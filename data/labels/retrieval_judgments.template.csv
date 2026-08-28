@@ -1,0 +1,4 @@
+query,article_id,relevance,reviewer,notes
+"new AI model security evaluations",41,2,SYNTHETIC_EXAMPLE,"Directly about a security evaluation of an agent framework."
+"new AI model security evaluations",42,1,SYNTHETIC_EXAMPLE,"Follow-up coverage; relevant but adds little."
+"new AI model security evaluations",9,0,SYNTHETIC_EXAMPLE,"Semiconductor investment; not relevant to model security evaluations."

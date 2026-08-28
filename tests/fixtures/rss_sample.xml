@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>NewsTrace test fixture</title>
+    <link>https://fixtures.example/NewsTrace test fixture</link>
+    <description>Synthetic NewsTrace fixture feed. All content is invented.</description>
+    <language>en-us</language>
+    <item>
+      <title>Northwind Labs releases Atlas 3 agent model with 128k context window</title>
+      <link>https://techledger.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window</link>
+      <guid isPermaLink="true">https://techledger.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window</guid>
+      <description>Northwind Labs said Atlas 3 scores 71.4 percent on the public agent benchmark and runs with a 128,000 token context window. The company said the model is available to developers on Tuesday. Pricing was not announced.</description>
+      <pubDate>Tue, 18 Aug 2026 06:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Atlas 3 launch: Northwind claims 71.4 percent on agent benchmark</title>
+      <link>https://wirefront.example/atlas-3-launch-northwind-claims-71-4-percent-on-agent-benchmark</link>
+      <guid isPermaLink="true">https://wirefront.example/atlas-3-launch-northwind-claims-71-4-percent-on-agent-benchmark</guid>
+      <description>Northwind Labs announced Atlas 3 on Tuesday. The company said the model reached 71.4 percent on the public agent benchmark. Independent evaluations of the model have not yet been published.</description>
+      <pubDate>Tue, 18 Aug 2026 07:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Developers get access to Northwind's Atlas 3 agent model</title>
+      <link>https://circuitdesk.example/developers-get-access-to-northwind-s-atlas-3-agent-model</link>
+      <guid isPermaLink="true">https://circuitdesk.example/developers-get-access-to-northwind-s-atlas-3-agent-model</guid>
+      <description>Atlas 3 became available to developers on Tuesday, Northwind Labs said. Two researchers who tested an early build said latency improved noticeably over the previous release. Northwind declined to share training data details.</description>
+      <pubDate>Tue, 18 Aug 2026 09:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>NewsTrace fixture: chips_and_compute</title>
+    <link>https://fixtures.example/NewsTrace fixture: chips_and_compute</link>
+    <description>Synthetic NewsTrace fixture feed. All content is invented.</description>
+    <language>en-us</language>
+    <item>
+      <title>Meridian Semiconductor to build $4.2 billion packaging plant in Arizona</title>
+      <link>https://chipwatch.example/meridian-semiconductor-to-build-4-2-billion-packaging-plant-in-arizona</link>
+      <guid isPermaLink="true">https://chipwatch.example/meridian-semiconductor-to-build-4-2-billion-packaging-plant-in-arizona</guid>
+      <description>Meridian Semiconductor said the plant will cost $4.2 billion and employ 1,800 people when it opens in 2029. Construction begins in the first quarter. State officials said incentives were part of the agreement.</description>
+      <pubDate>Tue, 18 Aug 2026 11:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Meridian confirms Arizona advanced packaging site, 1,800 jobs promised</title>
+      <link>https://circuitdesk.example/meridian-confirms-arizona-advanced-packaging-site-1-800-jobs-promised</link>
+      <guid isPermaLink="true">https://circuitdesk.example/meridian-confirms-arizona-advanced-packaging-site-1-800-jobs-promised</guid>
+      <description>The company confirmed the Arizona site on Wednesday and said it expects 1,800 jobs. Meridian put the investment at $4.2 billion. The facility is scheduled to open in 2029.</description>
+      <pubDate>Tue, 18 Aug 2026 12:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Meridian's Arizona packaging plant listed at $3.8 billion in state filing</title>
+      <link>https://marketfloor.example/meridian-s-arizona-packaging-plant-listed-at-3-8-billion-in-state-fili</link>
+      <guid isPermaLink="true">https://marketfloor.example/meridian-s-arizona-packaging-plant-listed-at-3-8-billion-in-state-fili</guid>
+      <description>A state filing reviewed on Thursday lists Meridian Semiconductor's Arizona packaging plant at $3.8 billion, not the $4.2 billion the company announced. Meridian did not respond to a request for comment on the discrepancy.</description>
+      <pubDate>Wed, 19 Aug 2026 02:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Meridian Semiconductor to build $4.2 billion packaging plant in Arizona</title>
+      <link>https://syndicatewire.example/meridian-semiconductor-to-build-4-2-billion-packaging-plant-in-arizona</link>
+      <guid isPermaLink="true">https://syndicatewire.example/meridian-semiconductor-to-build-4-2-billion-packaging-plant-in-arizona</guid>
+      <description>Meridian Semiconductor said the plant will cost $4.2 billion and employ 1,800 people when it opens in 2029. Construction begins in the first quarter. State officials said incentives were part of the agreement.</description>
+      <pubDate>Tue, 18 Aug 2026 13:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Grid operator warns data-centre demand could add 6 gigawatts by 2030</title>
+      <link>https://marketfloor.example/grid-operator-warns-data-centre-demand-could-add-6-gigawatts-by-2030</link>
+      <guid isPermaLink="true">https://marketfloor.example/grid-operator-warns-data-centre-demand-could-add-6-gigawatts-by-2030</guid>
+      <description>The regional grid operator said data-centre load could add 6 gigawatts of demand by 2030 under its high-growth scenario. The operator said transmission upgrades would be needed. No decision has been taken on cost allocation.</description>
+      <pubDate>Tue, 18 Aug 2026 19:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Data-centre growth pushes regional grid planners toward transmission upgrades</title>
+      <link>https://chipwatch.example/data-centre-growth-pushes-regional-grid-planners-toward-transmission-u</link>
+      <guid isPermaLink="true">https://chipwatch.example/data-centre-growth-pushes-regional-grid-planners-toward-transmission-u</guid>
+      <description>Planners said the 6 gigawatt high-growth figure assumes current expansion announcements are completed on schedule. Utilities have asked regulators to clarify who pays for the upgrades.</description>
+      <pubDate>Tue, 18 Aug 2026 21:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Corvid Compute commits $3.9 billion to Northgate fabrication plant expansion</title>
+      <link>https://civicsignal.example/corvid-compute-commits-3-9-billion-to-northgate-fabrication-plant-expa</link>
+      <guid isPermaLink="true">https://civicsignal.example/corvid-compute-commits-3-9-billion-to-northgate-fabrication-plant-expa</guid>
+      <description>Corvid Compute said on Wednesday it will spend $3.9 billion expanding its Northgate fabrication plant. The company expects the work to finish in 2028 and to add 900 positions.</description>
+      <pubDate>Thu, 20 Aug 2026 01:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Compute commits $3.9 billion to northgate fabrication plant expansion, Corvid Compute says</title>
+      <link>https://gridnotes.example/compute-commits-3-9-billion-to-northgate-fabrication-plant-expansion-c</link>
+      <guid isPermaLink="true">https://gridnotes.example/compute-commits-3-9-billion-to-northgate-fabrication-plant-expansion-c</guid>
+      <description>The Northgate fabrication plant expansion announced by Corvid Compute on Wednesday carries a $3.9 billion price tag. Corvid Compute said hiring for the 900 new roles begins before 2028.</description>
+      <pubDate>Thu, 20 Aug 2026 02:06:33 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Corvid Compute announced: Compute commits $3.9 billion to Northgate fabrication plant expansion</title>
+      <link>https://wirefront.example/what-corvid-compute-announced-compute-commits-3-9-billion-to-northgate</link>
+      <guid isPermaLink="true">https://wirefront.example/what-corvid-compute-announced-compute-commits-3-9-billion-to-northgate</guid>
+      <description>Corvid Compute put the cost of its Northgate fabrication plant expansion at $3.9 billion when it announced the project on Wednesday. Local officials said 900 jobs are expected by 2028.</description>
+      <pubDate>Thu, 20 Aug 2026 08:36:57 +0000</pubDate>
+    </item>
+    <item>
+      <title>Corvid Compute: Compute commits $3.9 billion to Northgate fabrication plant expansion</title>
+      <link>https://openweights.example/corvid-compute-compute-commits-3-9-billion-to-northgate-fabrication-pl</link>
+      <guid isPermaLink="true">https://openweights.example/corvid-compute-compute-commits-3-9-billion-to-northgate-fabrication-pl</guid>
+      <description>A $3.9 billion expansion of Corvid Compute's Northgate fabrication plant was confirmed on Wednesday. Corvid Compute said 900 jobs would follow and gave 2028 as the completion target.</description>
+      <pubDate>Thu, 20 Aug 2026 10:57:51 +0000</pubDate>
+    </item>
+    <item>
+      <title>Regulators review Larkspur Robotics's 1.7 billion Northgate fabrication plant agreement</title>
+      <link>https://secureloop.example/regulators-review-larkspur-robotics-s-1-7-billion-northgate-fabricatio</link>
+      <guid isPermaLink="true">https://secureloop.example/regulators-review-larkspur-robotics-s-1-7-billion-northgate-fabricatio</guid>
+      <description>Regulators opened a review of Larkspur Robotics's $1.7 billion Northgate fabrication plant agreement on Monday. The agency said it expects to decide within 15 months.</description>
+      <pubDate>Thu, 20 Aug 2026 04:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Review larkspur robotics's 1.7 billion northgate fabrication plant agreement, Larkspur Robotics says</title>
+      <link>https://policybench.example/review-larkspur-robotics-s-1-7-billion-northgate-fabrication-plant-agr</link>
+      <guid isPermaLink="true">https://policybench.example/review-larkspur-robotics-s-1-7-billion-northgate-fabrication-plant-agr</guid>
+      <description>Larkspur Robotics's $1.7 billion Northgate fabrication plant deal is under regulatory review as of Monday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Thu, 20 Aug 2026 06:44:26 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Larkspur Robotics announced: review Larkspur Robotics's 1.7 billion Northgate fabrication plant agreement</title>
+      <link>https://silicondaily.example/what-larkspur-robotics-announced-review-larkspur-robotics-s-1-7-billio</link>
+      <guid isPermaLink="true">https://silicondaily.example/what-larkspur-robotics-announced-review-larkspur-robotics-s-1-7-billio</guid>
+      <description>A review of the $1.7 billion Northgate fabrication plant agreement involving Larkspur Robotics began Monday, the agency said. Two competitors filed objections during the comment period.</description>
+      <pubDate>Thu, 20 Aug 2026 10:14:03 +0000</pubDate>
+    </item>
+    <item>
+      <title>Larkspur Robotics: review Larkspur Robotics's 1.7 billion Northgate fabrication plant agreement</title>
+      <link>https://techledger.example/larkspur-robotics-review-larkspur-robotics-s-1-7-billion-northgate-fab</link>
+      <guid isPermaLink="true">https://techledger.example/larkspur-robotics-review-larkspur-robotics-s-1-7-billion-northgate-fab</guid>
+      <description>Regulators opened a review of Larkspur Robotics's $1.7 billion Northgate fabrication plant agreement on Monday. The agency said it expects to decide within 15 months.</description>
+      <pubDate>Thu, 20 Aug 2026 19:29:12 +0000</pubDate>
+    </item>
+    <item>
+      <title>Redshift Foundry commits $6.2 billion to Fairhaven packaging site expansion</title>
+      <link>https://techledger.example/redshift-foundry-commits-6-2-billion-to-fairhaven-packaging-site-expan</link>
+      <guid isPermaLink="true">https://techledger.example/redshift-foundry-commits-6-2-billion-to-fairhaven-packaging-site-expan</guid>
+      <description>Redshift Foundry said on Wednesday it will spend $6.2 billion expanding its Fairhaven packaging site. The company expects the work to finish in 2031 and to add 320 positions.</description>
+      <pubDate>Thu, 20 Aug 2026 18:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Foundry commits $6.2 billion to fairhaven packaging site expansion, Redshift Foundry says</title>
+      <link>https://modelbeat.example/foundry-commits-6-2-billion-to-fairhaven-packaging-site-expansion-reds</link>
+      <guid isPermaLink="true">https://modelbeat.example/foundry-commits-6-2-billion-to-fairhaven-packaging-site-expansion-reds</guid>
+      <description>The Fairhaven packaging site expansion announced by Redshift Foundry on Wednesday carries a $6.2 billion price tag. Redshift Foundry said hiring for the 320 new roles begins before 2031.</description>
+      <pubDate>Thu, 20 Aug 2026 21:57:32 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Redshift Foundry announced: Foundry commits $6.2 billion to Fairhaven packaging site expansion</title>
+      <link>https://civicsignal.example/what-redshift-foundry-announced-foundry-commits-6-2-billion-to-fairhav</link>
+      <guid isPermaLink="true">https://civicsignal.example/what-redshift-foundry-announced-foundry-commits-6-2-billion-to-fairhav</guid>
+      <description>Redshift Foundry put the cost of its Fairhaven packaging site expansion at $6.2 billion when it announced the project on Wednesday. Local officials said 320 jobs are expected by 2031.</description>
+      <pubDate>Thu, 20 Aug 2026 21:43:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Redshift Foundry: Foundry commits $6.2 billion to Fairhaven packaging site expansion</title>
+      <link>https://circuitdesk.example/redshift-foundry-foundry-commits-6-2-billion-to-fairhaven-packaging-si</link>
+      <guid isPermaLink="true">https://circuitdesk.example/redshift-foundry-foundry-commits-6-2-billion-to-fairhaven-packaging-si</guid>
+      <description>A $6.2 billion expansion of Redshift Foundry's Fairhaven packaging site was confirmed on Wednesday. Redshift Foundry said 320 jobs would follow and gave 2031 as the completion target.</description>
+      <pubDate>Thu, 20 Aug 2026 22:46:12 +0000</pubDate>
+    </item>
+    <item>
+      <title>Regulators review Sableport Semiconductors's 2.7 billion Riverbend substrate works agreement</title>
+      <link>https://silicondaily.example/regulators-review-sableport-semiconductors-s-2-7-billion-riverbend-sub</link>
+      <guid isPermaLink="true">https://silicondaily.example/regulators-review-sableport-semiconductors-s-2-7-billion-riverbend-sub</guid>
+      <description>Regulators opened a review of Sableport Semiconductors's $2.7 billion Riverbend substrate works agreement on Monday. The agency said it expects to decide within 19 months.</description>
+      <pubDate>Thu, 20 Aug 2026 22:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Review sableport semiconductors's 2.7 billion riverbend substrate works agreement, Sableport Semiconductors says</title>
+      <link>https://gridnotes.example/review-sableport-semiconductors-s-2-7-billion-riverbend-substrate-work</link>
+      <guid isPermaLink="true">https://gridnotes.example/review-sableport-semiconductors-s-2-7-billion-riverbend-substrate-work</guid>
+      <description>A review of the $2.7 billion Riverbend substrate works agreement involving Sableport Semiconductors began Monday, the agency said. Two competitors filed objections during the comment period.</description>
+      <pubDate>Thu, 20 Aug 2026 23:01:50 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Sableport Semiconductors announced: review Sableport Semiconductors's 2.7 billion Riverbend substrate works agreement</title>
+      <link>https://policybench.example/what-sableport-semiconductors-announced-review-sableport-semiconductor</link>
+      <guid isPermaLink="true">https://policybench.example/what-sableport-semiconductors-announced-review-sableport-semiconductor</guid>
+      <description>Sableport Semiconductors's $2.7 billion Riverbend substrate works deal is under regulatory review as of Monday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Fri, 21 Aug 2026 03:53:47 +0000</pubDate>
+    </item>
+    <item>
+      <title>Sableport Semiconductors: review Sableport Semiconductors's 2.7 billion Riverbend substrate works agreement</title>
+      <link>https://modelbeat.example/sableport-semiconductors-review-sableport-semiconductors-s-2-7-billion</link>
+      <guid isPermaLink="true">https://modelbeat.example/sableport-semiconductors-review-sableport-semiconductors-s-2-7-billion</guid>
+      <description>Regulators opened a review of Sableport Semiconductors's $2.7 billion Riverbend substrate works agreement on Monday. The agency said it expects to decide within 19 months.</description>
+      <pubDate>Fri, 21 Aug 2026 11:07:09 +0000</pubDate>
+    </item>
+    <item>
+      <title>Windrow Institute commits $5.1 billion to Sandhill test facility expansion</title>
+      <link>https://wirefront.example/windrow-institute-commits-5-1-billion-to-sandhill-test-facility-expans</link>
+      <guid isPermaLink="true">https://wirefront.example/windrow-institute-commits-5-1-billion-to-sandhill-test-facility-expans</guid>
+      <description>Windrow Institute put the cost of its Sandhill test facility expansion at $5.1 billion when it announced the project on Thursday. Local officials said 2100 jobs are expected by 2030.</description>
+      <pubDate>Fri, 21 Aug 2026 12:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Institute commits $5.1 billion to sandhill test facility expansion, Windrow Institute says</title>
+      <link>https://policybench.example/institute-commits-5-1-billion-to-sandhill-test-facility-expansion-wind</link>
+      <guid isPermaLink="true">https://policybench.example/institute-commits-5-1-billion-to-sandhill-test-facility-expansion-wind</guid>
+      <description>Windrow Institute said on Thursday it will spend $5.1 billion expanding its Sandhill test facility. The company expects the work to finish in 2030 and to add 2100 positions.</description>
+      <pubDate>Fri, 21 Aug 2026 13:53:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Windrow Institute announced: Institute commits $5.1 billion to Sandhill test facility expansion</title>
+      <link>https://secureloop.example/what-windrow-institute-announced-institute-commits-5-1-billion-to-sand</link>
+      <guid isPermaLink="true">https://secureloop.example/what-windrow-institute-announced-institute-commits-5-1-billion-to-sand</guid>
+      <description>A $5.1 billion expansion of Windrow Institute's Sandhill test facility was confirmed on Thursday. Windrow Institute said 2100 jobs would follow and gave 2030 as the completion target.</description>
+      <pubDate>Fri, 21 Aug 2026 18:52:25 +0000</pubDate>
+    </item>
+    <item>
+      <title>Windrow Institute: Institute commits $5.1 billion to Sandhill test facility expansion</title>
+      <link>https://chipwatch.example/windrow-institute-institute-commits-5-1-billion-to-sandhill-test-facil</link>
+      <guid isPermaLink="true">https://chipwatch.example/windrow-institute-institute-commits-5-1-billion-to-sandhill-test-facil</guid>
+      <description>The Sandhill test facility expansion announced by Windrow Institute on Thursday carries a $5.1 billion price tag. Windrow Institute said hiring for the 2100 new roles begins before 2030.</description>
+      <pubDate>Fri, 21 Aug 2026 14:40:06 +0000</pubDate>
+    </item>
+    <item>
+      <title>Regulators review Yarrow Dynamics's 7.1 billion Fairhaven packaging site agreement</title>
+      <link>https://modelbeat.example/regulators-review-yarrow-dynamics-s-7-1-billion-fairhaven-packaging-si</link>
+      <guid isPermaLink="true">https://modelbeat.example/regulators-review-yarrow-dynamics-s-7-1-billion-fairhaven-packaging-si</guid>
+      <description>A review of the $7.1 billion Fairhaven packaging site agreement involving Yarrow Dynamics began Tuesday, the agency said. Two competitors filed objections during the comment period.</description>
+      <pubDate>Fri, 21 Aug 2026 15:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Review yarrow dynamics's 7.1 billion fairhaven packaging site agreement, Yarrow Dynamics says</title>
+      <link>https://openweights.example/review-yarrow-dynamics-s-7-1-billion-fairhaven-packaging-site-agreemen</link>
+      <guid isPermaLink="true">https://openweights.example/review-yarrow-dynamics-s-7-1-billion-fairhaven-packaging-site-agreemen</guid>
+      <description>Regulators opened a review of Yarrow Dynamics's $7.1 billion Fairhaven packaging site agreement on Tuesday. The agency said it expects to decide within 15 months.</description>
+      <pubDate>Fri, 21 Aug 2026 18:56:23 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Yarrow Dynamics announced: review Yarrow Dynamics's 7.1 billion Fairhaven packaging site agreement</title>
+      <link>https://chipwatch.example/what-yarrow-dynamics-announced-review-yarrow-dynamics-s-7-1-billion-fa</link>
+      <guid isPermaLink="true">https://chipwatch.example/what-yarrow-dynamics-announced-review-yarrow-dynamics-s-7-1-billion-fa</guid>
+      <description>Yarrow Dynamics's $7.1 billion Fairhaven packaging site deal is under regulatory review as of Tuesday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Fri, 21 Aug 2026 20:43:31 +0000</pubDate>
+    </item>
+    <item>
+      <title>Cinderpeak Cloud commits $2.8 billion to Fairhaven packaging site expansion</title>
+      <link>https://civicsignal.example/cinderpeak-cloud-commits-2-8-billion-to-fairhaven-packaging-site-expan</link>
+      <guid isPermaLink="true">https://civicsignal.example/cinderpeak-cloud-commits-2-8-billion-to-fairhaven-packaging-site-expan</guid>
+      <description>Cinderpeak Cloud put the cost of its Fairhaven packaging site expansion at $2.8 billion when it announced the project on Friday. Local officials said 1200 jobs are expected by 2028.</description>
+      <pubDate>Sat, 22 Aug 2026 05:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Cloud commits $2.8 billion to fairhaven packaging site expansion, Cinderpeak Cloud says</title>
+      <link>https://gridnotes.example/cloud-commits-2-8-billion-to-fairhaven-packaging-site-expansion-cinder</link>
+      <guid isPermaLink="true">https://gridnotes.example/cloud-commits-2-8-billion-to-fairhaven-packaging-site-expansion-cinder</guid>
+      <description>Cinderpeak Cloud said on Friday it will spend $2.8 billion expanding its Fairhaven packaging site. The company expects the work to finish in 2028 and to add 1200 positions.</description>
+      <pubDate>Sat, 22 Aug 2026 07:31:01 +0000</pubDate>
+    </item>
+    <item>
+      <title>Regulators review Dunmore Chips's 2.9 billion Sandhill test facility agreement</title>
+      <link>https://civicsignal.example/regulators-review-dunmore-chips-s-2-9-billion-sandhill-test-facility-a</link>
+      <guid isPermaLink="true">https://civicsignal.example/regulators-review-dunmore-chips-s-2-9-billion-sandhill-test-facility-a</guid>
+      <description>A review of the $2.9 billion Sandhill test facility agreement involving Dunmore Chips began Friday, the agency said. Two competitors filed objections during the comment period.</description>
+      <pubDate>Sat, 22 Aug 2026 09:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Review dunmore chips's 2.9 billion sandhill test facility agreement, Dunmore Chips says</title>
+      <link>https://marketfloor.example/review-dunmore-chips-s-2-9-billion-sandhill-test-facility-agreement-du</link>
+      <guid isPermaLink="true">https://marketfloor.example/review-dunmore-chips-s-2-9-billion-sandhill-test-facility-agreement-du</guid>
+      <description>Regulators opened a review of Dunmore Chips's $2.9 billion Sandhill test facility agreement on Friday. The agency said it expects to decide within 14 months.</description>
+      <pubDate>Sat, 22 Aug 2026 10:36:23 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Dunmore Chips announced: review Dunmore Chips's 2.9 billion Sandhill test facility agreement</title>
+      <link>https://openweights.example/what-dunmore-chips-announced-review-dunmore-chips-s-2-9-billion-sandhi</link>
+      <guid isPermaLink="true">https://openweights.example/what-dunmore-chips-announced-review-dunmore-chips-s-2-9-billion-sandhi</guid>
+      <description>Dunmore Chips's $2.9 billion Sandhill test facility deal is under regulatory review as of Friday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Sat, 22 Aug 2026 14:40:22 +0000</pubDate>
+    </item>
+    <item>
+      <title>Corvid Compute commits $4.4 billion to Fairhaven packaging site expansion</title>
+      <link>https://wirefront.example/corvid-compute-commits-4-4-billion-to-fairhaven-packaging-site-expansi</link>
+      <guid isPermaLink="true">https://wirefront.example/corvid-compute-commits-4-4-billion-to-fairhaven-packaging-site-expansi</guid>
+      <description>Corvid Compute put the cost of its Fairhaven packaging site expansion at $4.4 billion when it announced the project on Monday. Local officials said 640 jobs are expected by 2029.</description>
+      <pubDate>Sat, 22 Aug 2026 23:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Compute commits $4.4 billion to fairhaven packaging site expansion, Corvid Compute says</title>
+      <link>https://silicondaily.example/compute-commits-4-4-billion-to-fairhaven-packaging-site-expansion-corv</link>
+      <guid isPermaLink="true">https://silicondaily.example/compute-commits-4-4-billion-to-fairhaven-packaging-site-expansion-corv</guid>
+      <description>The Fairhaven packaging site expansion announced by Corvid Compute on Monday carries a $4.4 billion price tag. Corvid Compute said hiring for the 640 new roles begins before 2029.</description>
+      <pubDate>Sun, 23 Aug 2026 02:16:32 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Corvid Compute announced: Compute commits $4.4 billion to Fairhaven packaging site expansion</title>
+      <link>https://techledger.example/what-corvid-compute-announced-compute-commits-4-4-billion-to-fairhaven</link>
+      <guid isPermaLink="true">https://techledger.example/what-corvid-compute-announced-compute-commits-4-4-billion-to-fairhaven</guid>
+      <description>A $4.4 billion expansion of Corvid Compute's Fairhaven packaging site was confirmed on Monday. Corvid Compute said 640 jobs would follow and gave 2029 as the completion target.</description>
+      <pubDate>Sun, 23 Aug 2026 06:21:54 +0000</pubDate>
+    </item>
+    <item>
+      <title>Corvid Compute: Compute commits $4.4 billion to Fairhaven packaging site expansion</title>
+      <link>https://modelbeat.example/corvid-compute-compute-commits-4-4-billion-to-fairhaven-packaging-site</link>
+      <guid isPermaLink="true">https://modelbeat.example/corvid-compute-compute-commits-4-4-billion-to-fairhaven-packaging-site</guid>
+      <description>Corvid Compute said on Monday it will spend $4.4 billion expanding its Fairhaven packaging site. The company expects the work to finish in 2029 and to add 640 positions.</description>
+      <pubDate>Sun, 23 Aug 2026 11:14:19 +0000</pubDate>
+    </item>
+    <item>
+      <title>Regulators review Larkspur Robotics's 5.9 billion Sandhill test facility agreement</title>
+      <link>https://openweights.example/regulators-review-larkspur-robotics-s-5-9-billion-sandhill-test-facili</link>
+      <guid isPermaLink="true">https://openweights.example/regulators-review-larkspur-robotics-s-5-9-billion-sandhill-test-facili</guid>
+      <description>Larkspur Robotics's $5.9 billion Sandhill test facility deal is under regulatory review as of Wednesday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Sun, 23 Aug 2026 02:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Review larkspur robotics's 5.9 billion sandhill test facility agreement, Larkspur Robotics says</title>
+      <link>https://circuitdesk.example/review-larkspur-robotics-s-5-9-billion-sandhill-test-facility-agreemen</link>
+      <guid isPermaLink="true">https://circuitdesk.example/review-larkspur-robotics-s-5-9-billion-sandhill-test-facility-agreemen</guid>
+      <description>A review of the $5.9 billion Sandhill test facility agreement involving Larkspur Robotics began Wednesday, the agency said. Two competitors filed objections during the comment period.</description>
+      <pubDate>Sun, 23 Aug 2026 04:14:40 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Larkspur Robotics announced: review Larkspur Robotics's 5.9 billion Sandhill test facility agreement</title>
+      <link>https://techledger.example/what-larkspur-robotics-announced-review-larkspur-robotics-s-5-9-billio</link>
+      <guid isPermaLink="true">https://techledger.example/what-larkspur-robotics-announced-review-larkspur-robotics-s-5-9-billio</guid>
+      <description>Regulators opened a review of Larkspur Robotics's $5.9 billion Sandhill test facility agreement on Wednesday. The agency said it expects to decide within 3 months.</description>
+      <pubDate>Sun, 23 Aug 2026 04:50:31 +0000</pubDate>
+    </item>
+    <item>
+      <title>Larkspur Robotics: review Larkspur Robotics's 5.9 billion Sandhill test facility agreement</title>
+      <link>https://silicondaily.example/larkspur-robotics-review-larkspur-robotics-s-5-9-billion-sandhill-test</link>
+      <guid isPermaLink="true">https://silicondaily.example/larkspur-robotics-review-larkspur-robotics-s-5-9-billion-sandhill-test</guid>
+      <description>Larkspur Robotics's $5.9 billion Sandhill test facility deal is under regulatory review as of Wednesday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Sun, 23 Aug 2026 09:38:05 +0000</pubDate>
+    </item>
+    <item>
+      <title>Redshift Foundry commits $0.8 billion to Sandhill test facility expansion</title>
+      <link>https://marketfloor.example/redshift-foundry-commits-0-8-billion-to-sandhill-test-facility-expansi</link>
+      <guid isPermaLink="true">https://marketfloor.example/redshift-foundry-commits-0-8-billion-to-sandhill-test-facility-expansi</guid>
+      <description>The Sandhill test facility expansion announced by Redshift Foundry on Friday carries a $0.8 billion price tag. Redshift Foundry said hiring for the 900 new roles begins before 2029.</description>
+      <pubDate>Sun, 23 Aug 2026 16:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Foundry commits $0.8 billion to sandhill test facility expansion, Redshift Foundry says</title>
+      <link>https://silicondaily.example/foundry-commits-0-8-billion-to-sandhill-test-facility-expansion-redshi</link>
+      <guid isPermaLink="true">https://silicondaily.example/foundry-commits-0-8-billion-to-sandhill-test-facility-expansion-redshi</guid>
+      <description>A $0.8 billion expansion of Redshift Foundry's Sandhill test facility was confirmed on Friday. Redshift Foundry said 900 jobs would follow and gave 2029 as the completion target.</description>
+      <pubDate>Sun, 23 Aug 2026 18:52:25 +0000</pubDate>
+    </item>
+    <item>
+      <title>Regulators review Sableport Semiconductors's 3.3 billion Riverbend substrate works agreement</title>
+      <link>https://policybench.example/regulators-review-sableport-semiconductors-s-3-3-billion-riverbend-sub</link>
+      <guid isPermaLink="true">https://policybench.example/regulators-review-sableport-semiconductors-s-3-3-billion-riverbend-sub</guid>
+      <description>A review of the $3.3 billion Riverbend substrate works agreement involving Sableport Semiconductors began Wednesday, the agency said. Two competitors filed objections during the comment period.</description>
+      <pubDate>Sun, 23 Aug 2026 20:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Review sableport semiconductors's 3.3 billion riverbend substrate works agreement, Sableport Semiconductors says</title>
+      <link>https://chipwatch.example/review-sableport-semiconductors-s-3-3-billion-riverbend-substrate-work</link>
+      <guid isPermaLink="true">https://chipwatch.example/review-sableport-semiconductors-s-3-3-billion-riverbend-substrate-work</guid>
+      <description>Sableport Semiconductors's $3.3 billion Riverbend substrate works deal is under regulatory review as of Wednesday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Sun, 23 Aug 2026 22:11:13 +0000</pubDate>
+    </item>
+    <item>
+      <title>Windrow Institute commits $3.4 billion to Fairhaven packaging site expansion</title>
+      <link>https://secureloop.example/windrow-institute-commits-3-4-billion-to-fairhaven-packaging-site-expa</link>
+      <guid isPermaLink="true">https://secureloop.example/windrow-institute-commits-3-4-billion-to-fairhaven-packaging-site-expa</guid>
+      <description>A $3.4 billion expansion of Windrow Institute's Fairhaven packaging site was confirmed on Friday. Windrow Institute said 2100 jobs would follow and gave 2029 as the completion target.</description>
+      <pubDate>Mon, 24 Aug 2026 10:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Institute commits $3.4 billion to fairhaven packaging site expansion, Windrow Institute says</title>
+      <link>https://wirefront.example/institute-commits-3-4-billion-to-fairhaven-packaging-site-expansion-wi</link>
+      <guid isPermaLink="true">https://wirefront.example/institute-commits-3-4-billion-to-fairhaven-packaging-site-expansion-wi</guid>
+      <description>The Fairhaven packaging site expansion announced by Windrow Institute on Friday carries a $3.4 billion price tag. Windrow Institute said hiring for the 2100 new roles begins before 2029.</description>
+      <pubDate>Mon, 24 Aug 2026 11:45:02 +0000</pubDate>
+    </item>
+    <item>
+      <title>Regulators review Yarrow Dynamics's 7.1 billion Northgate fabrication plant agreement</title>
+      <link>https://chipwatch.example/regulators-review-yarrow-dynamics-s-7-1-billion-northgate-fabrication-</link>
+      <guid isPermaLink="true">https://chipwatch.example/regulators-review-yarrow-dynamics-s-7-1-billion-northgate-fabrication-</guid>
+      <description>Yarrow Dynamics's $7.1 billion Northgate fabrication plant deal is under regulatory review as of Thursday. A spokesperson said the company is cooperating and expects clearance.</description>
+      <pubDate>Mon, 24 Aug 2026 13:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Review yarrow dynamics's 7.1 billion northgate fabrication plant agreement, Yarrow Dynamics says</title>
+      <link>https://secureloop.example/review-yarrow-dynamics-s-7-1-billion-northgate-fabrication-plant-agree</link>
+      <guid isPermaLink="true">https://secureloop.example/review-yarrow-dynamics-s-7-1-billion-northgate-fabrication-plant-agree</guid>
+      <description>Regulators opened a review of Yarrow Dynamics's $7.1 billion Northgate fabrication plant agreement on Thursday. The agency said it expects to decide within 6 months.</description>
+      <pubDate>Mon, 24 Aug 2026 16:00:23 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

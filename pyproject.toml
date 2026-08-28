@@ -1,0 +1,101 @@
+[project]
+name = "newstrace"
+version = "0.1.0"
+description = "Real-time news story, claim, and source-evidence tracker (MCS 549 applied project)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "NewsTrace" }]
+
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "httpx>=0.27",
+    "feedparser>=6.0",
+    "pyyaml>=6.0",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "scikit-learn>=1.4",
+    "networkx>=3.2",
+    "pandas>=2.2",
+    "typer>=0.12",
+    "rich>=13.7",
+    "python-dateutil>=2.9",
+    "tldextract>=5.1",
+]
+
+[project.optional-dependencies]
+embeddings = ["sentence-transformers>=3.0"]
+extraction = ["trafilatura>=1.9"]
+ui = ["streamlit>=1.36", "matplotlib>=3.8", "seaborn>=0.13"]
+reports = ["matplotlib>=3.8", "seaborn>=0.13", "pyarrow>=16.0"]
+llm = ["anthropic>=0.34", "openai>=1.40"]
+# Documentation screenshots only; the app, tests and experiments never need a browser.
+screenshots = ["playwright>=1.44"]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-PyYAML",
+    "types-python-dateutil",
+    "psutil>=5.9",
+    "pyarrow>=16.0",
+    "matplotlib>=3.8",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+newstrace = "newstrace.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/newstrace"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts", "app"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "N", "RUF"]
+ignore = ["B008", "RUF012"]
+
+# Typographic characters that appear on purpose in rendered reports and UI copy.
+allowed-confusables = ["\u00d7", "\u2212", "\u00b7", "\u2013", "\u2014"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+plugins = ["pydantic.mypy"]
+strict_optional = true
+warn_unused_ignores = false
+warn_redundant_casts = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["newstrace.api.*", "newstrace.cli"]
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers -m 'not network'"
+markers = [
+    "network: tests that require live network access (deselected by default)",
+    "slow: slow tests",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+asyncio_mode = "auto"

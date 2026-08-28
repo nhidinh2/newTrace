@@ -1,0 +1,19 @@
+# NewsTrace topic configuration.
+# Copy to configs/topics.yaml and point NEWSTRACE_TOPICS_FILE at it to customise.
+# Never commit private or credentialed feed URLs.
+topics:
+  ai_models:
+    display_name: AI models and agents
+    gdelt_query: '("artificial intelligence" OR OpenAI OR Anthropic OR DeepMind OR "large language model")'
+    languages: [english]
+    feeds: []
+  ai_safety:
+    display_name: AI safety and security
+    gdelt_query: '("AI safety" OR "AI security" OR "prompt injection" OR "model evaluation")'
+    languages: [english]
+    feeds: []
+  chips_and_compute:
+    display_name: Chips and compute
+    gdelt_query: '(Nvidia OR semiconductor OR GPU OR "AI chip")'
+    languages: [english]
+    feeds: []

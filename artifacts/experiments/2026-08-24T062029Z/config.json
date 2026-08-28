@@ -1,0 +1,21 @@
+{
+  "methods": [
+    "full",
+    "svd",
+    "gaussian_rp",
+    "sparse_rp"
+  ],
+  "dimensions": [
+    32,
+    64,
+    128,
+    256
+  ],
+  "seed": 549,
+  "top_k": 10,
+  "include_pagerank": true,
+  "include_tfidf": true,
+  "max_queries": 60,
+  "latency_repeats": 5,
+  "artifacts_dir": null
+}

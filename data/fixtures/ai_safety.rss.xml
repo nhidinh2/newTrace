@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>NewsTrace fixture: ai_safety</title>
+    <link>https://fixtures.example/NewsTrace fixture: ai_safety</link>
+    <description>Synthetic NewsTrace fixture feed. All content is invented.</description>
+    <language>en-us</language>
+    <item>
+      <title>EU regulators publish draft transparency rules for general-purpose AI models</title>
+      <link>https://policybench.example/eu-regulators-publish-draft-transparency-rules-for-general-purpose-ai-</link>
+      <guid isPermaLink="true">https://policybench.example/eu-regulators-publish-draft-transparency-rules-for-general-purpose-ai-</guid>
+      <description>The draft rules would require providers of general-purpose models to publish training-data summaries and incident reports. Regulators said the consultation closes on 30 September. Industry groups have asked for a longer comment window.</description>
+      <pubDate>Tue, 18 Aug 2026 08:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Draft EU rules would force AI providers to publish training-data summaries</title>
+      <link>https://civicsignal.example/draft-eu-rules-would-force-ai-providers-to-publish-training-data-summa</link>
+      <guid isPermaLink="true">https://civicsignal.example/draft-eu-rules-would-force-ai-providers-to-publish-training-data-summa</guid>
+      <description>Under the draft published this week, providers of general-purpose AI models would file incident reports and publish training-data summaries. The consultation closes on 30 September, regulators said.</description>
+      <pubDate>Tue, 18 Aug 2026 10:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Industry groups push back on EU AI transparency consultation timeline</title>
+      <link>https://wirefront.example/industry-groups-push-back-on-eu-ai-transparency-consultation-timeline</link>
+      <guid isPermaLink="true">https://wirefront.example/industry-groups-push-back-on-eu-ai-transparency-consultation-timeline</guid>
+      <description>Three industry associations said the 30 September deadline gives too little time to respond. A regulator spokesperson said the timeline is not expected to change. The draft does not set penalties yet.</description>
+      <pubDate>Tue, 18 Aug 2026 17:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>What the EU's draft general-purpose AI rules would require</title>
+      <link>https://techledger.example/what-the-eu-s-draft-general-purpose-ai-rules-would-require</link>
+      <guid isPermaLink="true">https://techledger.example/what-the-eu-s-draft-general-purpose-ai-rules-would-require</guid>
+      <description>The draft covers training-data summaries, incident reporting and downstream documentation. Regulators said enforcement details will follow in a later text. No penalty schedule has been published.</description>
+      <pubDate>Wed, 19 Aug 2026 08:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Researchers disclose prompt-injection flaw affecting three agent frameworks</title>
+      <link>https://secureloop.example/researchers-disclose-prompt-injection-flaw-affecting-three-agent-frame</link>
+      <guid isPermaLink="true">https://secureloop.example/researchers-disclose-prompt-injection-flaw-affecting-three-agent-frame</guid>
+      <description>Researchers at Halden University disclosed a prompt-injection technique that bypassed tool-use restrictions in three open-source agent frameworks. Two maintainers shipped patches on Monday. The third has not responded publicly.</description>
+      <pubDate>Tue, 18 Aug 2026 14:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Agent frameworks patched after Halden prompt-injection disclosure</title>
+      <link>https://modelbeat.example/agent-frameworks-patched-after-halden-prompt-injection-disclosure</link>
+      <guid isPermaLink="true">https://modelbeat.example/agent-frameworks-patched-after-halden-prompt-injection-disclosure</guid>
+      <description>Two of the three affected agent frameworks released patches on Monday following the Halden University disclosure. Researchers said the technique required no special access to the target system.</description>
+      <pubDate>Tue, 18 Aug 2026 16:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Halden disclosure renews debate over agent tool permissions</title>
+      <link>https://policybench.example/halden-disclosure-renews-debate-over-agent-tool-permissions</link>
+      <guid isPermaLink="true">https://policybench.example/halden-disclosure-renews-debate-over-agent-tool-permissions</guid>
+      <description>Security engineers said the disclosure shows tool permissions are still granted too broadly by default. One maintainer said the reported technique does not work against the framework's current release.</description>
+      <pubDate>Wed, 19 Aug 2026 10:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Blue Harbor AI reports 10 security findings in Basalt 1 evaluation</title>
+      <link>https://policybench.example/blue-harbor-ai-reports-10-security-findings-in-basalt-1-evaluation</link>
+      <guid isPermaLink="true">https://policybench.example/blue-harbor-ai-reports-10-security-findings-in-basalt-1-evaluation</guid>
+      <description>An evaluation released by Blue Harbor AI on Friday lists 10 security findings for Basalt 1. Blue Harbor AI said 2 were resolved before the report went out. No exploit code was published.</description>
+      <pubDate>Wed, 19 Aug 2026 21:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Harbor ai reports 10 security findings in basalt 1 evaluation, Blue Harbor AI says</title>
+      <link>https://secureloop.example/harbor-ai-reports-10-security-findings-in-basalt-1-evaluation-blue-har</link>
+      <guid isPermaLink="true">https://secureloop.example/harbor-ai-reports-10-security-findings-in-basalt-1-evaluation-blue-har</guid>
+      <description>Security researchers at Blue Harbor AI said Basalt 1 had 10 findings in their review published Friday. 2 were fixed ahead of disclosure. The severity ratings were assigned by Blue Harbor AI itself.</description>
+      <pubDate>Thu, 20 Aug 2026 01:06:07 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Blue Harbor AI announced: Harbor AI reports 10 security findings in Basalt 1 evaluation</title>
+      <link>https://civicsignal.example/what-blue-harbor-ai-announced-harbor-ai-reports-10-security-findings-i</link>
+      <guid isPermaLink="true">https://civicsignal.example/what-blue-harbor-ai-announced-harbor-ai-reports-10-security-findings-i</guid>
+      <description>Blue Harbor AI's Friday report on Basalt 1 describes 10 findings, of which 2 were already patched. A maintainer said the remaining findings require configuration changes rather than code fixes.</description>
+      <pubDate>Thu, 20 Aug 2026 03:11:31 +0000</pubDate>
+    </item>
+    <item>
+      <title>Quillon Networks reports 18 security findings in Glint 2 evaluation</title>
+      <link>https://chipwatch.example/quillon-networks-reports-18-security-findings-in-glint-2-evaluation</link>
+      <guid isPermaLink="true">https://chipwatch.example/quillon-networks-reports-18-security-findings-in-glint-2-evaluation</guid>
+      <description>Security researchers at Quillon Networks said Glint 2 had 18 findings in their review published Wednesday. 3 were fixed ahead of disclosure. The severity ratings were assigned by Quillon Networks itself.</description>
+      <pubDate>Thu, 20 Aug 2026 15:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Networks reports 18 security findings in glint 2 evaluation, Quillon Networks says</title>
+      <link>https://marketfloor.example/networks-reports-18-security-findings-in-glint-2-evaluation-quillon-ne</link>
+      <guid isPermaLink="true">https://marketfloor.example/networks-reports-18-security-findings-in-glint-2-evaluation-quillon-ne</guid>
+      <description>An evaluation released by Quillon Networks on Wednesday lists 18 security findings for Glint 2. Quillon Networks said 3 were resolved before the report went out. No exploit code was published.</description>
+      <pubDate>Thu, 20 Aug 2026 19:24:55 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Quillon Networks announced: Networks reports 18 security findings in Glint 2 evaluation</title>
+      <link>https://wirefront.example/what-quillon-networks-announced-networks-reports-18-security-findings-</link>
+      <guid isPermaLink="true">https://wirefront.example/what-quillon-networks-announced-networks-reports-18-security-findings-</guid>
+      <description>Quillon Networks published 18 security findings from its evaluation of Glint 2 on Wednesday. The report said 3 findings were fixed before publication. The remaining issues are under review.</description>
+      <pubDate>Thu, 20 Aug 2026 16:28:14 +0000</pubDate>
+    </item>
+    <item>
+      <title>Quillon Networks: Networks reports 18 security findings in Glint 2 evaluation</title>
+      <link>https://secureloop.example/quillon-networks-networks-reports-18-security-findings-in-glint-2-eval</link>
+      <guid isPermaLink="true">https://secureloop.example/quillon-networks-networks-reports-18-security-findings-in-glint-2-eval</guid>
+      <description>Quillon Networks's Wednesday report on Glint 2 describes 18 findings, of which 3 were already patched. A maintainer said the remaining findings require configuration changes rather than code fixes.</description>
+      <pubDate>Fri, 21 Aug 2026 05:28:31 +0000</pubDate>
+    </item>
+    <item>
+      <title>Verity Compute reports 9 security findings in Lattice 1 evaluation</title>
+      <link>https://wirefront.example/verity-compute-reports-9-security-findings-in-lattice-1-evaluation</link>
+      <guid isPermaLink="true">https://wirefront.example/verity-compute-reports-9-security-findings-in-lattice-1-evaluation</guid>
+      <description>Security researchers at Verity Compute said Lattice 1 had 9 findings in their review published Friday. 3 were fixed ahead of disclosure. The severity ratings were assigned by Verity Compute itself.</description>
+      <pubDate>Fri, 21 Aug 2026 08:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Compute reports 9 security findings in lattice 1 evaluation, Verity Compute says</title>
+      <link>https://chipwatch.example/compute-reports-9-security-findings-in-lattice-1-evaluation-verity-com</link>
+      <guid isPermaLink="true">https://chipwatch.example/compute-reports-9-security-findings-in-lattice-1-evaluation-verity-com</guid>
+      <description>Verity Compute published 9 security findings from its evaluation of Lattice 1 on Friday. The report said 3 findings were fixed before publication. The remaining issues are under review.</description>
+      <pubDate>Fri, 21 Aug 2026 13:26:46 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Verity Compute announced: Compute reports 9 security findings in Lattice 1 evaluation</title>
+      <link>https://gridnotes.example/what-verity-compute-announced-compute-reports-9-security-findings-in-l</link>
+      <guid isPermaLink="true">https://gridnotes.example/what-verity-compute-announced-compute-reports-9-security-findings-in-l</guid>
+      <description>Verity Compute's Friday report on Lattice 1 describes 9 findings, of which 3 were already patched. A maintainer said the remaining findings require configuration changes rather than code fixes.</description>
+      <pubDate>Fri, 21 Aug 2026 12:23:48 +0000</pubDate>
+    </item>
+    <item>
+      <title>Bellweather Models reports 4 security findings in Aster 1 evaluation</title>
+      <link>https://openweights.example/bellweather-models-reports-4-security-findings-in-aster-1-evaluation</link>
+      <guid isPermaLink="true">https://openweights.example/bellweather-models-reports-4-security-findings-in-aster-1-evaluation</guid>
+      <description>Bellweather Models's Monday report on Aster 1 describes 4 findings, of which 2 were already patched. A maintainer said the remaining findings require configuration changes rather than code fixes.</description>
+      <pubDate>Sat, 22 Aug 2026 02:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Models reports 4 security findings in aster 1 evaluation, Bellweather Models says</title>
+      <link>https://secureloop.example/models-reports-4-security-findings-in-aster-1-evaluation-bellweather-m</link>
+      <guid isPermaLink="true">https://secureloop.example/models-reports-4-security-findings-in-aster-1-evaluation-bellweather-m</guid>
+      <description>Bellweather Models published 4 security findings from its evaluation of Aster 1 on Monday. The report said 2 findings were fixed before publication. The remaining issues are under review.</description>
+      <pubDate>Sat, 22 Aug 2026 04:34:08 +0000</pubDate>
+    </item>
+    <item>
+      <title>Blue Harbor AI reports 3 security findings in Fathom 2 evaluation</title>
+      <link>https://circuitdesk.example/blue-harbor-ai-reports-3-security-findings-in-fathom-2-evaluation</link>
+      <guid isPermaLink="true">https://circuitdesk.example/blue-harbor-ai-reports-3-security-findings-in-fathom-2-evaluation</guid>
+      <description>An evaluation released by Blue Harbor AI on Monday lists 3 security findings for Fathom 2. Blue Harbor AI said 2 were resolved before the report went out. No exploit code was published.</description>
+      <pubDate>Sat, 22 Aug 2026 19:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Harbor ai reports 3 security findings in fathom 2 evaluation, Blue Harbor AI says</title>
+      <link>https://marketfloor.example/harbor-ai-reports-3-security-findings-in-fathom-2-evaluation-blue-harb</link>
+      <guid isPermaLink="true">https://marketfloor.example/harbor-ai-reports-3-security-findings-in-fathom-2-evaluation-blue-harb</guid>
+      <description>Security researchers at Blue Harbor AI said Fathom 2 had 3 findings in their review published Monday. 2 were fixed ahead of disclosure. The severity ratings were assigned by Blue Harbor AI itself.</description>
+      <pubDate>Sat, 22 Aug 2026 21:13:59 +0000</pubDate>
+    </item>
+    <item>
+      <title>Quillon Networks reports 5 security findings in Kelvin 2 evaluation</title>
+      <link>https://openweights.example/quillon-networks-reports-5-security-findings-in-kelvin-2-evaluation</link>
+      <guid isPermaLink="true">https://openweights.example/quillon-networks-reports-5-security-findings-in-kelvin-2-evaluation</guid>
+      <description>An evaluation released by Quillon Networks on Tuesday lists 5 security findings for Kelvin 2. Quillon Networks said 3 were resolved before the report went out. No exploit code was published.</description>
+      <pubDate>Sun, 23 Aug 2026 13:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Networks reports 5 security findings in kelvin 2 evaluation, Quillon Networks says</title>
+      <link>https://circuitdesk.example/networks-reports-5-security-findings-in-kelvin-2-evaluation-quillon-ne</link>
+      <guid isPermaLink="true">https://circuitdesk.example/networks-reports-5-security-findings-in-kelvin-2-evaluation-quillon-ne</guid>
+      <description>Quillon Networks published 5 security findings from its evaluation of Kelvin 2 on Tuesday. The report said 3 findings were fixed before publication. The remaining issues are under review.</description>
+      <pubDate>Sun, 23 Aug 2026 14:49:17 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Quillon Networks announced: Networks reports 5 security findings in Kelvin 2 evaluation</title>
+      <link>https://gridnotes.example/what-quillon-networks-announced-networks-reports-5-security-findings-i</link>
+      <guid isPermaLink="true">https://gridnotes.example/what-quillon-networks-announced-networks-reports-5-security-findings-i</guid>
+      <description>Quillon Networks's Tuesday report on Kelvin 2 describes 5 findings, of which 3 were already patched. A maintainer said the remaining findings require configuration changes rather than code fixes.</description>
+      <pubDate>Sun, 23 Aug 2026 18:45:02 +0000</pubDate>
+    </item>
+    <item>
+      <title>Verity Compute reports 7 security findings in Prism 3 evaluation</title>
+      <link>https://marketfloor.example/verity-compute-reports-7-security-findings-in-prism-3-evaluation</link>
+      <guid isPermaLink="true">https://marketfloor.example/verity-compute-reports-7-security-findings-in-prism-3-evaluation</guid>
+      <description>Verity Compute's Monday report on Prism 3 describes 7 findings, of which 2 were already patched. A maintainer said the remaining findings require configuration changes rather than code fixes.</description>
+      <pubDate>Mon, 24 Aug 2026 06:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Compute reports 7 security findings in prism 3 evaluation, Verity Compute says</title>
+      <link>https://policybench.example/compute-reports-7-security-findings-in-prism-3-evaluation-verity-compu</link>
+      <guid isPermaLink="true">https://policybench.example/compute-reports-7-security-findings-in-prism-3-evaluation-verity-compu</guid>
+      <description>Security researchers at Verity Compute said Prism 3 had 7 findings in their review published Monday. 2 were fixed ahead of disclosure. The severity ratings were assigned by Verity Compute itself.</description>
+      <pubDate>Mon, 24 Aug 2026 09:21:56 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,71 @@
+# Live topic configuration: GDELT queries plus public, publisher-operated
+# RSS/Atom feeds.
+#
+# Every feed below is a public feed offered by its publisher for syndication.
+# No private, credentialed or paywalled feed URL belongs in this file.
+# Fetching honours the project's rate limiter, timeout and retry policy.
+#
+# This list is a convenience sample, not a representative one: vendor blogs
+# (OpenAI, DeepMind, Hugging Face, NVIDIA) contribute a large share of the
+# volume and corroborate nothing, and English-language technology outlets are
+# heavily over-represented. See docs/limitations.md.
+#
+# Use with:
+#   NEWSTRACE_TOPICS_FILE=configs/topics.live.yaml newstrace ingest --source rss
+topics:
+  ai_models:
+    display_name: AI models and agents
+    gdelt_query: '("artificial intelligence" OR OpenAI OR Anthropic OR DeepMind OR "large language model")'
+    languages: [english]
+    feeds:
+      - https://techcrunch.com/category/artificial-intelligence/feed/
+      - https://venturebeat.com/category/ai/feed/
+      - https://arstechnica.com/ai/feed/
+      - https://www.theverge.com/rss/index.xml
+      - https://www.technologyreview.com/topic/artificial-intelligence/feed
+      - https://www.wired.com/feed/tag/ai/latest/rss
+      - https://www.zdnet.com/topic/artificial-intelligence/rss.xml
+      - https://www.theguardian.com/technology/rss
+      - https://feeds.bbci.co.uk/news/technology/rss.xml
+      - https://www.engadget.com/rss.xml
+      - https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml
+      - https://spectrum.ieee.org/feeds/topic/artificial-intelligence.rss
+      - https://www.cnet.com/rss/news/
+      - https://gizmodo.com/feed
+      - https://mashable.com/feeds/rss/tech
+      - https://www.businessinsider.com/rss
+      - https://www.computerworld.com/index.rss
+      - https://openai.com/news/rss.xml
+      - https://deepmind.google/blog/rss.xml
+      - https://huggingface.co/blog/feed.xml
+      - https://news.ycombinator.com/rss
+      - https://hnrss.org/newest?q=AI
+      - https://hnrss.org/newest?q=OpenAI
+      - https://hnrss.org/newest?q=LLM
+  ai_safety:
+    display_name: AI safety and security
+    gdelt_query: '("AI safety" OR "AI security" OR "prompt injection" OR "model evaluation")'
+    languages: [english]
+    feeds:
+      - https://feeds.feedburner.com/TheHackersNews
+      - https://www.bleepingcomputer.com/feed/
+      - https://www.theregister.com/headlines.atom
+  chips_and_compute:
+    display_name: Chips and compute
+    gdelt_query: '(Nvidia OR semiconductor OR GPU OR "AI chip")'
+    languages: [english]
+    feeds:
+      - https://www.tomshardware.com/feeds/all
+      - https://blogs.nvidia.com/feed/
+      - https://www.semianalysis.com/feed
+      - https://hnrss.org/newest?q=Nvidia
+      - https://hnrss.org/newest?q=chip
+  markets_and_tech:
+    display_name: Market-moving technology news
+    gdelt_query: '(Nvidia OR OpenAI OR Anthropic OR "AI chip" OR "data center") AND (earnings OR revenue OR IPO OR valuation OR guidance)'
+    languages: [english]
+    feeds:
+      - https://finance.yahoo.com/news/rssindex
+      - https://feeds.a.dj.com/rss/RSSWSJD.xml
+      - https://www.cnbc.com/id/19854910/device/rss/rss.html
+      - https://www.ft.com/technology?format=rss

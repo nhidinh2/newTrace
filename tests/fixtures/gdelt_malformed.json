@@ -1,0 +1,11 @@
+{
+  "articles": [
+    {
+      "title": "no url here"
+    },
+    "not-an-object",
+    {
+      "url": ""
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "articles": [
+    {
+      "url": "https://techledger.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window",
+      "url_mobile": "",
+      "title": "Northwind Labs releases Atlas 3 agent model with 128k context window",
+      "seendate": "20260818T060000Z",
+      "socialimage": "",
+      "domain": "techledger.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://wirefront.example/atlas-3-launch-northwind-claims-71-4-percent-on-agent-benchmark",
+      "url_mobile": "",
+      "title": "Atlas 3 launch: Northwind claims 71.4 percent on agent benchmark",
+      "seendate": "20260818T073000Z",
+      "socialimage": "",
+      "domain": "wirefront.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://circuitdesk.example/developers-get-access-to-northwind-s-atlas-3-agent-model",
+      "url_mobile": "",
+      "title": "Developers get access to Northwind's Atlas 3 agent model",
+      "seendate": "20260818T090000Z",
+      "socialimage": "",
+      "domain": "circuitdesk.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://syndicatewire.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window",
+      "url_mobile": "",
+      "title": "Northwind Labs releases Atlas 3 agent model with 128k context window",
+      "seendate": "20260818T100000Z",
+      "socialimage": "",
+      "domain": "syndicatewire.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    }
+  ]
+}

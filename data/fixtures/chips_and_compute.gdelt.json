@@ -1,0 +1,504 @@
+{
+  "articles": [
+    {
+      "url": "https://chipwatch.example/meridian-semiconductor-to-build-4-2-billion-packaging-plant-in-arizona",
+      "url_mobile": "",
+      "title": "Meridian Semiconductor to build $4.2 billion packaging plant in Arizona",
+      "seendate": "20260818T110000Z",
+      "socialimage": "",
+      "domain": "chipwatch.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://circuitdesk.example/meridian-confirms-arizona-advanced-packaging-site-1-800-jobs-promised",
+      "url_mobile": "",
+      "title": "Meridian confirms Arizona advanced packaging site, 1,800 jobs promised",
+      "seendate": "20260818T123000Z",
+      "socialimage": "",
+      "domain": "circuitdesk.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://marketfloor.example/meridian-s-arizona-packaging-plant-listed-at-3-8-billion-in-state-fili",
+      "url_mobile": "",
+      "title": "Meridian's Arizona packaging plant listed at $3.8 billion in state filing",
+      "seendate": "20260819T020000Z",
+      "socialimage": "",
+      "domain": "marketfloor.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://syndicatewire.example/meridian-semiconductor-to-build-4-2-billion-packaging-plant-in-arizona",
+      "url_mobile": "",
+      "title": "Meridian Semiconductor to build $4.2 billion packaging plant in Arizona",
+      "seendate": "20260818T130000Z",
+      "socialimage": "",
+      "domain": "syndicatewire.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://marketfloor.example/grid-operator-warns-data-centre-demand-could-add-6-gigawatts-by-2030",
+      "url_mobile": "",
+      "title": "Grid operator warns data-centre demand could add 6 gigawatts by 2030",
+      "seendate": "20260818T190000Z",
+      "socialimage": "",
+      "domain": "marketfloor.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://chipwatch.example/data-centre-growth-pushes-regional-grid-planners-toward-transmission-u",
+      "url_mobile": "",
+      "title": "Data-centre growth pushes regional grid planners toward transmission upgrades",
+      "seendate": "20260818T210000Z",
+      "socialimage": "",
+      "domain": "chipwatch.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://civicsignal.example/corvid-compute-commits-3-9-billion-to-northgate-fabrication-plant-expa",
+      "url_mobile": "",
+      "title": "Corvid Compute commits $3.9 billion to Northgate fabrication plant expansion",
+      "seendate": "20260820T010000Z",
+      "socialimage": "",
+      "domain": "civicsignal.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://gridnotes.example/compute-commits-3-9-billion-to-northgate-fabrication-plant-expansion-c",
+      "url_mobile": "",
+      "title": "Compute commits $3.9 billion to northgate fabrication plant expansion, Corvid Compute says",
+      "seendate": "20260820T020633Z",
+      "socialimage": "",
+      "domain": "gridnotes.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://wirefront.example/what-corvid-compute-announced-compute-commits-3-9-billion-to-northgate",
+      "url_mobile": "",
+      "title": "What Corvid Compute announced: Compute commits $3.9 billion to Northgate fabrication plant expansion",
+      "seendate": "20260820T083657Z",
+      "socialimage": "",
+      "domain": "wirefront.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://openweights.example/corvid-compute-compute-commits-3-9-billion-to-northgate-fabrication-pl",
+      "url_mobile": "",
+      "title": "Corvid Compute: Compute commits $3.9 billion to Northgate fabrication plant expansion",
+      "seendate": "20260820T105751Z",
+      "socialimage": "",
+      "domain": "openweights.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://secureloop.example/regulators-review-larkspur-robotics-s-1-7-billion-northgate-fabricatio",
+      "url_mobile": "",
+      "title": "Regulators review Larkspur Robotics's 1.7 billion Northgate fabrication plant agreement",
+      "seendate": "20260820T043000Z",
+      "socialimage": "",
+      "domain": "secureloop.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://policybench.example/review-larkspur-robotics-s-1-7-billion-northgate-fabrication-plant-agr",
+      "url_mobile": "",
+      "title": "Review larkspur robotics's 1.7 billion northgate fabrication plant agreement, Larkspur Robotics says",
+      "seendate": "20260820T064426Z",
+      "socialimage": "",
+      "domain": "policybench.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://silicondaily.example/what-larkspur-robotics-announced-review-larkspur-robotics-s-1-7-billio",
+      "url_mobile": "",
+      "title": "What Larkspur Robotics announced: review Larkspur Robotics's 1.7 billion Northgate fabrication plant agreement",
+      "seendate": "20260820T101403Z",
+      "socialimage": "",
+      "domain": "silicondaily.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://techledger.example/larkspur-robotics-review-larkspur-robotics-s-1-7-billion-northgate-fab",
+      "url_mobile": "",
+      "title": "Larkspur Robotics: review Larkspur Robotics's 1.7 billion Northgate fabrication plant agreement",
+      "seendate": "20260820T192912Z",
+      "socialimage": "",
+      "domain": "techledger.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://techledger.example/redshift-foundry-commits-6-2-billion-to-fairhaven-packaging-site-expan",
+      "url_mobile": "",
+      "title": "Redshift Foundry commits $6.2 billion to Fairhaven packaging site expansion",
+      "seendate": "20260820T183000Z",
+      "socialimage": "",
+      "domain": "techledger.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://modelbeat.example/foundry-commits-6-2-billion-to-fairhaven-packaging-site-expansion-reds",
+      "url_mobile": "",
+      "title": "Foundry commits $6.2 billion to fairhaven packaging site expansion, Redshift Foundry says",
+      "seendate": "20260820T215732Z",
+      "socialimage": "",
+      "domain": "modelbeat.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://civicsignal.example/what-redshift-foundry-announced-foundry-commits-6-2-billion-to-fairhav",
+      "url_mobile": "",
+      "title": "What Redshift Foundry announced: Foundry commits $6.2 billion to Fairhaven packaging site expansion",
+      "seendate": "20260820T214300Z",
+      "socialimage": "",
+      "domain": "civicsignal.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://circuitdesk.example/redshift-foundry-foundry-commits-6-2-billion-to-fairhaven-packaging-si",
+      "url_mobile": "",
+      "title": "Redshift Foundry: Foundry commits $6.2 billion to Fairhaven packaging site expansion",
+      "seendate": "20260820T224612Z",
+      "socialimage": "",
+      "domain": "circuitdesk.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://silicondaily.example/regulators-review-sableport-semiconductors-s-2-7-billion-riverbend-sub",
+      "url_mobile": "",
+      "title": "Regulators review Sableport Semiconductors's 2.7 billion Riverbend substrate works agreement",
+      "seendate": "20260820T220000Z",
+      "socialimage": "",
+      "domain": "silicondaily.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://gridnotes.example/review-sableport-semiconductors-s-2-7-billion-riverbend-substrate-work",
+      "url_mobile": "",
+      "title": "Review sableport semiconductors's 2.7 billion riverbend substrate works agreement, Sableport Semiconductors says",
+      "seendate": "20260820T230150Z",
+      "socialimage": "",
+      "domain": "gridnotes.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://policybench.example/what-sableport-semiconductors-announced-review-sableport-semiconductor",
+      "url_mobile": "",
+      "title": "What Sableport Semiconductors announced: review Sableport Semiconductors's 2.7 billion Riverbend substrate works agreement",
+      "seendate": "20260821T035347Z",
+      "socialimage": "",
+      "domain": "policybench.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://modelbeat.example/sableport-semiconductors-review-sableport-semiconductors-s-2-7-billion",
+      "url_mobile": "",
+      "title": "Sableport Semiconductors: review Sableport Semiconductors's 2.7 billion Riverbend substrate works agreement",
+      "seendate": "20260821T110709Z",
+      "socialimage": "",
+      "domain": "modelbeat.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://wirefront.example/windrow-institute-commits-5-1-billion-to-sandhill-test-facility-expans",
+      "url_mobile": "",
+      "title": "Windrow Institute commits $5.1 billion to Sandhill test facility expansion",
+      "seendate": "20260821T120000Z",
+      "socialimage": "",
+      "domain": "wirefront.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://policybench.example/institute-commits-5-1-billion-to-sandhill-test-facility-expansion-wind",
+      "url_mobile": "",
+      "title": "Institute commits $5.1 billion to sandhill test facility expansion, Windrow Institute says",
+      "seendate": "20260821T135300Z",
+      "socialimage": "",
+      "domain": "policybench.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://secureloop.example/what-windrow-institute-announced-institute-commits-5-1-billion-to-sand",
+      "url_mobile": "",
+      "title": "What Windrow Institute announced: Institute commits $5.1 billion to Sandhill test facility expansion",
+      "seendate": "20260821T185225Z",
+      "socialimage": "",
+      "domain": "secureloop.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://chipwatch.example/windrow-institute-institute-commits-5-1-billion-to-sandhill-test-facil",
+      "url_mobile": "",
+      "title": "Windrow Institute: Institute commits $5.1 billion to Sandhill test facility expansion",
+      "seendate": "20260821T144006Z",
+      "socialimage": "",
+      "domain": "chipwatch.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://modelbeat.example/regulators-review-yarrow-dynamics-s-7-1-billion-fairhaven-packaging-si",
+      "url_mobile": "",
+      "title": "Regulators review Yarrow Dynamics's 7.1 billion Fairhaven packaging site agreement",
+      "seendate": "20260821T153000Z",
+      "socialimage": "",
+      "domain": "modelbeat.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://openweights.example/review-yarrow-dynamics-s-7-1-billion-fairhaven-packaging-site-agreemen",
+      "url_mobile": "",
+      "title": "Review yarrow dynamics's 7.1 billion fairhaven packaging site agreement, Yarrow Dynamics says",
+      "seendate": "20260821T185623Z",
+      "socialimage": "",
+      "domain": "openweights.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://chipwatch.example/what-yarrow-dynamics-announced-review-yarrow-dynamics-s-7-1-billion-fa",
+      "url_mobile": "",
+      "title": "What Yarrow Dynamics announced: review Yarrow Dynamics's 7.1 billion Fairhaven packaging site agreement",
+      "seendate": "20260821T204331Z",
+      "socialimage": "",
+      "domain": "chipwatch.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://civicsignal.example/cinderpeak-cloud-commits-2-8-billion-to-fairhaven-packaging-site-expan",
+      "url_mobile": "",
+      "title": "Cinderpeak Cloud commits $2.8 billion to Fairhaven packaging site expansion",
+      "seendate": "20260822T053000Z",
+      "socialimage": "",
+      "domain": "civicsignal.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://gridnotes.example/cloud-commits-2-8-billion-to-fairhaven-packaging-site-expansion-cinder",
+      "url_mobile": "",
+      "title": "Cloud commits $2.8 billion to fairhaven packaging site expansion, Cinderpeak Cloud says",
+      "seendate": "20260822T073101Z",
+      "socialimage": "",
+      "domain": "gridnotes.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://civicsignal.example/regulators-review-dunmore-chips-s-2-9-billion-sandhill-test-facility-a",
+      "url_mobile": "",
+      "title": "Regulators review Dunmore Chips's 2.9 billion Sandhill test facility agreement",
+      "seendate": "20260822T090000Z",
+      "socialimage": "",
+      "domain": "civicsignal.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://marketfloor.example/review-dunmore-chips-s-2-9-billion-sandhill-test-facility-agreement-du",
+      "url_mobile": "",
+      "title": "Review dunmore chips's 2.9 billion sandhill test facility agreement, Dunmore Chips says",
+      "seendate": "20260822T103623Z",
+      "socialimage": "",
+      "domain": "marketfloor.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://openweights.example/what-dunmore-chips-announced-review-dunmore-chips-s-2-9-billion-sandhi",
+      "url_mobile": "",
+      "title": "What Dunmore Chips announced: review Dunmore Chips's 2.9 billion Sandhill test facility agreement",
+      "seendate": "20260822T144022Z",
+      "socialimage": "",
+      "domain": "openweights.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://wirefront.example/corvid-compute-commits-4-4-billion-to-fairhaven-packaging-site-expansi",
+      "url_mobile": "",
+      "title": "Corvid Compute commits $4.4 billion to Fairhaven packaging site expansion",
+      "seendate": "20260822T230000Z",
+      "socialimage": "",
+      "domain": "wirefront.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://silicondaily.example/compute-commits-4-4-billion-to-fairhaven-packaging-site-expansion-corv",
+      "url_mobile": "",
+      "title": "Compute commits $4.4 billion to fairhaven packaging site expansion, Corvid Compute says",
+      "seendate": "20260823T021632Z",
+      "socialimage": "",
+      "domain": "silicondaily.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://techledger.example/what-corvid-compute-announced-compute-commits-4-4-billion-to-fairhaven",
+      "url_mobile": "",
+      "title": "What Corvid Compute announced: Compute commits $4.4 billion to Fairhaven packaging site expansion",
+      "seendate": "20260823T062154Z",
+      "socialimage": "",
+      "domain": "techledger.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://modelbeat.example/corvid-compute-compute-commits-4-4-billion-to-fairhaven-packaging-site",
+      "url_mobile": "",
+      "title": "Corvid Compute: Compute commits $4.4 billion to Fairhaven packaging site expansion",
+      "seendate": "20260823T111419Z",
+      "socialimage": "",
+      "domain": "modelbeat.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://openweights.example/regulators-review-larkspur-robotics-s-5-9-billion-sandhill-test-facili",
+      "url_mobile": "",
+      "title": "Regulators review Larkspur Robotics's 5.9 billion Sandhill test facility agreement",
+      "seendate": "20260823T023000Z",
+      "socialimage": "",
+      "domain": "openweights.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://circuitdesk.example/review-larkspur-robotics-s-5-9-billion-sandhill-test-facility-agreemen",
+      "url_mobile": "",
+      "title": "Review larkspur robotics's 5.9 billion sandhill test facility agreement, Larkspur Robotics says",
+      "seendate": "20260823T041440Z",
+      "socialimage": "",
+      "domain": "circuitdesk.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://techledger.example/what-larkspur-robotics-announced-review-larkspur-robotics-s-5-9-billio",
+      "url_mobile": "",
+      "title": "What Larkspur Robotics announced: review Larkspur Robotics's 5.9 billion Sandhill test facility agreement",
+      "seendate": "20260823T045031Z",
+      "socialimage": "",
+      "domain": "techledger.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://silicondaily.example/larkspur-robotics-review-larkspur-robotics-s-5-9-billion-sandhill-test",
+      "url_mobile": "",
+      "title": "Larkspur Robotics: review Larkspur Robotics's 5.9 billion Sandhill test facility agreement",
+      "seendate": "20260823T093805Z",
+      "socialimage": "",
+      "domain": "silicondaily.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://marketfloor.example/redshift-foundry-commits-0-8-billion-to-sandhill-test-facility-expansi",
+      "url_mobile": "",
+      "title": "Redshift Foundry commits $0.8 billion to Sandhill test facility expansion",
+      "seendate": "20260823T163000Z",
+      "socialimage": "",
+      "domain": "marketfloor.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://silicondaily.example/foundry-commits-0-8-billion-to-sandhill-test-facility-expansion-redshi",
+      "url_mobile": "",
+      "title": "Foundry commits $0.8 billion to sandhill test facility expansion, Redshift Foundry says",
+      "seendate": "20260823T185225Z",
+      "socialimage": "",
+      "domain": "silicondaily.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://policybench.example/regulators-review-sableport-semiconductors-s-3-3-billion-riverbend-sub",
+      "url_mobile": "",
+      "title": "Regulators review Sableport Semiconductors's 3.3 billion Riverbend substrate works agreement",
+      "seendate": "20260823T200000Z",
+      "socialimage": "",
+      "domain": "policybench.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://chipwatch.example/review-sableport-semiconductors-s-3-3-billion-riverbend-substrate-work",
+      "url_mobile": "",
+      "title": "Review sableport semiconductors's 3.3 billion riverbend substrate works agreement, Sableport Semiconductors says",
+      "seendate": "20260823T221113Z",
+      "socialimage": "",
+      "domain": "chipwatch.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://secureloop.example/windrow-institute-commits-3-4-billion-to-fairhaven-packaging-site-expa",
+      "url_mobile": "",
+      "title": "Windrow Institute commits $3.4 billion to Fairhaven packaging site expansion",
+      "seendate": "20260824T100000Z",
+      "socialimage": "",
+      "domain": "secureloop.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://wirefront.example/institute-commits-3-4-billion-to-fairhaven-packaging-site-expansion-wi",
+      "url_mobile": "",
+      "title": "Institute commits $3.4 billion to fairhaven packaging site expansion, Windrow Institute says",
+      "seendate": "20260824T114502Z",
+      "socialimage": "",
+      "domain": "wirefront.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://chipwatch.example/regulators-review-yarrow-dynamics-s-7-1-billion-northgate-fabrication-",
+      "url_mobile": "",
+      "title": "Regulators review Yarrow Dynamics's 7.1 billion Northgate fabrication plant agreement",
+      "seendate": "20260824T133000Z",
+      "socialimage": "",
+      "domain": "chipwatch.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://secureloop.example/review-yarrow-dynamics-s-7-1-billion-northgate-fabrication-plant-agree",
+      "url_mobile": "",
+      "title": "Review yarrow dynamics's 7.1 billion northgate fabrication plant agreement, Yarrow Dynamics says",
+      "seendate": "20260824T160023Z",
+      "socialimage": "",
+      "domain": "secureloop.example",
+      "language": "English",
+      "sourcecountry": "United States"
+    }
+  ]
+}
