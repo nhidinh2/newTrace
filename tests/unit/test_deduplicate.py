@@ -1,0 +1,131 @@
+"""Exact and near-duplicate detection."""
+
+from __future__ import annotations
+
+from datetime import timedelta
+
+from sqlalchemy.orm import Session
+
+from newstrace.ingestion.base import RawArticle
+from newstrace.ingestion.deduplicate import (
+    DuplicateDetector,
+    hamming_distance,
+    simhash,
+    simhash_similarity,
+    title_similarity,
+)
+from newstrace.ingestion.normalize import normalize_article
+from newstrace.ingestion.pipeline import persist_articles
+from newstrace.models import Article
+from tests.conftest import BASE_TIME
+
+
+def test_simhash_is_deterministic_and_similarity_bounded() -> None:
+    text = "Northwind Labs releases Atlas 3 agent model"
+    assert simhash(text) == simhash(text)
+    assert hamming_distance(simhash(text), simhash(text)) == 0
+    assert simhash_similarity(text, text) == 1.0
+    assert 0.0 <= simhash_similarity(text, "completely unrelated words here") <= 1.0
+
+
+def test_simhash_of_empty_text() -> None:
+    assert simhash("") == 0
+
+
+def test_title_similarity_ranks_paraphrases_above_unrelated() -> None:
+    a = "Northwind Labs releases Atlas 3 agent model"
+    near = "Northwind Labs releases the Atlas 3 agent model"
+    far = "Grid operator warns of data centre demand"
+    assert title_similarity(a, a) == 1.0
+    assert title_similarity(a, near) > title_similarity(a, far)
+
+
+def test_exact_canonical_url_duplicate(session: Session) -> None:
+    raw = RawArticle(url="https://alpha.example/a", title="Title one", published_at=BASE_TIME)
+    persist_articles(session, [raw])
+    session.commit()
+    detector = DuplicateDetector(session)
+    verdict = detector.check(normalize_article(RawArticle(url="https://www.alpha.example/a/")))
+    assert verdict.is_duplicate
+    assert verdict.reason == "canonical_url"
+
+
+def test_identical_title_from_another_domain_is_a_duplicate(session: Session) -> None:
+    persist_articles(
+        session,
+        [
+            RawArticle(
+                url="https://alpha.example/a", title="Same headline here", published_at=BASE_TIME
+            )
+        ],
+    )
+    session.commit()
+    verdict = DuplicateDetector(session).check(
+        normalize_article(
+            RawArticle(
+                url="https://wire.example/b", title="Same headline here", published_at=BASE_TIME
+            )
+        )
+    )
+    assert verdict.is_duplicate
+    assert verdict.reason in {"title_hash", "normalized_text_hash"}
+
+
+def test_unrelated_article_is_not_a_duplicate(session: Session) -> None:
+    persist_articles(
+        session,
+        [
+            RawArticle(
+                url="https://alpha.example/a", title="Atlas 3 model release", published_at=BASE_TIME
+            )
+        ],
+    )
+    session.commit()
+    verdict = DuplicateDetector(session).check(
+        normalize_article(
+            RawArticle(
+                url="https://gamma.example/x",
+                title="Grid operator warns of transmission upgrades",
+                published_at=BASE_TIME,
+            )
+        )
+    )
+    assert not verdict.is_duplicate
+    assert verdict.duplicate_of_id is None
+
+
+def test_duplicates_are_preserved_and_linked(session: Session, raw_articles: list) -> None:
+    result = persist_articles(session, raw_articles)
+    session.commit()
+    assert result.duplicates == 1
+    duplicate = session.query(Article).filter(Article.is_near_duplicate.is_(True)).one()
+    original = session.get(Article, duplicate.duplicate_of_article_id)
+    assert original is not None
+    assert original.source_domain != duplicate.source_domain
+    # Preserved, not deleted.
+    assert session.query(Article).count() == len(raw_articles)
+
+
+def test_publication_time_window_limits_candidates(session: Session) -> None:
+    persist_articles(
+        session,
+        [
+            RawArticle(
+                url="https://alpha.example/a",
+                title="A distinctive rare headline about widgets",
+                description="Body text about widgets and the widget market.",
+                published_at=BASE_TIME,
+            )
+        ],
+    )
+    session.commit()
+    detector = DuplicateDetector(session, window_hours=1)
+    far_away = normalize_article(
+        RawArticle(
+            url="https://beta.example/b",
+            title="A distinctive rare headline about widgets today",
+            description="Body text about widgets and the widget market.",
+            published_at=BASE_TIME + timedelta(days=30),
+        )
+    )
+    assert not detector.check(far_away).is_duplicate

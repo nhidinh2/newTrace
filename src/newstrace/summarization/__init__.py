@@ -1,0 +1,1 @@
+"""NewsTrace summarization package."""

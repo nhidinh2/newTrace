@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>NewsTrace fixture: ai_models</title>
+    <link>https://fixtures.example/NewsTrace fixture: ai_models</link>
+    <description>Synthetic NewsTrace fixture feed. All content is invented.</description>
+    <language>en-us</language>
+    <item>
+      <title>Northwind Labs releases Atlas 3 agent model with 128k context window</title>
+      <link>https://techledger.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window</link>
+      <guid isPermaLink="true">https://techledger.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window</guid>
+      <description>Northwind Labs said Atlas 3 scores 71.4 percent on the public agent benchmark and runs with a 128,000 token context window. The company said the model is available to developers on Tuesday. Pricing was not announced.</description>
+      <pubDate>Tue, 18 Aug 2026 06:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Atlas 3 launch: Northwind claims 71.4 percent on agent benchmark</title>
+      <link>https://wirefront.example/atlas-3-launch-northwind-claims-71-4-percent-on-agent-benchmark</link>
+      <guid isPermaLink="true">https://wirefront.example/atlas-3-launch-northwind-claims-71-4-percent-on-agent-benchmark</guid>
+      <description>Northwind Labs announced Atlas 3 on Tuesday. The company said the model reached 71.4 percent on the public agent benchmark. Independent evaluations of the model have not yet been published.</description>
+      <pubDate>Tue, 18 Aug 2026 07:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Developers get access to Northwind's Atlas 3 agent model</title>
+      <link>https://circuitdesk.example/developers-get-access-to-northwind-s-atlas-3-agent-model</link>
+      <guid isPermaLink="true">https://circuitdesk.example/developers-get-access-to-northwind-s-atlas-3-agent-model</guid>
+      <description>Atlas 3 became available to developers on Tuesday, Northwind Labs said. Two researchers who tested an early build said latency improved noticeably over the previous release. Northwind declined to share training data details.</description>
+      <pubDate>Tue, 18 Aug 2026 09:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Northwind Labs releases Atlas 3 agent model with 128k context window</title>
+      <link>https://syndicatewire.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window</link>
+      <guid isPermaLink="true">https://syndicatewire.example/northwind-labs-releases-atlas-3-agent-model-with-128k-context-window</guid>
+      <description>Northwind Labs said Atlas 3 scores 71.4 percent on the public agent benchmark and runs with a 128,000 token context window. The company said the model is available to developers on Tuesday. Pricing was not announced.</description>
+      <pubDate>Tue, 18 Aug 2026 10:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Northwind's Atlas 3 agent benchmark score disputed by analysts</title>
+      <link>https://modelbeat.example/northwind-s-atlas-3-agent-benchmark-score-disputed-by-analysts</link>
+      <guid isPermaLink="true">https://modelbeat.example/northwind-s-atlas-3-agent-benchmark-score-disputed-by-analysts</guid>
+      <description>Two analysts said Atlas 3 does not score 71.4 percent on the public agent benchmark, putting the comparable figure closer to 64 percent. Northwind Labs said its methodology is documented in the Atlas 3 model card.</description>
+      <pubDate>Tue, 18 Aug 2026 15:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Kestrel Institute publishes open-weight 12B model under a research licence</title>
+      <link>https://modelbeat.example/kestrel-institute-publishes-open-weight-12b-model-under-a-research-lic</link>
+      <guid isPermaLink="true">https://modelbeat.example/kestrel-institute-publishes-open-weight-12b-model-under-a-research-lic</guid>
+      <description>The Kestrel Institute released a 12-billion-parameter model with open weights under a research-only licence. The institute said commercial use requires a separate agreement. Evaluation results were published alongside the release.</description>
+      <pubDate>Tue, 18 Aug 2026 23:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Kestrel's 12B open-weight release comes with research-only terms</title>
+      <link>https://techledger.example/kestrel-s-12b-open-weight-release-comes-with-research-only-terms</link>
+      <guid isPermaLink="true">https://techledger.example/kestrel-s-12b-open-weight-release-comes-with-research-only-terms</guid>
+      <description>Kestrel's release includes weights and evaluation results but restricts commercial use. Two developers said the licence would keep them from deploying the model in products.</description>
+      <pubDate>Wed, 19 Aug 2026 01:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Open-weight model releases accelerate as Kestrel joins with 12B system</title>
+      <link>https://wirefront.example/open-weight-model-releases-accelerate-as-kestrel-joins-with-12b-system</link>
+      <guid isPermaLink="true">https://wirefront.example/open-weight-model-releases-accelerate-as-kestrel-joins-with-12b-system</guid>
+      <description>Kestrel Institute's release is the fourth open-weight model published this month. The institute said it trained the system on 1.4 trillion tokens.</description>
+      <pubDate>Wed, 19 Aug 2026 04:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Labour board opens inquiry into automated screening at three employers</title>
+      <link>https://civicsignal.example/labour-board-opens-inquiry-into-automated-screening-at-three-employers</link>
+      <guid isPermaLink="true">https://civicsignal.example/labour-board-opens-inquiry-into-automated-screening-at-three-employers</guid>
+      <description>The labour board said it opened an inquiry into automated candidate screening at three employers after complaints were filed in June. The employers said their systems are reviewed by human recruiters.</description>
+      <pubDate>Wed, 19 Aug 2026 12:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Employers defend automated screening as labour board inquiry begins</title>
+      <link>https://policybench.example/employers-defend-automated-screening-as-labour-board-inquiry-begins</link>
+      <guid isPermaLink="true">https://policybench.example/employers-defend-automated-screening-as-labour-board-inquiry-begins</guid>
+      <description>Two of the three employers named in the inquiry said human recruiters review every rejection. The labour board declined to say when it expects to conclude.</description>
+      <pubDate>Wed, 19 Aug 2026 15:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Vantara Systems releases Aster 2, a 27B-parameter model for document analysis</title>
+      <link>https://civicsignal.example/vantara-systems-releases-aster-2-a-27b-parameter-model-for-document-an</link>
+      <guid isPermaLink="true">https://civicsignal.example/vantara-systems-releases-aster-2-a-27b-parameter-model-for-document-an</guid>
+      <description>Aster 2, announced by Vantara Systems on Monday, is aimed at document analysis. Vantara Systems reported a 86.0 percent internal evaluation score for the 27 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Wed, 19 Aug 2026 18:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Systems releases aster 2, a 27b-parameter model for document analysis, Vantara Systems says</title>
+      <link>https://silicondaily.example/systems-releases-aster-2-a-27b-parameter-model-for-document-analysis-v</link>
+      <guid isPermaLink="true">https://silicondaily.example/systems-releases-aster-2-a-27b-parameter-model-for-document-analysis-v</guid>
+      <description>Developers can request access to Aster 2, Vantara Systems said on Monday. The company put the model at 27 billion parameters and cited a 86.0 percent score on its own evaluation suite. Two testers said throughput was the notable change.</description>
+      <pubDate>Wed, 19 Aug 2026 21:51:38 +0000</pubDate>
+    </item>
+    <item>
+      <title>Vantara Systems releases Aster 2, a 27B-parameter model for document analysis</title>
+      <link>https://syndicatewire.example/vantara-systems-releases-aster-2-a-27b-parameter-model-for-document-an</link>
+      <guid isPermaLink="true">https://syndicatewire.example/vantara-systems-releases-aster-2-a-27b-parameter-model-for-document-an</guid>
+      <description>Aster 2, announced by Vantara Systems on Monday, is aimed at document analysis. Vantara Systems reported a 86.0 percent internal evaluation score for the 27 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Thu, 20 Aug 2026 00:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ostrom Analytics opens Ember 1 weights to researchers under research-only terms</title>
+      <link>https://chipwatch.example/ostrom-analytics-opens-ember-1-weights-to-researchers-under-research-o</link>
+      <guid isPermaLink="true">https://chipwatch.example/ostrom-analytics-opens-ember-1-weights-to-researchers-under-research-o</guid>
+      <description>Ostrom Analytics's Friday release puts Ember 1 weights under research-only terms. Two developers said the licence conditions rule out production use.</description>
+      <pubDate>Thu, 20 Aug 2026 08:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Analytics opens ember 1 weights to researchers under research-only terms, Ostrom Analytics says</title>
+      <link>https://openweights.example/analytics-opens-ember-1-weights-to-researchers-under-research-only-ter</link>
+      <guid isPermaLink="true">https://openweights.example/analytics-opens-ember-1-weights-to-researchers-under-research-only-ter</guid>
+      <description>Ostrom Analytics published the weights of Ember 1 on Friday under a research-only licence. The institute said it trained the model on 6.9 trillion tokens.</description>
+      <pubDate>Thu, 20 Aug 2026 11:15:37 +0000</pubDate>
+    </item>
+    <item>
+      <title>Pellucid Labs releases Fathom 1, a 27B-parameter model for agent orchestration</title>
+      <link>https://chipwatch.example/pellucid-labs-releases-fathom-1-a-27b-parameter-model-for-agent-orches</link>
+      <guid isPermaLink="true">https://chipwatch.example/pellucid-labs-releases-fathom-1-a-27b-parameter-model-for-agent-orches</guid>
+      <description>Pellucid Labs released Fathom 1 on Wednesday. The company said the 27 billion parameter model targets agent orchestration and reached 55.4 percent on its internal evaluation suite. Availability outside the developer preview was not announced.</description>
+      <pubDate>Thu, 20 Aug 2026 11:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Labs releases fathom 1, a 27b-parameter model for agent orchestration, Pellucid Labs says</title>
+      <link>https://openweights.example/labs-releases-fathom-1-a-27b-parameter-model-for-agent-orchestration-p</link>
+      <guid isPermaLink="true">https://openweights.example/labs-releases-fathom-1-a-27b-parameter-model-for-agent-orchestration-p</guid>
+      <description>Pellucid Labs said Fathom 1 will serve agent orchestration workloads. The 27 billion parameter model posted 55.4 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Thu, 20 Aug 2026 12:29:14 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Pellucid Labs announced: Labs releases Fathom 1, a 27B-parameter model for agent orchestration</title>
+      <link>https://wirefront.example/what-pellucid-labs-announced-labs-releases-fathom-1-a-27b-parameter-mo</link>
+      <guid isPermaLink="true">https://wirefront.example/what-pellucid-labs-announced-labs-releases-fathom-1-a-27b-parameter-mo</guid>
+      <description>Developers can request access to Fathom 1, Pellucid Labs said on Wednesday. The company put the model at 27 billion parameters and cited a 55.4 percent score on its own evaluation suite. Two testers said throughput was the notable change.</description>
+      <pubDate>Thu, 20 Aug 2026 18:58:52 +0000</pubDate>
+    </item>
+    <item>
+      <title>Pellucid Labs releases Fathom 1, a 27B-parameter model for agent orchestration</title>
+      <link>https://syndicatewire.example/pellucid-labs-releases-fathom-1-a-27b-parameter-model-for-agent-orches</link>
+      <guid isPermaLink="true">https://syndicatewire.example/pellucid-labs-releases-fathom-1-a-27b-parameter-model-for-agent-orches</guid>
+      <description>Pellucid Labs released Fathom 1 on Wednesday. The company said the 27 billion parameter model targets agent orchestration and reached 55.4 percent on its internal evaluation suite. Availability outside the developer preview was not announced.</description>
+      <pubDate>Thu, 20 Aug 2026 17:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Tessellate AI opens Juniper 2 weights to researchers under non-commercial terms</title>
+      <link>https://silicondaily.example/tessellate-ai-opens-juniper-2-weights-to-researchers-under-non-commerc</link>
+      <guid isPermaLink="true">https://silicondaily.example/tessellate-ai-opens-juniper-2-weights-to-researchers-under-non-commerc</guid>
+      <description>Tessellate AI published the weights of Juniper 2 on Thursday under a non-commercial licence. The institute said it trained the model on 5.0 trillion tokens.</description>
+      <pubDate>Fri, 21 Aug 2026 01:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ai opens juniper 2 weights to researchers under non-commercial terms, Tessellate AI says</title>
+      <link>https://circuitdesk.example/ai-opens-juniper-2-weights-to-researchers-under-non-commercial-terms-t</link>
+      <guid isPermaLink="true">https://circuitdesk.example/ai-opens-juniper-2-weights-to-researchers-under-non-commercial-terms-t</guid>
+      <description>Tessellate AI's Thursday release puts Juniper 2 weights under non-commercial terms. Two developers said the licence conditions rule out production use.</description>
+      <pubDate>Fri, 21 Aug 2026 04:03:51 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Tessellate AI announced: AI opens Juniper 2 weights to researchers under non-commercial terms</title>
+      <link>https://policybench.example/what-tessellate-ai-announced-ai-opens-juniper-2-weights-to-researchers</link>
+      <guid isPermaLink="true">https://policybench.example/what-tessellate-ai-announced-ai-opens-juniper-2-weights-to-researchers</guid>
+      <description>Researchers can now download Juniper 2, Tessellate AI said Thursday. The non-commercial licence restricts redistribution. Training used 5.0 trillion tokens, according to the release notes.</description>
+      <pubDate>Fri, 21 Aug 2026 08:05:04 +0000</pubDate>
+    </item>
+    <item>
+      <title>Umbra Research releases Kelvin 2, a 34B-parameter model for customer support automation</title>
+      <link>https://civicsignal.example/umbra-research-releases-kelvin-2-a-34b-parameter-model-for-customer-su</link>
+      <guid isPermaLink="true">https://civicsignal.example/umbra-research-releases-kelvin-2-a-34b-parameter-model-for-customer-su</guid>
+      <description>Kelvin 2, announced by Umbra Research on Monday, is aimed at customer support automation. Umbra Research reported a 86.0 percent internal evaluation score for the 34 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Fri, 21 Aug 2026 05:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Research releases kelvin 2, a 34b-parameter model for customer support automation, Umbra Research says</title>
+      <link>https://openweights.example/research-releases-kelvin-2-a-34b-parameter-model-for-customer-support-</link>
+      <guid isPermaLink="true">https://openweights.example/research-releases-kelvin-2-a-34b-parameter-model-for-customer-support-</guid>
+      <description>Umbra Research said Kelvin 2 will serve customer support automation workloads. The 34 billion parameter model posted 86.0 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Fri, 21 Aug 2026 07:46:55 +0000</pubDate>
+    </item>
+    <item>
+      <title>Umbra Research releases Kelvin 2, a 34B-parameter model for customer support automation</title>
+      <link>https://syndicatewire.example/umbra-research-releases-kelvin-2-a-34b-parameter-model-for-customer-su</link>
+      <guid isPermaLink="true">https://syndicatewire.example/umbra-research-releases-kelvin-2-a-34b-parameter-model-for-customer-su</guid>
+      <description>Kelvin 2, announced by Umbra Research on Monday, is aimed at customer support automation. Umbra Research reported a 86.0 percent internal evaluation score for the 34 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Fri, 21 Aug 2026 11:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Zephyr Silicon opens Onyx 4 weights to researchers under research-only terms</title>
+      <link>https://wirefront.example/zephyr-silicon-opens-onyx-4-weights-to-researchers-under-research-only</link>
+      <guid isPermaLink="true">https://wirefront.example/zephyr-silicon-opens-onyx-4-weights-to-researchers-under-research-only</guid>
+      <description>Researchers can now download Onyx 4, Zephyr Silicon said Tuesday. The research-only licence restricts redistribution. Training used 8.0 trillion tokens, according to the release notes.</description>
+      <pubDate>Fri, 21 Aug 2026 19:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Silicon opens onyx 4 weights to researchers under research-only terms, Zephyr Silicon says</title>
+      <link>https://gridnotes.example/silicon-opens-onyx-4-weights-to-researchers-under-research-only-terms-</link>
+      <guid isPermaLink="true">https://gridnotes.example/silicon-opens-onyx-4-weights-to-researchers-under-research-only-terms-</guid>
+      <description>Zephyr Silicon published the weights of Onyx 4 on Tuesday under a research-only licence. The institute said it trained the model on 8.0 trillion tokens.</description>
+      <pubDate>Fri, 21 Aug 2026 22:42:02 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Zephyr Silicon announced: Silicon opens Onyx 4 weights to researchers under research-only terms</title>
+      <link>https://modelbeat.example/what-zephyr-silicon-announced-silicon-opens-onyx-4-weights-to-research</link>
+      <guid isPermaLink="true">https://modelbeat.example/what-zephyr-silicon-announced-silicon-opens-onyx-4-weights-to-research</guid>
+      <description>Zephyr Silicon's Tuesday release puts Onyx 4 weights under research-only terms. Two developers said the licence conditions rule out production use.</description>
+      <pubDate>Sat, 22 Aug 2026 01:55:58 +0000</pubDate>
+    </item>
+    <item>
+      <title>Zephyr Silicon: Silicon opens Onyx 4 weights to researchers under research-only terms</title>
+      <link>https://chipwatch.example/zephyr-silicon-silicon-opens-onyx-4-weights-to-researchers-under-resea</link>
+      <guid isPermaLink="true">https://chipwatch.example/zephyr-silicon-silicon-opens-onyx-4-weights-to-researchers-under-resea</guid>
+      <description>Researchers can now download Onyx 4, Zephyr Silicon said Tuesday. The research-only licence restricts redistribution. Training used 8.0 trillion tokens, according to the release notes.</description>
+      <pubDate>Fri, 21 Aug 2026 23:16:53 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ashgrove Data releases Prism 2, a 12B-parameter model for customer support automation</title>
+      <link>https://techledger.example/ashgrove-data-releases-prism-2-a-12b-parameter-model-for-customer-supp</link>
+      <guid isPermaLink="true">https://techledger.example/ashgrove-data-releases-prism-2-a-12b-parameter-model-for-customer-supp</guid>
+      <description>Prism 2, announced by Ashgrove Data on Thursday, is aimed at customer support automation. Ashgrove Data reported a 51.0 percent internal evaluation score for the 12 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Fri, 21 Aug 2026 22:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Data releases prism 2, a 12b-parameter model for customer support automation, Ashgrove Data says</title>
+      <link>https://silicondaily.example/data-releases-prism-2-a-12b-parameter-model-for-customer-support-autom</link>
+      <guid isPermaLink="true">https://silicondaily.example/data-releases-prism-2-a-12b-parameter-model-for-customer-support-autom</guid>
+      <description>Ashgrove Data said Prism 2 will serve customer support automation workloads. The 12 billion parameter model posted 51.0 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Sat, 22 Aug 2026 02:59:30 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Ashgrove Data announced: Data releases Prism 2, a 12B-parameter model for customer support automation</title>
+      <link>https://secureloop.example/what-ashgrove-data-announced-data-releases-prism-2-a-12b-parameter-mod</link>
+      <guid isPermaLink="true">https://secureloop.example/what-ashgrove-data-announced-data-releases-prism-2-a-12b-parameter-mod</guid>
+      <description>Developers can request access to Prism 2, Ashgrove Data said on Thursday. The company put the model at 12 billion parameters and cited a 51.0 percent score on its own evaluation suite. Two testers said throughput was the notable change.</description>
+      <pubDate>Sat, 22 Aug 2026 08:23:13 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ashgrove Data: Data releases Prism 2, a 12B-parameter model for customer support automation</title>
+      <link>https://wirefront.example/ashgrove-data-data-releases-prism-2-a-12b-parameter-model-for-customer</link>
+      <guid isPermaLink="true">https://wirefront.example/ashgrove-data-data-releases-prism-2-a-12b-parameter-model-for-customer</guid>
+      <description>Ashgrove Data released Prism 2 on Thursday. The company said the 12 billion parameter model targets customer support automation and reached 51.0 percent on its internal evaluation suite. Availability outside the developer preview was not announced.</description>
+      <pubDate>Sat, 22 Aug 2026 05:48:51 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ashgrove Data releases Prism 2, a 12B-parameter model for customer support automation</title>
+      <link>https://syndicatewire.example/ashgrove-data-releases-prism-2-a-12b-parameter-model-for-customer-supp</link>
+      <guid isPermaLink="true">https://syndicatewire.example/ashgrove-data-releases-prism-2-a-12b-parameter-model-for-customer-supp</guid>
+      <description>Prism 2, announced by Ashgrove Data on Thursday, is aimed at customer support automation. Ashgrove Data reported a 51.0 percent internal evaluation score for the 12 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Sat, 22 Aug 2026 04:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Eastvale AI opens Drift 3 weights to researchers under research-only terms</title>
+      <link>https://modelbeat.example/eastvale-ai-opens-drift-3-weights-to-researchers-under-research-only-t</link>
+      <guid isPermaLink="true">https://modelbeat.example/eastvale-ai-opens-drift-3-weights-to-researchers-under-research-only-t</guid>
+      <description>Researchers can now download Drift 3, Eastvale AI said Friday. The research-only licence restricts redistribution. Training used 8.1 trillion tokens, according to the release notes.</description>
+      <pubDate>Sat, 22 Aug 2026 12:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ai opens drift 3 weights to researchers under research-only terms, Eastvale AI says</title>
+      <link>https://techledger.example/ai-opens-drift-3-weights-to-researchers-under-research-only-terms-east</link>
+      <guid isPermaLink="true">https://techledger.example/ai-opens-drift-3-weights-to-researchers-under-research-only-terms-east</guid>
+      <description>Eastvale AI published the weights of Drift 3 on Friday under a research-only licence. The institute said it trained the model on 8.1 trillion tokens.</description>
+      <pubDate>Sat, 22 Aug 2026 15:06:19 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Eastvale AI announced: AI opens Drift 3 weights to researchers under research-only terms</title>
+      <link>https://openweights.example/what-eastvale-ai-announced-ai-opens-drift-3-weights-to-researchers-und</link>
+      <guid isPermaLink="true">https://openweights.example/what-eastvale-ai-announced-ai-opens-drift-3-weights-to-researchers-und</guid>
+      <description>Eastvale AI's Friday release puts Drift 3 weights under research-only terms. Two developers said the licence conditions rule out production use.</description>
+      <pubDate>Sat, 22 Aug 2026 14:39:50 +0000</pubDate>
+    </item>
+    <item>
+      <title>Eastvale AI: AI opens Drift 3 weights to researchers under research-only terms</title>
+      <link>https://policybench.example/eastvale-ai-ai-opens-drift-3-weights-to-researchers-under-research-onl</link>
+      <guid isPermaLink="true">https://policybench.example/eastvale-ai-ai-opens-drift-3-weights-to-researchers-under-research-onl</guid>
+      <description>Researchers can now download Drift 3, Eastvale AI said Friday. The research-only licence restricts redistribution. Training used 8.1 trillion tokens, according to the release notes.</description>
+      <pubDate>Sat, 22 Aug 2026 16:48:35 +0000</pubDate>
+    </item>
+    <item>
+      <title>Vantara Systems releases Ember 3, a 12B-parameter model for agent orchestration</title>
+      <link>https://secureloop.example/vantara-systems-releases-ember-3-a-12b-parameter-model-for-agent-orche</link>
+      <guid isPermaLink="true">https://secureloop.example/vantara-systems-releases-ember-3-a-12b-parameter-model-for-agent-orche</guid>
+      <description>Vantara Systems said Ember 3 will serve agent orchestration workloads. The 12 billion parameter model posted 80.9 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Sat, 22 Aug 2026 16:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Systems releases ember 3, a 12b-parameter model for agent orchestration, Vantara Systems says</title>
+      <link>https://silicondaily.example/systems-releases-ember-3-a-12b-parameter-model-for-agent-orchestration</link>
+      <guid isPermaLink="true">https://silicondaily.example/systems-releases-ember-3-a-12b-parameter-model-for-agent-orchestration</guid>
+      <description>Vantara Systems released Ember 3 on Tuesday. The company said the 12 billion parameter model targets agent orchestration and reached 80.9 percent on its internal evaluation suite. Availability outside the developer preview was not announced.</description>
+      <pubDate>Sat, 22 Aug 2026 20:40:14 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Vantara Systems announced: Systems releases Ember 3, a 12B-parameter model for agent orchestration</title>
+      <link>https://techledger.example/what-vantara-systems-announced-systems-releases-ember-3-a-12b-paramete</link>
+      <guid isPermaLink="true">https://techledger.example/what-vantara-systems-announced-systems-releases-ember-3-a-12b-paramete</guid>
+      <description>Developers can request access to Ember 3, Vantara Systems said on Tuesday. The company put the model at 12 billion parameters and cited a 80.9 percent score on its own evaluation suite. Two testers said throughput was the notable change.</description>
+      <pubDate>Sat, 22 Aug 2026 17:43:39 +0000</pubDate>
+    </item>
+    <item>
+      <title>Vantara Systems releases Ember 3, a 12B-parameter model for agent orchestration</title>
+      <link>https://syndicatewire.example/vantara-systems-releases-ember-3-a-12b-parameter-model-for-agent-orche</link>
+      <guid isPermaLink="true">https://syndicatewire.example/vantara-systems-releases-ember-3-a-12b-parameter-model-for-agent-orche</guid>
+      <description>Vantara Systems said Ember 3 will serve agent orchestration workloads. The 12 billion parameter model posted 80.9 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Sat, 22 Aug 2026 22:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ostrom Analytics opens Ingot 4 weights to researchers under community terms</title>
+      <link>https://openweights.example/ostrom-analytics-opens-ingot-4-weights-to-researchers-under-community-</link>
+      <guid isPermaLink="true">https://openweights.example/ostrom-analytics-opens-ingot-4-weights-to-researchers-under-community-</guid>
+      <description>Ostrom Analytics's Monday release puts Ingot 4 weights under community terms. Two developers said the licence conditions rule out production use.</description>
+      <pubDate>Sun, 23 Aug 2026 06:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Analytics opens ingot 4 weights to researchers under community terms, Ostrom Analytics says</title>
+      <link>https://circuitdesk.example/analytics-opens-ingot-4-weights-to-researchers-under-community-terms-o</link>
+      <guid isPermaLink="true">https://circuitdesk.example/analytics-opens-ingot-4-weights-to-researchers-under-community-terms-o</guid>
+      <description>Researchers can now download Ingot 4, Ostrom Analytics said Monday. The community licence restricts redistribution. Training used 0.5 trillion tokens, according to the release notes.</description>
+      <pubDate>Sun, 23 Aug 2026 08:48:27 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Ostrom Analytics announced: Analytics opens Ingot 4 weights to researchers under community terms</title>
+      <link>https://policybench.example/what-ostrom-analytics-announced-analytics-opens-ingot-4-weights-to-res</link>
+      <guid isPermaLink="true">https://policybench.example/what-ostrom-analytics-announced-analytics-opens-ingot-4-weights-to-res</guid>
+      <description>Ostrom Analytics published the weights of Ingot 4 on Monday under a community licence. The institute said it trained the model on 0.5 trillion tokens.</description>
+      <pubDate>Sun, 23 Aug 2026 12:36:42 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ostrom Analytics: Analytics opens Ingot 4 weights to researchers under community terms</title>
+      <link>https://civicsignal.example/ostrom-analytics-analytics-opens-ingot-4-weights-to-researchers-under-</link>
+      <guid isPermaLink="true">https://civicsignal.example/ostrom-analytics-analytics-opens-ingot-4-weights-to-researchers-under-</guid>
+      <description>Ostrom Analytics's Monday release puts Ingot 4 weights under community terms. Two developers said the licence conditions rule out production use.</description>
+      <pubDate>Sun, 23 Aug 2026 17:55:59 +0000</pubDate>
+    </item>
+    <item>
+      <title>Pellucid Labs releases Juniper 4, a 34B-parameter model for retrieval workloads</title>
+      <link>https://modelbeat.example/pellucid-labs-releases-juniper-4-a-34b-parameter-model-for-retrieval-w</link>
+      <guid isPermaLink="true">https://modelbeat.example/pellucid-labs-releases-juniper-4-a-34b-parameter-model-for-retrieval-w</guid>
+      <description>Pellucid Labs said Juniper 4 will serve retrieval workloads workloads. The 34 billion parameter model posted 50.9 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Sun, 23 Aug 2026 09:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Labs releases juniper 4, a 34b-parameter model for retrieval workloads, Pellucid Labs says</title>
+      <link>https://gridnotes.example/labs-releases-juniper-4-a-34b-parameter-model-for-retrieval-workloads-</link>
+      <guid isPermaLink="true">https://gridnotes.example/labs-releases-juniper-4-a-34b-parameter-model-for-retrieval-workloads-</guid>
+      <description>Juniper 4, announced by Pellucid Labs on Friday, is aimed at retrieval workloads. Pellucid Labs reported a 50.9 percent internal evaluation score for the 34 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Sun, 23 Aug 2026 12:38:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Pellucid Labs announced: Labs releases Juniper 4, a 34B-parameter model for retrieval workloads</title>
+      <link>https://silicondaily.example/what-pellucid-labs-announced-labs-releases-juniper-4-a-34b-parameter-m</link>
+      <guid isPermaLink="true">https://silicondaily.example/what-pellucid-labs-announced-labs-releases-juniper-4-a-34b-parameter-m</guid>
+      <description>Developers can request access to Juniper 4, Pellucid Labs said on Friday. The company put the model at 34 billion parameters and cited a 50.9 percent score on its own evaluation suite. Two testers said throughput was the notable change.</description>
+      <pubDate>Sun, 23 Aug 2026 13:30:48 +0000</pubDate>
+    </item>
+    <item>
+      <title>Pellucid Labs: Labs releases Juniper 4, a 34B-parameter model for retrieval workloads</title>
+      <link>https://openweights.example/pellucid-labs-labs-releases-juniper-4-a-34b-parameter-model-for-retrie</link>
+      <guid isPermaLink="true">https://openweights.example/pellucid-labs-labs-releases-juniper-4-a-34b-parameter-model-for-retrie</guid>
+      <description>Pellucid Labs released Juniper 4 on Friday. The company said the 34 billion parameter model targets retrieval workloads and reached 50.9 percent on its internal evaluation suite. Availability outside the developer preview was not announced.</description>
+      <pubDate>Sun, 23 Aug 2026 21:51:33 +0000</pubDate>
+    </item>
+    <item>
+      <title>Pellucid Labs releases Juniper 4, a 34B-parameter model for retrieval workloads</title>
+      <link>https://syndicatewire.example/pellucid-labs-releases-juniper-4-a-34b-parameter-model-for-retrieval-w</link>
+      <guid isPermaLink="true">https://syndicatewire.example/pellucid-labs-releases-juniper-4-a-34b-parameter-model-for-retrieval-w</guid>
+      <description>Pellucid Labs said Juniper 4 will serve retrieval workloads workloads. The 34 billion parameter model posted 50.9 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Sun, 23 Aug 2026 15:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Tessellate AI opens Nimbus 3 weights to researchers under community terms</title>
+      <link>https://policybench.example/tessellate-ai-opens-nimbus-3-weights-to-researchers-under-community-te</link>
+      <guid isPermaLink="true">https://policybench.example/tessellate-ai-opens-nimbus-3-weights-to-researchers-under-community-te</guid>
+      <description>Tessellate AI published the weights of Nimbus 3 on Monday under a community licence. The institute said it trained the model on 7.4 trillion tokens.</description>
+      <pubDate>Sun, 23 Aug 2026 23:30:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Ai opens nimbus 3 weights to researchers under community terms, Tessellate AI says</title>
+      <link>https://chipwatch.example/ai-opens-nimbus-3-weights-to-researchers-under-community-terms-tessell</link>
+      <guid isPermaLink="true">https://chipwatch.example/ai-opens-nimbus-3-weights-to-researchers-under-community-terms-tessell</guid>
+      <description>Tessellate AI's Monday release puts Nimbus 3 weights under community terms. Two developers said the licence conditions rule out production use.</description>
+      <pubDate>Mon, 24 Aug 2026 00:43:15 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Tessellate AI announced: AI opens Nimbus 3 weights to researchers under community terms</title>
+      <link>https://civicsignal.example/what-tessellate-ai-announced-ai-opens-nimbus-3-weights-to-researchers-</link>
+      <guid isPermaLink="true">https://civicsignal.example/what-tessellate-ai-announced-ai-opens-nimbus-3-weights-to-researchers-</guid>
+      <description>Researchers can now download Nimbus 3, Tessellate AI said Monday. The community licence restricts redistribution. Training used 7.4 trillion tokens, according to the release notes.</description>
+      <pubDate>Mon, 24 Aug 2026 05:51:56 +0000</pubDate>
+    </item>
+    <item>
+      <title>Umbra Research releases Onyx 1, a 8B-parameter model for agent orchestration</title>
+      <link>https://secureloop.example/umbra-research-releases-onyx-1-a-8b-parameter-model-for-agent-orchestr</link>
+      <guid isPermaLink="true">https://secureloop.example/umbra-research-releases-onyx-1-a-8b-parameter-model-for-agent-orchestr</guid>
+      <description>Onyx 1, announced by Umbra Research on Thursday, is aimed at agent orchestration. Umbra Research reported a 57.2 percent internal evaluation score for the 8 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Mon, 24 Aug 2026 03:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Research releases onyx 1, a 8b-parameter model for agent orchestration, Umbra Research says</title>
+      <link>https://techledger.example/research-releases-onyx-1-a-8b-parameter-model-for-agent-orchestration-</link>
+      <guid isPermaLink="true">https://techledger.example/research-releases-onyx-1-a-8b-parameter-model-for-agent-orchestration-</guid>
+      <description>Umbra Research said Onyx 1 will serve agent orchestration workloads. The 8 billion parameter model posted 57.2 percent internally, according to the company. A researcher who saw an early build said the evaluation configuration was not published.</description>
+      <pubDate>Mon, 24 Aug 2026 04:27:18 +0000</pubDate>
+    </item>
+    <item>
+      <title>What Umbra Research announced: Research releases Onyx 1, a 8B-parameter model for agent orchestration</title>
+      <link>https://openweights.example/what-umbra-research-announced-research-releases-onyx-1-a-8b-parameter-</link>
+      <guid isPermaLink="true">https://openweights.example/what-umbra-research-announced-research-releases-onyx-1-a-8b-parameter-</guid>
+      <description>Umbra Research released Onyx 1 on Thursday. The company said the 8 billion parameter model targets agent orchestration and reached 57.2 percent on its internal evaluation suite. Availability outside the developer preview was not announced.</description>
+      <pubDate>Mon, 24 Aug 2026 08:25:16 +0000</pubDate>
+    </item>
+    <item>
+      <title>Umbra Research: Research releases Onyx 1, a 8B-parameter model for agent orchestration</title>
+      <link>https://silicondaily.example/umbra-research-research-releases-onyx-1-a-8b-parameter-model-for-agent</link>
+      <guid isPermaLink="true">https://silicondaily.example/umbra-research-research-releases-onyx-1-a-8b-parameter-model-for-agent</guid>
+      <description>Developers can request access to Onyx 1, Umbra Research said on Thursday. The company put the model at 8 billion parameters and cited a 57.2 percent score on its own evaluation suite. Two testers said throughput was the notable change.</description>
+      <pubDate>Mon, 24 Aug 2026 11:02:30 +0000</pubDate>
+    </item>
+    <item>
+      <title>Umbra Research releases Onyx 1, a 8B-parameter model for agent orchestration</title>
+      <link>https://syndicatewire.example/umbra-research-releases-onyx-1-a-8b-parameter-model-for-agent-orchestr</link>
+      <guid isPermaLink="true">https://syndicatewire.example/umbra-research-releases-onyx-1-a-8b-parameter-model-for-agent-orchestr</guid>
+      <description>Onyx 1, announced by Umbra Research on Thursday, is aimed at agent orchestration. Umbra Research reported a 57.2 percent internal evaluation score for the 8 billion parameter system. Independent results are not yet available.</description>
+      <pubDate>Mon, 24 Aug 2026 09:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

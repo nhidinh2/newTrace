@@ -1,0 +1,13 @@
+# Optional per-publisher policy. Full-text extraction is OFF unless a domain is
+# allow-listed here AND the extraction extra is installed. Respect robots.txt,
+# publisher terms, rate limits and paywalls.
+extraction:
+  enabled: false
+  allowlist: []          # e.g. ["example-openaccess-news.org"]
+  max_excerpt_chars: 1200
+rate_limits:
+  default_min_interval_seconds: 1.0
+  # Publisher-stated limits win over the default. GDELT's 429 body asks for
+  # "one request every 5 seconds"; honour it rather than retrying into a block.
+  per_domain:
+    api.gdeltproject.org: 5.5

@@ -1,0 +1,34 @@
+services:
+  api:
+    build: .
+    image: newstrace:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - newstrace-data:/data
+      - ./artifacts:/app/artifacts
+    environment:
+      NEWSTRACE_DATABASE_URL: sqlite:////data/newstrace.db
+      NEWSTRACE_LOG_LEVEL: INFO
+      LLM_PROVIDER: none
+
+  ui:
+    build: .
+    image: newstrace:latest
+    depends_on:
+      - api
+    ports:
+      - "8501:8501"
+    volumes:
+      - newstrace-data:/data
+      - ./artifacts:/app/artifacts
+    environment:
+      NEWSTRACE_DATABASE_URL: sqlite:////data/newstrace.db
+      LLM_PROVIDER: none
+    command: >
+      sh -c "alembic upgrade head &&
+             streamlit run app/streamlit_app.py
+             --server.address 0.0.0.0 --server.port 8501 --server.headless true"
+
+volumes:
+  newstrace-data:
