@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
 from sqlalchemy.orm import Session
 
 from newstrace.ingestion.base import RawArticle
@@ -12,6 +13,7 @@ from newstrace.ingestion.deduplicate import (
     hamming_distance,
     simhash,
     simhash_similarity,
+    strip_site_suffix,
     title_similarity,
 )
 from newstrace.ingestion.normalize import normalize_article
@@ -129,3 +131,84 @@ def test_publication_time_window_limits_candidates(session: Session) -> None:
         )
     )
     assert not detector.check(far_away).is_duplicate
+
+
+# One wire story, nine co-owned mastheads. The headline is byte-identical; only
+# the appended masthead differs, and these feeds carry no excerpt, so the
+# simhash fallback has nothing to compare. Without suffix stripping the pair
+# scores about 0.65 against a 0.9 threshold and each copy is counted as an
+# independent source.
+SYNDICATED = [
+    "AI chatbot travel tips fail Aussie tourists at border crossing | Moree Champion",
+    "AI chatbot travel tips fail Aussie tourists at border crossing | The Queanbeyan Age",
+    "AI chatbot travel tips fail Aussie tourists at border crossing | The Advertiser - Cessnock",
+    "AI chatbot travel tips fail Aussie tourists at border crossing | Daily Liberal",
+]
+
+
+@pytest.mark.parametrize("title", SYNDICATED)
+def test_strip_site_suffix_removes_mastheads(title: str) -> None:
+    assert (
+        strip_site_suffix(title) == "AI chatbot travel tips fail Aussie tourists at border crossing"
+    )
+
+
+def test_syndicated_copies_score_as_duplicates() -> None:
+    for other in SYNDICATED[1:]:
+        assert title_similarity(SYNDICATED[0], other) >= 0.9
+
+
+@pytest.mark.parametrize(
+    ("left", "right"),
+    [
+        # Trailing clauses that are not mastheads: stripping either of these
+        # would merge two stories that report opposite outcomes.
+        (
+            "Fed holds rates steady - Powell signals cuts",
+            "Fed holds rates steady - Powell rules out cuts",
+        ),
+        ("Nvidia beats estimates - shares jump 12%", "Nvidia beats estimates - shares fall 4%"),
+        ("OpenAI ships new model | The Verge", "Anthropic ships new model | The Verge"),
+    ],
+)
+def test_different_stories_are_not_merged_by_stripping(left: str, right: str) -> None:
+    assert title_similarity(left, right) < 0.9
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Fed holds rates steady - Powell signals cuts",  # tail is a clause, not a masthead
+        "Nvidia beats estimates - shares jump 12%",  # digits
+        "Cats - Dogs",  # head too short to strip safely
+    ],
+)
+def test_strip_site_suffix_leaves_headlines_alone(title: str) -> None:
+    assert strip_site_suffix(title) == title
+
+
+def test_detector_flags_syndicated_copy(session: Session) -> None:
+    persist_articles(
+        session,
+        [
+            RawArticle(
+                url="https://moreechampion.com.au/story/1",
+                title=SYNDICATED[0],
+                description="",
+                published_at=BASE_TIME,
+            )
+        ],
+    )
+    session.commit()
+    detector = DuplicateDetector(session)
+    copy = normalize_article(
+        RawArticle(
+            url="https://queanbeyanage.com.au/story/1",
+            title=SYNDICATED[1],
+            description="",
+            published_at=BASE_TIME + timedelta(hours=1),
+        )
+    )
+    verdict = detector.check(copy)
+    assert verdict.is_duplicate
+    assert verdict.reason == "title_similarity"

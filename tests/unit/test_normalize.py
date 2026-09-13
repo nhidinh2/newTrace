@@ -49,10 +49,30 @@ def test_canonicalize_empty_url() -> None:
         ("https://news.bbc.co.uk/a", "bbc.co.uk"),
         ("https://www.example.com/a", "example.com"),
         ("https://sub.deep.example.org/a", "example.org"),
+        # Multi-tenant platforms: the tenant is the publisher, so two
+        # newsletters on one platform must not collapse into a single source.
+        ("https://terrytao.wordpress.com/2026/01/a", "terrytao.wordpress.com"),
+        ("https://importai.substack.com/p/a", "importai.substack.com"),
+        ("https://garymarcus.substack.com/p/a", "garymarcus.substack.com"),
+        ("https://someone.github.io/post/", "someone.github.io"),
+        ("https://writer.medium.com/a", "writer.medium.com"),
+        # The platform's own site keeps the bare domain.
+        ("https://wordpress.com/news/a", "wordpress.com"),
+        ("https://www.substack.com/about", "substack.com"),
+        # The tenant is the label next to the platform, not the leftmost one.
+        ("https://feeds.terrytao.wordpress.com/a", "terrytao.wordpress.com"),
     ],
 )
 def test_extract_domain(url: str, domain: str) -> None:
     assert extract_domain(url) == domain
+
+
+def test_extract_domain_separates_platform_tenants() -> None:
+    """The regression this guards: one Substack is not every Substack."""
+    a = extract_domain("https://importai.substack.com/p/one")
+    b = extract_domain("https://garymarcus.substack.com/p/two")
+    assert a != b
+    assert len({a, b}) == 2
 
 
 @pytest.mark.parametrize(
