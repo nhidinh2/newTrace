@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+build/
+dist/
+
+# Environment / secrets
+.env
+*.env
+!.env.example
+
+# Local data & generated artifacts
+*.db
+*.sqlite3
+newstrace*.db*
+*.db-wal
+*.db-shm
+data/raw/*
+!data/raw/.gitkeep
+data/cache/
+artifacts/*
+!artifacts/.gitkeep
+.newstrace_cache/
+
+# Model / embedding artifacts
+*.npy
+*.npz
+*.joblib
+!tests/fixtures/**/*.npy
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Backup of pre-flatten local git history
+.git-old-history/
+
+# Local run logs
+*.log

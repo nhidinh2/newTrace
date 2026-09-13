@@ -7,6 +7,7 @@ never hidden behind generated prose.
 from __future__ import annotations
 
 import contextlib
+import html
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -39,6 +40,38 @@ DISCLAIMER = (
 )
 
 
+# Card styling. Streamlit has no chip or eyebrow primitive, so the story card is
+# rendered as one escaped HTML block; everything here is scoped to ``ns-`` class
+# names rather than Streamlit's internal test ids, which change between releases.
+CARD_CSS = """
+<style>
+.ns-eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
+  color: #8A8073; margin-bottom: 0.35rem;
+}
+.ns-headline {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.42rem; line-height: 1.28; font-weight: 600;
+  color: #1A1A1A; margin-bottom: 0.7rem;
+}
+.ns-signal { font-size: 0.92rem; color: #3A3A3A; margin-bottom: 0.55rem; }
+.ns-signal b { font-weight: 700; }
+.ns-dots { letter-spacing: 0.14em; color: #8C2F1E; margin-right: 0.45rem; }
+.ns-dots .off { color: #D8D0C2; }
+.ns-warn { color: #8C2F1E; font-weight: 600; }
+.ns-chips { margin-bottom: 0.5rem; line-height: 2.1; }
+.ns-chip {
+  border: 1px solid #E4DED3; background: #F7F4EE; border-radius: 3px;
+  padding: 0.16rem 0.46rem; margin-right: 0.3rem; font-size: 0.78rem; color: #4A443B;
+  white-space: nowrap;
+}
+.ns-kw { font-size: 0.8rem; color: #8A8073; }
+</style>
+"""
+
+MAX_DOTS = 8
+
+
 @st.cache_resource
 def _init() -> bool:
     create_all()
@@ -47,6 +80,26 @@ def _init() -> bool:
 
 def fmt_time(value: datetime | None) -> str:
     return value.strftime("%Y-%m-%d %H:%M UTC") if value else "unknown time"
+
+
+def fmt_date_short(value: datetime | None) -> str:
+    return value.strftime("%d %b %Y").lstrip("0") if value else "undated"
+
+
+def dots(count: int, cap: int = MAX_DOTS) -> str:
+    """A filled/empty dot run for ``count``, so diversity reads pre-attentively."""
+    filled = min(count, cap)
+    markup = "●" * filled + f'<span class="off">{"●" * (cap - filled)}</span>'
+    # The overflow marker stays inside the span: outside it, the run's trailing
+    # margin falls before the "+" and it reads as part of the count ("+9").
+    return f'<span class="ns-dots">{markup}{"+" if count > cap else ""}</span>'
+
+
+def chips(values: list[str], cap: int = 6) -> str:
+    shown = [f'<span class="ns-chip">{html.escape(v)}</span>' for v in values[:cap]]
+    if len(values) > cap:
+        shown.append(f'<span class="ns-chip">+{len(values) - cap} more</span>')
+    return f'<div class="ns-chips">{"".join(shown)}</div>'
 
 
 def page_top_stories() -> None:
@@ -81,21 +134,39 @@ def page_top_stories() -> None:
             if bundle is None:
                 continue
             with st.container(border=True):
-                st.subheader(story.display_title)
-                cols = st.columns(5)
-                cols[0].metric("Articles", story.article_count)
-                cols[1].metric("Independent sources", len(bundle.independent_domains))
-                cols[2].metric("Near-duplicates", len(bundle.duplicates))
-                cols[3].metric("Topic", story.topic or "—")
-                cols[4].metric("Latest", fmt_time(story.last_published_at).split(" ")[0])
+                sources = bundle.independent_domains
+                near_dupes = len(bundle.duplicates)
+                # Independent sources is the number the tool exists to report, so
+                # it carries the dots and the bold; everything else is secondary.
+                dupe_note = (
+                    f' · <span class="ns-warn">{near_dupes} near-duplicate'
+                    f"{'' if near_dupes == 1 else 's'}</span>"
+                    if near_dupes
+                    else " · no near-duplicates"
+                )
+                st.markdown(
+                    f'<div class="ns-eyebrow">{html.escape(story.topic or "untopiced")}'
+                    f" &nbsp;·&nbsp; {fmt_date_short(story.last_published_at)}</div>"
+                    f'<div class="ns-headline">{html.escape(story.display_title)}</div>'
+                    f'<div class="ns-signal">{dots(len(sources))}'
+                    f"<b>{len(sources)}</b> independent source"
+                    f"{'' if len(sources) == 1 else 's'}"
+                    f" · {story.article_count} article"
+                    f"{'' if story.article_count == 1 else 's'}{dupe_note}</div>"
+                    f"{chips(sources)}",
+                    unsafe_allow_html=True,
+                )
                 keywords = story_keywords(bundle)
                 if keywords:
-                    st.caption("Keywords: " + ", ".join(keywords))
-                st.caption("Sources: " + ", ".join(bundle.independent_domains))
-                st.page_link_note = None
-                if st.button("Open story", key=f"open-{story.id}"):
-                    st.session_state["story_id"] = story.id
-                    st.session_state["page"] = "Story detail"
+                    st.markdown(
+                        f'<div class="ns-kw">{html.escape(" · ".join(keywords))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                if st.button("Open story  →", key=f"open-{story.id}"):
+                    # ``page`` and ``story_id`` are widget keys, and Streamlit
+                    # forbids writing a widget's state once it is instantiated,
+                    # so park the target for main() to apply on the next run.
+                    st.session_state["_goto"] = ("Story detail", story.id)
                     st.rerun()
 
 
@@ -110,24 +181,43 @@ def page_story_detail() -> None:
             st.info("No stories yet. Run `make demo` first.")
             return
         requested = query_param("story")
-        default = st.session_state.get("story_id", ids[0])
-        if requested.isdigit() and int(requested) in ids:
-            default = int(requested)
-        story_id = st.selectbox(
-            "Story", ids, index=ids.index(default) if default in ids else 0, key="story_select"
-        )
+        from_url = int(requested) if requested.isdigit() and int(requested) in ids else None
+        # ``?story=`` is written back on every render, so it only wins when it
+        # changes; otherwise it would override the story the "Open story" button
+        # just selected. The selectbox is keyed on ``story_id`` so that widget
+        # state and the button write to the same place.
+        if from_url is not None and from_url != st.session_state.get("_story_from_url"):
+            st.session_state["story_id"] = from_url
+        if st.session_state.get("story_id") not in ids:
+            st.session_state["story_id"] = ids[0]
+        story_id = st.selectbox("Story", ids, key="story_id")
         set_query_param("story", str(story_id))
+        st.session_state["_story_from_url"] = story_id
         bundle = load_story(session, story_id)
         if bundle is None:
             st.error("Story not found.")
             return
 
-        st.subheader(bundle.story.display_title)
-        cols = st.columns(4)
-        cols[0].metric("Articles", len(bundle.articles))
-        cols[1].metric("Independent sources", len(bundle.independent_domains))
-        cols[2].metric("Near-duplicates", len(bundle.duplicates))
-        cols[3].metric("Topic", bundle.story.topic or "—")
+        sources = bundle.independent_domains
+        near_dupes = len(bundle.duplicates)
+        dupe_note = (
+            f' · <span class="ns-warn">{near_dupes} near-duplicate'
+            f"{'' if near_dupes == 1 else 's'} not counted as confirmation</span>"
+            if near_dupes
+            else " · no near-duplicates"
+        )
+        st.markdown(
+            f'<div class="ns-eyebrow">{html.escape(bundle.story.topic or "untopiced")}'
+            f" &nbsp;·&nbsp; {fmt_date_short(bundle.story.last_published_at)}</div>"
+            f'<div class="ns-headline">{html.escape(bundle.story.display_title)}</div>'
+            f'<div class="ns-signal">{dots(len(sources))}'
+            f"<b>{len(sources)}</b> independent source"
+            f"{'' if len(sources) == 1 else 's'}"
+            f" · {len(bundle.articles)} article"
+            f"{'' if len(bundle.articles) == 1 else 's'}{dupe_note}</div>"
+            f"{chips(sources, cap=10)}",
+            unsafe_allow_html=True,
+        )
 
         tab_timeline, tab_summary, tab_claims, tab_sources = st.tabs(
             ["Timeline", "Grounded summary", "Claims", "Sources"]
@@ -522,13 +612,35 @@ def requested_page() -> str | None:
 
 def main() -> None:
     _init()
+    st.markdown(CARD_CSS, unsafe_allow_html=True)
     st.sidebar.title("📰 NewsTrace")
     st.sidebar.caption(f"v{__version__}")
-    default = requested_page() or st.session_state.get("page", "Top stories")
     names = list(PAGES)
-    page = st.sidebar.radio("Page", names, index=names.index(default) if default in names else 0)
-    st.session_state["page"] = page
+
+    # Apply in-app navigation parked by a button before any widget is created,
+    # then let it flow through the query parameters like any other navigation.
+    goto = st.session_state.pop("_goto", None)
+    if goto is not None:
+        target_page, target_story = goto
+        st.session_state["page"] = target_page
+        st.session_state["story_id"] = target_story
+        set_query_param("page", page_slug(target_page))
+        set_query_param("story", str(target_story))
+
+    # ``?page=`` is written back on every render, so it only wins when it
+    # changes; comparing against the raw value would let the URL from the
+    # previous run override in-app navigation such as the "Open story" button.
+    requested = requested_page()
+    if requested and requested != st.session_state.get("_page_from_url"):
+        st.session_state["page"] = requested
+    if st.session_state.get("page") not in names:
+        st.session_state["page"] = names[0]
+    page = st.sidebar.radio("Page", names, key="page")
     set_query_param("page", page_slug(page))
+    # Remember what we put in the URL, not what we read: recording the stale
+    # value would make the next sidebar click look like an external ?page=
+    # change and revert it.
+    st.session_state["_page_from_url"] = page
     st.sidebar.markdown("---")
     st.sidebar.caption(DISCLAIMER)
     PAGES[page]()
