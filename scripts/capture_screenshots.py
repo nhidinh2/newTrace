@@ -21,13 +21,15 @@ from pathlib import Path
 DEFAULT_BASE_URL = "http://localhost:8501"
 DEFAULT_OUTDIR = Path("docs/screenshots")
 
-# (filename, query string, wait-for-this-text, extra settle selector)
+# (filename, url path, wait-for-this-text). Paths come from the ``url_path`` each
+# st.Page declares, so they follow the navigation rather than a query string.
 SHOTS: tuple[tuple[str, str, str], ...] = (
-    ("top-stories.png", "page=top-stories", "Top stories"),
-    ("story-detail.png", "page=story-detail", "Story detail"),
-    ("search.png", "page=search", "Search"),
-    ("experiments.png", "page=experiment-dashboard", "Experiment dashboard"),
-    ("health.png", "page=system-health", "System health"),
+    # The default page answers at the root, not at a path of its own.
+    ("stories.png", "", "Stories"),
+    ("story.png", "story", "Story"),
+    ("search.png", "search", "Search"),
+    ("experiments.png", "experiments", "Experiments"),
+    ("health.png", "health", "Health"),
 )
 
 
@@ -62,10 +64,9 @@ def main(argv: list[str] | None = None) -> int:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page(viewport={"width": args.width, "height": args.height})
-        for filename, query, heading in SHOTS:
-            if filename == "story-detail.png" and args.story:
-                query = f"{query}&story={args.story}"
-            url = f"{args.base_url}/?{query}"
+        for filename, path, heading in SHOTS:
+            query = f"?story={args.story}" if filename == "story.png" and args.story else ""
+            url = f"{args.base_url}/{path}{query}"
             page.goto(url, wait_until="load")
             try:
                 page.get_by_text(heading, exact=False).first.wait_for(timeout=30_000)

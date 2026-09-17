@@ -1,0 +1,24 @@
+# NewsTrace visual theme: editorial rather than dashboard.
+#
+# The palette is deliberately restrained - one muted accent, warm paper
+# background - so that the corroboration counts on each card are the only
+# strong colour on the page. See app/streamlit_app.py for the card styles.
+
+[theme]
+base = "light"
+primaryColor = "#8C2F1E"              # muted brick, used only for emphasis
+backgroundColor = "#FBFAF7"           # warm paper
+secondaryBackgroundColor = "#F2EFE9"  # sidebar, inputs
+textColor = "#1A1A1A"
+linkColor = "#8C2F1E"
+borderColor = "#E4DED3"
+font = "sans-serif"
+headingFont = "serif"
+codeFont = "monospace"
+baseRadius = "small"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

@@ -44,7 +44,25 @@ TRACKING_PARAMS = {
     "smid",
 }
 
-_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=())
+# ``include_psl_private_domains`` keeps the tenant label on hosts the Public
+# Suffix List marks as private (``someone.github.io``, ``blog.blogspot.com``).
+_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=(), include_psl_private_domains=True)
+
+# Publishing platforms the PSL does not list as private suffixes. Each tenant is
+# a separate publisher, so collapsing them to the platform would let two
+# unrelated newsletters count as one source when stories report corroboration.
+MULTI_TENANT_HOSTS = frozenset(
+    {
+        "beehiiv.com",
+        "ghost.io",
+        "medium.com",
+        "substack.com",
+        "svbtle.com",
+        "tumblr.com",
+        "typepad.com",
+        "wordpress.com",
+    }
+)
 
 
 def is_tracking_param(name: str) -> bool:
@@ -88,13 +106,25 @@ def canonicalize_url(url: str) -> str:
 
 
 def extract_domain(url: str) -> str:
-    """Registrable domain (``sub.example.co.uk`` -> ``example.co.uk``)."""
+    """Publisher domain (``sub.example.co.uk`` -> ``example.co.uk``).
+
+    Registrable domain, except on a multi-tenant publishing platform, where the
+    tenant label is kept (``terrytao.wordpress.com``) because the tenant, not
+    the platform, is the publisher.
+    """
     if not url:
         return ""
     host = urlsplit(url if "://" in url else f"https://{url}").hostname or ""
     result = _EXTRACTOR(host)
     if result.domain and result.suffix:
-        return f"{result.domain}.{result.suffix}".lower()
+        registrable = f"{result.domain}.{result.suffix}".lower()
+        if registrable in MULTI_TENANT_HOSTS:
+            # The tenant is the label directly left of the platform domain, so
+            # ``feeds.terrytao.wordpress.com`` is still Tao's blog.
+            tenant = result.subdomain.lower().rsplit(".", 1)[-1]
+            if tenant and tenant != "www":
+                return f"{tenant}.{registrable}"
+        return registrable
     return host.lower().removeprefix("www.")
 
 
