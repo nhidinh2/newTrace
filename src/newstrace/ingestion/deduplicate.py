@@ -55,11 +55,79 @@ def simhash_similarity(a: str, b: str, bits: int = SIMHASH_BITS) -> float:
     return 1.0 - hamming_distance(simhash(a, bits), simhash(b, bits)) / bits
 
 
+# Mastheads a syndicating publisher appends to an otherwise identical headline:
+# "Wire headline | Moree Champion". Both separators and the check below stay
+# deliberately narrow -- a false strip would merge two genuinely different
+# stories that happen to share an opening clause.
+_TITLE_SEPARATORS = (" | ", " — ", " – ", " - ", " · ", " :: ")
+_PUBLICATION_STOPWORDS = frozenset(
+    {"a", "an", "and", "at", "de", "du", "for", "in", "la", "le", "of", "on", "the"}
+)
+
+
+def _looks_like_publication(tail: str) -> bool:
+    """True when ``tail`` reads as a masthead rather than part of the headline.
+
+    A masthead is short, capitalised and free of the digits and sentence
+    punctuation that a trailing headline clause almost always carries.
+    """
+    tokens = tail.split()
+    if not 1 <= len(tokens) <= 5:
+        return False
+    if any(character.isdigit() for character in tail):
+        return False
+    if any(character in tail for character in ".!?%:;,\"'"):
+        return False
+    alphabetic = [token for token in tokens if token[:1].isalpha()]
+    if not alphabetic:
+        return False
+    return all(
+        token[:1].isupper() or token.lower() in _PUBLICATION_STOPWORDS for token in alphabetic
+    )
+
+
+def strip_site_suffix(title: str, max_strips: int = 2) -> str:
+    """Drop trailing mastheads so syndicated copies compare as the same headline.
+
+    Two passes, because a masthead can itself be compound: "... | The
+    Advertiser - Cessnock". The headline must keep enough words to stay
+    meaningful, otherwise the title is returned untouched.
+    """
+    result = title.strip()
+    for _ in range(max_strips):
+        cut = -1
+        width = 0
+        for separator in _TITLE_SEPARATORS:
+            position = result.rfind(separator)
+            if position > cut:
+                cut, width = position, len(separator)
+        if cut <= 0:
+            break
+        head, tail = result[:cut].strip(), result[cut + width :].strip()
+        if len(head.split()) < 3 or len(head) < 15 or not _looks_like_publication(tail):
+            break
+        result = head
+    return result
+
+
 def title_similarity(a: str, b: str) -> float:
-    """Blend token Jaccard with 4-gram character Jaccard for robustness."""
-    token_score = jaccard(set(tokenize(a)), set(tokenize(b)))
-    char_score = jaccard(char_shingles(a), char_shingles(b))
-    return 0.5 * token_score + 0.5 * char_score
+    """Blend token Jaccard with 4-gram character Jaccard for robustness.
+
+    Scored twice, with and without trailing mastheads, and the better score
+    wins: stripping may only rescue a match that the masthead was hiding, never
+    weaken one.
+    """
+
+    def score(left: str, right: str) -> float:
+        token_score = jaccard(set(tokenize(left)), set(tokenize(right)))
+        char_score = jaccard(char_shingles(left), char_shingles(right))
+        return 0.5 * token_score + 0.5 * char_score
+
+    raw = score(a, b)
+    stripped_a, stripped_b = strip_site_suffix(a), strip_site_suffix(b)
+    if stripped_a == a and stripped_b == b:
+        return raw
+    return max(raw, score(stripped_a, stripped_b))
 
 
 @dataclass

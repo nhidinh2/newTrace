@@ -42,6 +42,10 @@ topics:
       - https://hnrss.org/newest?q=AI
       - https://hnrss.org/newest?q=OpenAI
       - https://hnrss.org/newest?q=LLM
+      # Analysis newsletters. These read the same launches as the outlets
+      # above, so they corroborate framing rather than facts.
+      - https://www.interconnects.ai/feed
+      - https://importai.substack.com/feed
   ai_safety:
     display_name: AI safety and security
     gdelt_query: '("AI safety" OR "AI security" OR "prompt injection" OR "model evaluation")'
@@ -50,6 +54,8 @@ topics:
       - https://feeds.feedburner.com/TheHackersNews
       - https://www.bleepingcomputer.com/feed/
       - https://www.theregister.com/headlines.atom
+      # Evaluations primary source; publishes reports, not daily news.
+      - https://metr.org/feed.xml
   chips_and_compute:
     display_name: Chips and compute
     gdelt_query: '(Nvidia OR semiconductor OR GPU OR "AI chip")'
@@ -69,3 +75,38 @@ topics:
       - https://feeds.a.dj.com/rss/RSSWSJD.xml
       - https://www.cnbc.com/id/19854910/device/rss/rss.html
       - https://www.ft.com/technology?format=rss
+      - https://www.ft.com/alphaville?format=rss
+      # Monetary policy primary source. press_all.xml is a superset of this
+      # feed; taking both would file the same release twice from one domain.
+      - https://www.federalreserve.gov/feeds/press_monetary.xml
+  mathematics:
+    display_name: Mathematics research
+    # No GDELT query: the wire index does not carry mathematics research in any
+    # useful form, and a bare "mathematics" query returns mostly school and
+    # sport coverage. RSS only.
+    languages: [english]
+    feeds:
+      - https://www.quantamagazine.org/mathematics/feed/
+      - https://terrytao.wordpress.com/feed/
+      - https://blogs.ams.org/mathmedia/feed/
+  preprints:
+    display_name: Preprints (arXiv)
+    # Preprints are kept out of the news topics on purpose. A paper is announced
+    # once, by one server, so it can never accumulate independent sources: mixed
+    # into a news topic every cluster here would read "1 independent source" and
+    # dilute a count that is supposed to mean corroboration. See
+    # docs/limitations.md.
+    #
+    # These feeds carry one day of announcements and are empty at weekends
+    # (arXiv sets <skipDays>Saturday/Sunday), so an ingest run on a Sunday
+    # returning nothing from them is expected, not a failure.
+    languages: [english]
+    feeds:
+      - https://rss.arxiv.org/rss/cs.LG
+      - https://rss.arxiv.org/rss/cs.AI
+      - https://rss.arxiv.org/rss/stat.ML
+      - https://rss.arxiv.org/rss/cs.DS
+      - https://rss.arxiv.org/rss/math.CO
+      - https://rss.arxiv.org/rss/math.PR
+      - https://rss.arxiv.org/rss/math.NT
+      - https://rss.arxiv.org/rss/q-fin
