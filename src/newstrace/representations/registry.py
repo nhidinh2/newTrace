@@ -157,6 +157,25 @@ def store_vectors(
     return written
 
 
+def latest_fit_version(
+    session: Session, *, method: str, dimension: int | None = None
+) -> str | None:
+    """The most recently written ``fit_version`` for a representation.
+
+    Re-running a sweep stores a *new* fit rather than replacing the old one --
+    the identity a vector is keyed by includes its ``fit_version``, which is
+    what keeps an earlier experiment reproducible. The cost is that asking for
+    "svd at 32 dimensions" without naming a fit matches every fit ever stored,
+    silently stacking two coordinate systems into one matrix. Callers that do
+    not name a fit get the newest one.
+    """
+    stmt = select(EmbeddingRecord.fit_version).where(EmbeddingRecord.method == method)
+    if dimension is not None:
+        stmt = stmt.where(EmbeddingRecord.dimension == dimension)
+    row = session.execute(stmt.order_by(EmbeddingRecord.id.desc()).limit(1)).scalar_one_or_none()
+    return str(row) if row is not None else None
+
+
 def load_vectors(
     session: Session,
     *,
@@ -166,7 +185,13 @@ def load_vectors(
     article_ids: Sequence[int] | None = None,
     model_name: str | None = None,
 ) -> VectorSet:
-    """Load a :class:`VectorSet` for the requested representation."""
+    """Load a :class:`VectorSet` for the requested representation.
+
+    With no ``fit_version`` the newest fit is used; mixing fits would put two
+    different coordinate systems in one matrix.
+    """
+    if fit_version is None:
+        fit_version = latest_fit_version(session, method=method, dimension=dimension)
     stmt = select(EmbeddingRecord).where(EmbeddingRecord.method == method)
     if fit_version is not None:
         stmt = stmt.where(EmbeddingRecord.fit_version == fit_version)

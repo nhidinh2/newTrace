@@ -39,6 +39,7 @@ from newstrace.logging import get_logger
 from newstrace.models import EmbeddingRecord, ProjectionArtifact
 from newstrace.representations.embedder import from_blob
 from newstrace.representations.projection import load_projector
+from newstrace.representations.registry import latest_fit_version
 from newstrace.retrieval.exact import DenseRetriever
 
 logger = get_logger(__name__)
@@ -141,6 +142,10 @@ def get_index(
     ``None`` means the representation has no stored vectors at all.
     """
     settings = settings or get_settings()
+    if fit_version is None:
+        # Resolve before keying: two fits of the same (method, dimension) are
+        # two coordinate systems, and an index must hold exactly one.
+        fit_version = latest_fit_version(session, method=method, dimension=dimension)
     key: IndexKey = (_bind_key(session), method, dimension, fit_version)
 
     with _LOCK:

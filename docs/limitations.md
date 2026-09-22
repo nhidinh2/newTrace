@@ -129,17 +129,27 @@ candidates sharing the most keys. The old fixed `LIMIT 2000` over the whole
 window was the opposite: an arbitrary subset, silently growing more arbitrary
 as the corpus grew.
 
-**The approximate index has no committed run.** `scripts/run_ann.py` reports
-recall against exact retrieval, which needs no judgments, precisely because
-the silver judgments cannot separate the representations. An indicative run is
-quoted in the README as indicative; it is not in the results table, and IVF-PQ
+**The approximate index is one configuration on one corpus.**
+[`docs/experiments/ann-live`](experiments/ann-live) is a single run at 64 IVF
+lists and one seed, and its nDCG column uses the same silver judgments as the
+live sweep. Only the recall-against-exact column is judgment-free. IVF-PQ
 being slower than the exhaustive scan at 6,320 vectors is a fact about that
-corpus size, not about the method.
+corpus size, not about the method, and this run does not locate the crossover.
+Nothing in the serving path uses the approximate index; search is still exact.
 
-**The BEIR harness has not been run either.** It exists so the compression
-claim can be tested where human judgments exist; until it is run, the claim
-remains what the live sweep supports -- a statement about cost, not quality.
-Relevance is binarised there, so a graded qrel of 2 counts the same as 1.
+**The benchmark run is one dataset.**
+[`docs/experiments/beir-scifact`](experiments/beir-scifact) reverses the live
+sweep's compression result -- 12x compression costs 0.19 nDCG@10 there, with
+an interval far from zero -- but it is one dataset, one embedder and one seed.
+SciFact is scientific claim verification, not news; its lexical friendliness
+is also why TF-IDF matches the dense baseline on it. Relevance is binarised,
+so a graded qrel of 2 counts the same as 1. `nfcorpus` and `arguana` are one
+flag away and would make the finding a pattern rather than a point.
+
+**The live corpus still has no human judgments**, so the live table's numbers
+remain silver throughout. What the benchmark run establishes is that those
+numbers could not have detected a real quality loss, not that the live corpus
+has one.
 
 ## Models and determinism
 
