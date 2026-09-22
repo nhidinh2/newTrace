@@ -11,6 +11,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     DateTime,
     Float,
@@ -59,6 +60,10 @@ class Article(Base, TimestampMixin):
     normalized_title_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     extraction_method: Mapped[str] = mapped_column(String(64), nullable=False, default="metadata")
     source_adapter: Mapped[str] = mapped_column(String(64), nullable=False, default="unknown")
+    # Charikar SimHash of the excerpt, stored signed because SQLite integers
+    # are. Duplicate candidates are found through the band rows in
+    # ``article_signatures``; this column is what the verdict is scored on.
+    simhash: Mapped[int | None] = mapped_column(BigInteger)
     is_near_duplicate: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     duplicate_of_article_id: Mapped[int | None] = mapped_column(
         ForeignKey("articles.id", ondelete="SET NULL"), index=True
@@ -79,10 +84,25 @@ class Article(Base, TimestampMixin):
     embeddings: Mapped[list[EmbeddingRecord]] = relationship(
         back_populates="article", cascade="all, delete-orphan"
     )
+    signatures: Mapped[list[ArticleSignature]] = relationship(
+        back_populates="article", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         UniqueConstraint("canonical_url", name="uq_articles_canonical_url"),
         Index("ix_articles_published_domain", "published_at", "source_domain"),
+        # Covering index for the default search filter ("everything that is not
+        # a near-duplicate, optionally within a topic or window"). Without it
+        # SQLite reads every article row -- including the text columns -- just
+        # to collect ids.
+        Index(
+            "ix_articles_live",
+            "is_near_duplicate",
+            "published_at",
+            "topic",
+            "source_domain",
+            "id",
+        ),
     )
 
     @property
@@ -143,6 +163,36 @@ class ClusterMembership(Base):
     )
 
 
+class ArticleSignature(Base):
+    """Blocking keys: one row per LSH band and per indexed title token.
+
+    Duplicate detection used to compare each incoming article against every
+    article in a 96-hour window (capped, arbitrarily, at 2,000 rows). These
+    rows turn that scan into an index lookup, and remove the cap: candidates
+    are retrieved by shared key, not by truncating the window.
+
+    ``kind`` is ``simhash_band`` (``"<band index>:<byte>"``) or
+    ``title_prefix`` (a token). Both live in one table so a single composite
+    index serves both lookups.
+    """
+
+    __tablename__ = "article_signatures"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    article_id: Mapped[int] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    value: Mapped[str] = mapped_column(String(128), nullable=False)
+
+    article: Mapped[Article] = relationship(back_populates="signatures")
+
+    __table_args__ = (
+        Index("ix_article_signatures_lookup", "kind", "value", "article_id"),
+        UniqueConstraint("article_id", "kind", "value", name="uq_article_signature"),
+    )
+
+
 class EmbeddingRecord(Base):
     __tablename__ = "embedding_records"
 
@@ -170,6 +220,9 @@ class EmbeddingRecord(Base):
             "fit_version",
             name="uq_embedding_identity",
         ),
+        # The retrieval cache re-checks (count, max id) per representation
+        # before every search; this keeps that check index-only.
+        Index("ix_embedding_lookup", "method", "dimension", "fit_version", "id"),
     )
 
 

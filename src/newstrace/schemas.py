@@ -9,9 +9,12 @@ from pydantic import BaseModel, Field
 
 from newstrace.summarization.base import Evidence, StorySummary, SummaryStatement
 
-RetrievalMethod = Literal["full", "svd", "gaussian_rp", "sparse_rp", "tfidf"]
+# What a search may ask for, and what the dimensionality sweep can fit. BM25
+# is served by the full-text index, so it is queryable but not projectable.
+RetrievalMethod = Literal["full", "svd", "gaussian_rp", "sparse_rp", "tfidf", "bm25"]
+ProjectionMethod = Literal["full", "svd", "gaussian_rp", "sparse_rp"]
 
-DEFAULT_EXPERIMENT_METHODS: list[RetrievalMethod] = ["full", "svd", "gaussian_rp", "sparse_rp"]
+DEFAULT_EXPERIMENT_METHODS: list[ProjectionMethod] = ["full", "svd", "gaussian_rp", "sparse_rp"]
 DEFAULT_EXPERIMENT_DIMENSIONS: list[int] = [32, 64, 128, 256]
 
 
@@ -30,6 +33,10 @@ class HealthResponse(BaseModel):
     duplicate_count: int
     last_ingestion_run: dict[str, Any] | None = None
     representations: list[dict[str, Any]] = Field(default_factory=list)
+    # Which indexes this process is holding, and whether the full-text index
+    # exists in this database -- both change what a query costs.
+    retrieval_cache: dict[str, Any] = Field(default_factory=dict)
+    full_text_index: bool = False
 
 
 class TopicResponse(BaseModel):
@@ -220,7 +227,9 @@ class SummaryResponse(BaseModel):
 
 
 class ExperimentRequest(BaseModel):
-    methods: list[RetrievalMethod] = Field(default_factory=lambda: list(DEFAULT_EXPERIMENT_METHODS))
+    methods: list[ProjectionMethod] = Field(
+        default_factory=lambda: list(DEFAULT_EXPERIMENT_METHODS)
+    )
     dimensions: list[int] = Field(default_factory=lambda: list(DEFAULT_EXPERIMENT_DIMENSIONS))
     seed: int = 549
     top_k: int = 10

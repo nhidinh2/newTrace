@@ -41,6 +41,14 @@ def build_engine(url: str | None = None) -> Engine:
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.execute("PRAGMA journal_mode=WAL")
+            # A refresh writing while the UI or API reads is the normal case,
+            # and without a busy timeout SQLite raises "database is locked"
+            # immediately instead of waiting for the writer to commit.
+            cursor.execute(f"PRAGMA busy_timeout={int(settings.sqlite_busy_timeout_ms)}")
+            # WAL already gives durability across process crashes; NORMAL only
+            # risks the last commits on a machine-level power loss, and it is
+            # what makes bulk ingestion write at a sane rate.
+            cursor.execute("PRAGMA synchronous=NORMAL")
             cursor.close()
 
     return engine
@@ -85,7 +93,13 @@ def get_db() -> Iterator[Session]:
 
 def create_all(engine: Engine | None = None) -> None:
     """Create tables directly (tests and the fixture demo); Alembic owns prod."""
-    Base.metadata.create_all(engine or get_engine())
+    target = engine or get_engine()
+    Base.metadata.create_all(target)
+    # The FTS5 table has no ORM model, so metadata.create_all cannot know
+    # about it; the migration and this call share one DDL string.
+    from newstrace.retrieval.fulltext import create_index
+
+    create_index(target)
 
 
 def reset_engine(url: str | None = None) -> Engine:

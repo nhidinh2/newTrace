@@ -55,6 +55,16 @@ class Settings(BaseSettings):
 
     near_duplicate_title_threshold: float = 0.9
     near_duplicate_window_hours: int = 96
+    # Candidates are now retrieved by SimHash band, so the cap is a guard
+    # against a pathological band collision rather than the sampling step it
+    # used to be. See newstrace.ingestion.deduplicate.DuplicateDetector.
+    near_duplicate_max_candidates: int = 400
+
+    # How many (method, dimension, fit_version) matrices the process keeps
+    # resident. Each costs ~4 bytes x articles x dimension: 9 MiB for 6k
+    # articles at 384-d, and a fortieth of that for a 32-d projection.
+    retrieval_cache_entries: int = 4
+    sqlite_busy_timeout_ms: int = 5000
 
     http_user_agent: str = "NewsTraceResearch/0.1"
     http_timeout_seconds: float = 20.0

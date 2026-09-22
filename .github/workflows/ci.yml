@@ -1,0 +1,87 @@
+# Lint, types and tests on every push, plus a proof that the offline quickstart
+# in the README still works: `make demo` runs with no API key and no network.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Every job runs against the deterministic hashing embedder: no model
+  # download, no GPU, and vectors that are byte-identical across runners.
+  NEWSTRACE_EMBEDDING_BACKEND: hashing
+  NEWSTRACE_RANDOM_SEED: "549"
+
+jobs:
+  check:
+    name: check (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --extra dev --python ${{ matrix.python-version }}
+
+      - name: Lint
+        run: |
+          uv run ruff format --check .
+          uv run ruff check --output-format=github .
+
+      - name: Typecheck
+        run: uv run mypy src
+
+      - name: Test
+        run: uv run pytest -q --cov=newstrace --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  offline-demo:
+    name: offline quickstart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Migrations match the ORM models
+        # Catches a model change that never got a migration -- the failure mode
+        # that makes `make db` and `create_all()` disagree.
+        run: |
+          uv run alembic upgrade head
+          uv run alembic check
+
+      - name: Ingest fixtures
+        run: uv run python scripts/ingest_demo.py --source fixtures
+
+      - name: Search the fixture corpus
+        run: uv run newstrace search "agent benchmark" --top-k 5
+
+      - name: Story listing
+        run: uv run newstrace stories --limit 5

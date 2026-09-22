@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
         console.print(table)
         console.print(
             "\nNext: [cyan]make api[/cyan] and [cyan]make ui[/cyan], or "
-            "[cyan]uv run newstrace story <id>[/cyan] for a timeline and grounded summary."
+            "[cyan]scripts/run.sh newstrace story <id>[/cyan] for a timeline and grounded summary."
         )
     return 0
 
