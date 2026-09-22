@@ -308,7 +308,8 @@ It reports two different things, deliberately:
   compression sweep uses, reported so the two arms can be compared, and read
   with the same caution.
 
-Every row carries the fraction of the corpus its vectors cover. A compressed
+One run is committed: [`experiments/ann-live`](experiments/ann-live). Every
+row carries the fraction of the corpus its vectors cover. A compressed
 representation stored by an earlier sweep covers only the articles that
 existed then, and scoring it against an exact baseline over the whole corpus
 reads as a quality collapse when it is really a stale index; re-run
@@ -337,9 +338,12 @@ paired bootstrap interval on the nDCG delta against `full`. Projectors are
 fitted on a random 60% of the corpus and scored on all of it, mirroring the
 chronological fit used on the live corpus; relevance is binarised.
 
-Nothing in this section has a committed run. The harness is tested on a
-synthetic dataset in `tests/unit/test_beir.py`; the numbers are for whoever
-runs it.
+One run is committed: [`experiments/beir-scifact`](experiments/beir-scifact),
+300 human-judged queries over 5,183 documents. It reverses the live sweep's
+compression result -- every dimension below 256 is worse than the baseline by
+an interval that excludes zero, and SVD@32 loses 0.187 nDCG@10 [-0.229,
+-0.147]. Read the two runs together: the geometry did not change between them,
+the judgments did.
 
 ## Reproducing
 

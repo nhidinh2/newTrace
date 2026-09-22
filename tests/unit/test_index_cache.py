@@ -116,6 +116,46 @@ def test_rewritten_vectors_invalidate_the_cache(populated_session: Session) -> N
     assert not np.allclose(first.matrix, second.matrix)
 
 
+def test_two_fits_of_one_representation_do_not_mix(populated_session: Session) -> None:
+    """Re-running a sweep stores a new fit; loading must not stack both.
+
+    ``store_vectors`` keys a vector by its ``fit_version``, so a second fit
+    adds rows rather than replacing them. Asking for "svd at 32 dimensions"
+    then matched every fit ever stored -- two coordinate systems in one
+    matrix, and a query projected into only one of them.
+    """
+    from newstrace.representations.registry import latest_fit_version
+
+    vectors = load_vectors(populated_session, method="full")
+    count = len(vectors.article_ids)
+    for fit, fill in (("old-fit", 0.0), ("new-fit", 1.0)):
+        store_vectors(
+            populated_session,
+            vectors.article_ids,
+            np.full((count, 4), fill, dtype=np.float32),
+            model_name="test",
+            method="svd",
+            fit_version=fit,
+        )
+    populated_session.commit()
+
+    assert latest_fit_version(populated_session, method="svd", dimension=4) == "new-fit"
+    loaded = load_vectors(populated_session, method="svd", dimension=4)
+    assert len(loaded.article_ids) == count
+    assert loaded.fit_version == "new-fit"
+    assert np.allclose(loaded.matrix, 1.0)
+
+    index_module.invalidate()
+    retriever = index_module.get_index(populated_session, method="svd", dimension=4)
+    assert retriever is not None
+    assert len(retriever.article_ids) == count
+
+    # The older fit is still addressable, so an earlier run stays reproducible.
+    older = load_vectors(populated_session, method="svd", dimension=4, fit_version="old-fit")
+    assert len(older.article_ids) == count
+    assert np.allclose(older.matrix, 0.0)
+
+
 def test_missing_representation_returns_none(populated_session: Session) -> None:
     assert index_module.get_index(populated_session, method="does_not_exist") is None
 

@@ -9,8 +9,10 @@ with summaries where every statement links back to the reporting it came from.
 The interesting part is the measurement: **how much can you compress the
 embeddings of a live news stream before retrieval quality suffers?** On a
 30-day live corpus a 12× smaller index ranked no worse — while returning a
-different half of the result set. The geometry moves a long way; the ranking
-does not notice.
+different half of the result set. Run the same sweep against 300 human
+relevance judgments and that result reverses: the same 12× index loses 0.19
+nDCG@10, with an interval nowhere near zero. **The live corpus was not
+measuring compression. It was measuring 23 queries.** Both runs are below.
 
 | | |
 | --- | --- |
@@ -89,6 +91,9 @@ bootstrap interval that excludes zero** — across all twelve configurations.
 SVD@32 beat the baseline on nDCG, but the interval on that difference is
 [0.000, 0.112].
 
+That last sentence was always doing more work than it looked like, and
+[the benchmark run below](#what-the-benchmark-says) is what it was hiding.
+
 The last two columns are why "no measurable loss" is not the same as
 "lossless", and they are the more interesting result. SVD@32 shares only **49%
 of its top-10** with the full-dimensional baseline; the random projections
@@ -111,6 +116,59 @@ top-10 that does not change between damping 0.5 and 0.95 even as convergence
 goes from 28 iterations to 355. Clustering F1, ingestion throughput and 100%
 citation coverage on generated summaries are in
 [`docs/evaluation.md`](docs/evaluation.md).
+
+### What the benchmark says
+
+23 silver-labelled queries could not separate these representations, which the
+run above reports as its own main caveat. SciFact has **300 queries with human
+relevance judgments** over 5,183 documents, and the projectors are
+corpus-agnostic, so the identical sweep runs there
+([`docs/experiments/beir-scifact`](docs/experiments/beir-scifact)):
+
+| Retrieval | dim | nDCG@10 | Recall@10 | top-10 overlap | Index | Δ nDCG vs full (95% CI) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full embeddings | 384 | 0.648 | 0.788 | — | 7.59 MiB | baseline |
+| Truncated SVD | 256 | 0.647 | 0.790 | 0.96 | 5.06 MiB | −0.002 [−0.007, +0.003] |
+| Truncated SVD | 128 | 0.619 | 0.770 | 0.81 | 2.53 MiB | −0.030 [−0.046, −0.015] |
+| Truncated SVD | 64 | 0.559 | 0.703 | 0.65 | 1.27 MiB | −0.089 [−0.119, −0.061] |
+| Truncated SVD | 32 | 0.461 | 0.606 | 0.47 | 0.63 MiB | −0.187 [−0.229, −0.147] |
+| Gaussian RP | 32 | 0.321 | 0.451 | 0.22 | 0.63 MiB | −0.327 [−0.374, −0.281] |
+| Sparse RP | 32 | 0.283 | 0.401 | 0.20 | 0.63 MiB | −0.365 [−0.413, −0.317] |
+| TF-IDF, lexical | — | 0.642 | 0.779 | 0.32 | 12.68 MiB | −0.007 [−0.048, +0.034] |
+
+Every dimension except 256 is worse by an interval that excludes zero. **12×
+compression costs 29% of nDCG@10 here**; only 1.5× compression is
+indistinguishable from the baseline. Nothing about the geometry changed
+between the two runs — the measuring instrument did.
+
+Two things survive the reversal. The top-10 overlap column still shows the
+indexes returning substantially different documents (0.47 at SVD@32), so the
+geometric claim holds; it is the *quality* claim that does not. And TF-IDF is
+still statistically indistinguishable from the dense baseline, on a second
+corpus, which is now a pattern rather than a quirk.
+
+### Compression is not the only way to buy the memory
+
+An approximate index buys it by scanning less instead of by shrinking the
+vectors, and at matched memory on the live corpus the two are not close
+([`docs/experiments/ann-live`](docs/experiments/ann-live)):
+
+| Index | recall@10 vs exact | nDCG@10 | Index memory | p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Exact, 384-d | 1.00 | 0.487 | 9.26 MiB | 0.65 ms |
+| IVF-PQ, 96 subvectors, 16 probes | 0.86 | 0.469 | 1.05 MiB | 6.68 ms |
+| Exact SVD@32 | 0.54 | 0.373 | 0.77 MiB | 0.17 ms |
+| Exact Gaussian RP@32 | 0.36 | 0.369 | 0.77 MiB | 0.17 ms |
+
+**0.86 against 0.54 recall of the exact top-10, at the same cost.** PQ
+discards precision within a preserved geometry; a 32-d projection discards the
+geometry. Recall here is measured against the exhaustive scan over the same
+vectors, so it needs no judgments — which is exactly why it can separate what
+the silver queries cannot.
+
+The latency column is the catch: IVF-PQ is *slower* than the exhaustive scan
+at 6,320 vectors, because a BLAS matrix-vector product beats a Python-driven
+quantised lookup at this size. At this scale ANN buys memory, not latency.
 
 ## Serving the index
 
@@ -163,41 +221,24 @@ BM25 over SQLite's FTS5 is available as `--method bm25`, and is what the
   publisher-trust weight would not be explainable or justifiable, so there
   isn't one.
 
-## Two open questions, now runnable
+## Running the sweeps
 
-Both of these follow directly from the result above, and neither has a
-committed run yet — the harnesses are here, the numbers are not claimed.
-
-**Compression is not the only way to buy the memory.** An approximate index
-buys it by scanning less, and the two interact. `make ann` sweeps IVF and
-IVF-PQ (written out in numpy, no FAISS wheel) against the exhaustive scan over
-the same vectors, reporting recall@10 *against exact retrieval* beside nDCG,
-because on this corpus the judgments cannot tell the two apart and the recall
-number can:
+Three harnesses, all reproducible from a committed corpus or a public one:
 
 ```bash
-make ann                     # or: python scripts/run_ann.py --probes 1,4,8,16
+make experiment SINCE=30 QUERIES=200     # compression, on the live corpus
+make ann SINCE=30                        # approximate retrieval vs exact
+make beir DATASET=scifact DOWNLOAD=1     # compression, on human judgments
 ```
 
-An indicative run on the 6,320-article corpus: IVF-PQ at 96 subvectors holds
-the index in 1.05 MiB against 9.26 MiB exact and recovers 0.78 of the exact
-top-10 at eight probes — and is *slower* than the exhaustive scan, because at
-six thousand vectors a BLAS matrix-vector product beats a quantised lookup.
-At this size ANN buys memory, not latency. That is a finding about the corpus
-size, and it is why the numbers are not in the results table.
+`make experiment` refreshes the stored compressed representations, so run it
+before `make ann` — the comparison arm reads them, and every row in the ANN
+table reports what fraction of the corpus its vectors cover so a stale fit
+cannot be mistaken for a quality collapse.
 
-**23 silver queries cannot separate the representations.** That is a statement
-about the judgments, and the fix is a corpus that has real ones. The identical
-sweep runs on any BEIR dataset:
-
-```bash
-make beir DATASET=scifact DOWNLOAD=1     # the download is the only networked step
-```
-
-It reports the same table with human relevance judgments and paired bootstrap
-intervals against the full-dimensional baseline. If the interval on SVD@32
-excludes zero there, the compression claim stops being a claim about cost
-only.
+The BEIR download is the only networked step in this repository, and it is
+opt-in. `nfcorpus` and `arguana` are the same flag away; running them would
+turn one benchmark result into a pattern.
 
 ## How it works
 
@@ -225,7 +266,7 @@ corroboration, and source counts do not establish truth. Full list in
 - [Architecture](docs/architecture.md) — data flow, module map, design decisions
 - [Evaluation](docs/evaluation.md) — protocol, metrics, uncertainty, reproduction
 - [Limitations](docs/limitations.md) · [Model card](docs/model_card.md)
-- [Experiments](docs/experiments) — committed runs on [fixtures](docs/experiments/baseline) and [live data](docs/experiments/live-30d)
+- [Experiments](docs/experiments) — committed runs on [fixtures](docs/experiments/baseline), [live data](docs/experiments/live-30d), [SciFact](docs/experiments/beir-scifact) and [approximate retrieval](docs/experiments/ann-live)
 - [Specification](docs/spec.md) — the original design brief
 - Harnesses: [`scripts/run_experiments.py`](scripts/run_experiments.py) (compression),
   [`scripts/run_ann.py`](scripts/run_ann.py) (approximate retrieval),
