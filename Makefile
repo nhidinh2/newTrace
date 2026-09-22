@@ -36,11 +36,11 @@ ingest:  ## Live GDELT ingestion (override TOPIC/TIMESPAN/MAX)
 	$(PY) newstrace ingest --source gdelt $(if $(TOPIC),--topic $(TOPIC),) \
 		--timespan $(or $(TIMESPAN),24h) --max-records $(or $(MAX),250)
 
-experiment:  ## Run the dimensionality-reduction sweep
+experiment:  ## Run the dimensionality-reduction sweep (SINCE=30 windows the corpus)
 	$(PY) python scripts/run_experiments.py \
 		--methods full,svd,gaussian_rp,sparse_rp \
 		--dimensions 32,64,128,256 \
-		--seed 549
+		--seed 549 $(if $(SINCE),--since-days $(SINCE),) $(if $(QUERIES),--max-queries $(QUERIES),)
 
 ann:  ## Sweep approximate retrieval (IVF / IVF-PQ) against exact search
 	$(PY) python scripts/run_ann.py $(if $(SINCE),--since-days $(SINCE),)
