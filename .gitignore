@@ -27,6 +27,9 @@ newstrace*.db*
 data/raw/*
 !data/raw/.gitkeep
 data/cache/
+# Third-party benchmark corpora: fetched by scripts/run_beir.py --download,
+# redistributed by BEIR, not by this repository.
+data/beir/
 artifacts/*
 !artifacts/.gitkeep
 .newstrace_cache/

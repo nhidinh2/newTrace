@@ -1,0 +1,26 @@
+{
+  "n_lists": [
+    64
+  ],
+  "n_probes": [
+    1,
+    4,
+    8,
+    16
+  ],
+  "n_subvectors": [
+    0,
+    48,
+    96
+  ],
+  "n_bits": 8,
+  "top_k": 10,
+  "max_queries": 60,
+  "latency_repeats": 3,
+  "seed": 549,
+  "since_days": 30,
+  "compare_dimensions": [
+    32
+  ],
+  "artifacts_dir": null
+}
