@@ -104,7 +104,7 @@ def search(
     query: Annotated[str, typer.Argument(help="Natural-language query")],
     top_k: Annotated[int, typer.Option("--top-k", help="Number of results")] = 10,
     method: Annotated[
-        str, typer.Option(help="full | svd | gaussian_rp | sparse_rp | tfidf")
+        str, typer.Option(help="full | svd | gaussian_rp | sparse_rp | bm25 | tfidf")
     ] = "full",
     dimension: Annotated[int | None, typer.Option(help="Compressed dimension")] = None,
     topic: Annotated[str | None, typer.Option(help="Restrict to a topic")] = None,

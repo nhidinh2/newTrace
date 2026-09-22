@@ -14,10 +14,11 @@ from sqlalchemy.orm import Session
 from newstrace.config import Settings, get_settings
 from newstrace.logging import get_logger
 from newstrace.models import Article, ClusterMembership
-from newstrace.representations.projection import load_projector
 from newstrace.representations.registry import load_vectors
+from newstrace.retrieval import fulltext
 from newstrace.retrieval.exact import DenseRetriever, ScoredHit, TfidfRetriever
 from newstrace.retrieval.explain import evidence_excerpt, explain_hit
+from newstrace.retrieval.index import get_index
 from newstrace.retrieval.rerank import blend_pagerank, rerank_with_signals
 from newstrace.utils import ensure_utc
 
@@ -82,12 +83,18 @@ def _matching_article_ids(session: Session, filters: SearchFilters) -> set[int]:
         stmt = stmt.where(Article.is_near_duplicate.is_(False))
     ids = set(session.execute(stmt).scalars())
     if filters.entity:
-        needle = filters.entity.lower()
-        keep: set[int] = set()
-        for article in session.execute(select(Article).where(Article.id.in_(ids))).scalars():
-            if needle in article.body_text.lower():
-                keep.add(article.id)
-        ids = keep
+        # The full-text index answers this as a phrase query. The fallback --
+        # reading every remaining article and lowercasing its text in Python --
+        # only runs on a database predating the FTS5 table.
+        matched = fulltext.match_ids(session, filters.entity, phrase=True)
+        if matched is None:
+            needle = filters.entity.lower()
+            matched = {
+                article.id
+                for article in session.execute(select(Article).where(Article.id.in_(ids))).scalars()
+                if needle in article.body_text.lower()
+            }
+        ids &= matched
     return ids
 
 
@@ -113,35 +120,37 @@ def search(
             request.query, request.method, [], 0.0, 0, ["no articles matched the filters"]
         )
 
-    if request.method == "tfidf":
+    candidate_k = max(request.top_k * 4, request.top_k)
+    method = request.method
+    if method == "bm25" and not fulltext.available(session):
+        notes.append("no full-text index in this database; using the TF-IDF baseline")
+        method = "tfidf"
+
+    if method == "bm25":
+        hits = fulltext.bm25_hits(session, request.query, k=candidate_k, allowed_ids=allowed) or []
+    elif method == "tfidf":
         articles = list(session.execute(select(Article).where(Article.id.in_(allowed))).scalars())
         retriever: Any = TfidfRetriever([a.id for a in articles], [a.body_text for a in articles])
-        hits = retriever.search(request.query, k=max(request.top_k * 4, request.top_k))
+        hits = retriever.search(request.query, k=candidate_k)
     else:
-        vectors = load_vectors(
+        # Cached: building the matrix from stored blobs costs far more than the
+        # search itself, and the corpus changes only when something is ingested.
+        retriever = get_index(
             session,
-            method=request.method,
+            method=method,
             fit_version=request.fit_version,
             dimension=request.dimension,
+            settings=settings,
         )
-        if len(vectors) == 0:
-            if request.method != "full":
-                notes.append(
-                    f"no stored '{request.method}' vectors (dimension={request.dimension}); "
-                    "falling back to the full-dimensional baseline"
-                )
-                vectors = load_vectors(session, method="full")
-            if len(vectors) == 0:
-                return SearchResponse(
-                    request.query, request.method, [], 0.0, 0, ["no embeddings available"]
-                )
-        projector = _load_projector_for(session, vectors.method, vectors.fit_version)
-        retriever = DenseRetriever(
-            vectors.article_ids, vectors.matrix, method=vectors.method, projector=projector
-        )
-        hits = retriever.search(
-            request.query, k=max(request.top_k * 4, request.top_k), allowed_ids=allowed
-        )
+        if retriever is None and method != "full":
+            notes.append(
+                f"no stored '{method}' vectors (dimension={request.dimension}); "
+                "falling back to the full-dimensional baseline"
+            )
+            retriever = get_index(session, method="full", settings=settings)
+        if retriever is None:
+            return SearchResponse(request.query, method, [], 0.0, 0, ["no embeddings available"])
+        hits = retriever.search(request.query, k=candidate_k, allowed_ids=allowed)
 
     hits = [h for h in hits if h.article_id in allowed]
     candidates = len(hits)
@@ -190,35 +199,12 @@ def search(
 
     return SearchResponse(
         query=request.query,
-        method=hits[0].method if hits else request.method,
+        method=hits[0].method if hits else method,
         items=items,
         took_ms=(time.perf_counter() - started) * 1000.0,
         candidates_considered=candidates,
         notes=notes,
     )
-
-
-def _load_projector_for(session: Session, method: str, fit_version: str) -> Any:
-    """Load the saved projector matching a stored representation, if any."""
-    if method == "full":
-        return None
-    from pathlib import Path
-
-    from newstrace.models import ProjectionArtifact
-
-    artifact = session.execute(
-        select(ProjectionArtifact).where(ProjectionArtifact.fit_version == fit_version)
-    ).scalar_one_or_none()
-    if artifact is None:
-        logger.warning(
-            "No saved projector for fit_version=%s; queries may be mis-scaled", fit_version
-        )
-        return None
-    path = Path(artifact.path)
-    if not path.exists():
-        logger.warning("Projector artifact missing on disk: %s", path)
-        return None
-    return load_projector(path)
 
 
 def query_latency_benchmark(

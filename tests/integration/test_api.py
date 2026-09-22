@@ -97,6 +97,22 @@ def test_search_returns_evidence_and_explanations(api_client: TestClient) -> Non
     assert ranks == sorted(ranks, reverse=True)
 
 
+def test_search_over_bm25(api_client: TestClient) -> None:
+    response = api_client.post(
+        "/search", json={"query": "Atlas 3 agent benchmark", "method": "bm25", "top_k": 5}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["results"]
+    assert all("bm25" in r["ranking_method"] for r in body["results"])
+
+
+def test_health_reports_the_index_state(api_client: TestClient) -> None:
+    body = api_client.get("/health").json()
+    assert body["full_text_index"] is True
+    assert "entries" in body["retrieval_cache"]
+
+
 def test_search_excludes_duplicates_by_default(api_client: TestClient) -> None:
     default = api_client.post("/search", json={"query": "Atlas 3", "top_k": 10}).json()
     assert all(not r["is_near_duplicate"] for r in default["results"])

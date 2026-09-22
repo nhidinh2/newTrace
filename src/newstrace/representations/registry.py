@@ -149,6 +149,11 @@ def store_vectors(
             )
         written += 1
     session.flush()
+    # Overwriting a vector in place changes neither the row count nor the
+    # highest record id, so the cached index cannot detect it on its own.
+    from newstrace.retrieval.index import invalidate
+
+    invalidate(method)
     return written
 
 
