@@ -18,10 +18,11 @@ from sqlalchemy.orm import Session
 
 from newstrace.config import Settings, get_settings, load_source_policy, load_topics
 from newstrace.ingestion.base import IngestionResult, RawArticle
-from newstrace.ingestion.deduplicate import DuplicateDetector
+from newstrace.ingestion.deduplicate import DuplicateDetector, index_article
 from newstrace.ingestion.normalize import NormalizedArticle, normalize_article
 from newstrace.logging import get_logger
 from newstrace.models import Article, EmbeddingRecord, IngestionRun
+from newstrace.retrieval.fulltext import index_article_text
 from newstrace.utils import git_commit, utcnow
 
 logger = get_logger(__name__)
@@ -121,6 +122,7 @@ def persist_articles(
         session,
         title_threshold=settings.near_duplicate_title_threshold,
         window_hours=settings.near_duplicate_window_hours,
+        max_candidates=settings.near_duplicate_max_candidates,
     )
     result = IngestionResult(fetched=len(raw_articles))
 
@@ -173,6 +175,9 @@ def persist_articles(
             with session.begin_nested():
                 session.add(article)
             session.flush()
+            index_article(session, article)
+            index_article_text(session, article)
+            session.flush()
         except SQLAlchemyError as exc:
             session.rollback()
             result.failures += 1
@@ -211,6 +216,9 @@ def _enrich_existing(session: Session, article_id: int, normalized: NormalizedAr
         session.query(EmbeddingRecord).filter(EmbeddingRecord.article_id == article_id).delete(
             synchronize_session=False
         )
+        # The text this article is blocked and searched on just changed.
+        index_article(session, article)
+        index_article_text(session, article)
         session.flush()
     return changed
 

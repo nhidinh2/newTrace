@@ -109,6 +109,38 @@ strict as-of-time discipline that this system does not yet enforce.
 - Clustering quality is measured on the fixtures only; the live corpus has no
   labels to measure it against.
 
+## What the new indexes do and do not guarantee
+
+**Blocking is complete for the thresholds it was built against, not for any
+threshold.** Duplicate candidates come from SimHash bands and title prefix
+tokens. Eight 8-bit bands guarantee a shared band for any pair within seven
+flipped bits, and the excerpt rule accepts at most five; the title prefix is
+cut at a token Jaccard of 0.8, which is what a blended score of 0.9 requires.
+**Lower either threshold in `Settings` and the guarantee stops holding** --
+the candidate lookup would start missing pairs the scorer would have accepted.
+`near_duplicate_title_threshold` below 0.9 needs `TITLE_PREFIX_JACCARD`
+lowered with it. Verdict parity against the exhaustive scan was checked on a
+250-article sample of the live corpus (zero disagreements) and is asserted on
+the fixtures in `tests/unit/test_blocking.py`.
+
+**The candidate cap is a guard, not a sample.** `near_duplicate_max_candidates`
+(400) truncates only if a band collides pathologically, and it keeps the
+candidates sharing the most keys. The old fixed `LIMIT 2000` over the whole
+window was the opposite: an arbitrary subset, silently growing more arbitrary
+as the corpus grew.
+
+**The approximate index has no committed run.** `scripts/run_ann.py` reports
+recall against exact retrieval, which needs no judgments, precisely because
+the silver judgments cannot separate the representations. An indicative run is
+quoted in the README as indicative; it is not in the results table, and IVF-PQ
+being slower than the exhaustive scan at 6,320 vectors is a fact about that
+corpus size, not about the method.
+
+**The BEIR harness has not been run either.** It exists so the compression
+claim can be tested where human judgments exist; until it is run, the claim
+remains what the live sweep supports -- a statement about cost, not quality.
+Relevance is binarised there, so a graded qrel of 2 counts the same as 1.
+
 ## Models and determinism
 
 The default embedder is `all-MiniLM-L6-v2` (English, general-domain). Without the
