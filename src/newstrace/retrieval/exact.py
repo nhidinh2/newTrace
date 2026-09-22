@@ -7,7 +7,7 @@ adding once these numbers exist.
 from __future__ import annotations
 
 import time
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -66,10 +66,37 @@ class DenseRetriever:
         projector: Any = None,
     ) -> None:
         self.article_ids = list(article_ids)
+        # Normalised once, here. ``search`` scores with a plain matrix-vector
+        # product rather than ``cosine_scores`` so that the whole index is not
+        # re-normalised on every query.
         self.matrix = l2_normalize(np.asarray(matrix, dtype=np.float32))
         self.method = method
         self._embedder = embedder
         self.projector = projector
+        self._id_array = np.asarray(self.article_ids, dtype=np.int64)
+
+    def extend(self, article_ids: Sequence[int], matrix: Matrix) -> None:
+        """Append new rows in place; used to grow a cached index after ingest."""
+        if not len(article_ids):
+            return
+        block = l2_normalize(np.asarray(matrix, dtype=np.float32))
+        if block.shape[1] != self.matrix.shape[1]:
+            raise ValueError(
+                f"cannot extend a {self.matrix.shape[1]}-d index with {block.shape[1]}-d vectors"
+            )
+        self.matrix = np.vstack([self.matrix, block])
+        self.article_ids.extend(int(a) for a in article_ids)
+        self._id_array = np.asarray(self.article_ids, dtype=np.int64)
+
+    def _mask_for(self, allowed_ids: Collection[int]) -> NDArray[np.bool_]:
+        """Boolean row mask for ``allowed_ids``, vectorised.
+
+        ``np.isin`` sorts and searches in C. The obvious Python comprehension
+        over ``article_ids`` costs milliseconds per query once the corpus is a
+        few thousand articles, which is the same order as the search itself.
+        """
+        allowed = np.fromiter(allowed_ids, dtype=np.int64, count=len(allowed_ids))
+        return np.isin(self._id_array, allowed)
 
     @property
     def embedder(self) -> Embedder:
@@ -91,10 +118,9 @@ class DenseRetriever:
         allowed_ids: set[int] | None = None,
     ) -> list[ScoredHit]:
         vector = self.embed_query(query) if isinstance(query, str) else query
-        scores = cosine_scores(vector, self.matrix)
+        scores = self.score(vector)
         if allowed_ids is not None:
-            mask = np.array([aid in allowed_ids for aid in self.article_ids], dtype=bool)
-            scores = np.where(mask, scores, -np.inf).astype(np.float32)
+            scores = np.where(self._mask_for(allowed_ids), scores, -np.inf).astype(np.float32)
         hits: list[ScoredHit] = []
         for rank, idx in enumerate(top_k(scores, k), start=1):
             score = float(scores[idx])
@@ -110,6 +136,16 @@ class DenseRetriever:
                 )
             )
         return hits
+
+    def score(self, vector: NDArray[np.float32]) -> NDArray[np.float32]:
+        """Cosine scores against every row (the index is already normalised)."""
+        if self.matrix.size == 0:
+            return np.zeros(0, dtype=np.float32)
+        q = np.asarray(vector, dtype=np.float32).reshape(-1)
+        norm = float(np.linalg.norm(q))
+        if norm > 1e-9:
+            q = q / norm
+        return (self.matrix @ q).astype(np.float32)
 
     def memory_bytes(self) -> int:
         return int(self.matrix.nbytes)
@@ -161,7 +197,8 @@ class TfidfRetriever:
         q = self.vectorizer.transform([query])
         scores = np.asarray((self.matrix @ q.T).todense()).reshape(-1).astype(np.float32)
         if allowed_ids is not None:
-            mask = np.array([aid in allowed_ids for aid in self.article_ids], dtype=bool)
+            allowed = np.fromiter(allowed_ids, dtype=np.int64, count=len(allowed_ids))
+            mask = np.isin(np.asarray(self.article_ids, dtype=np.int64), allowed)
             scores = np.where(mask, scores, -np.inf).astype(np.float32)
         hits = []
         for rank, idx in enumerate(top_k(scores, k), start=1):

@@ -53,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError:
         print(
             "playwright is not installed. Install the optional extra:\n"
-            "  uv sync --extra screenshots && uv run playwright install chromium",
+            "  make setup && scripts/run.sh playwright install chromium",
             file=sys.stderr,
         )
         return 2

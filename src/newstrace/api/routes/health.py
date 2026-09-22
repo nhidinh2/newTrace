@@ -13,6 +13,8 @@ from newstrace.ingestion.pipeline import latest_run
 from newstrace.models import Article, StoryCluster
 from newstrace.representations.embedder import detect_device, get_embedder
 from newstrace.representations.registry import available_representations
+from newstrace.retrieval import fulltext
+from newstrace.retrieval.index import cache_stats, describe
 from newstrace.schemas import HealthResponse
 
 router = APIRouter(tags=["system"])
@@ -59,4 +61,6 @@ def health(session: Session = Depends(get_db)) -> HealthResponse:
             else None
         ),
         representations=available_representations(session),
+        retrieval_cache={**cache_stats(), "resident": describe()},
+        full_text_index=fulltext.available(session),
     )

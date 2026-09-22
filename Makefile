@@ -1,17 +1,19 @@
 # NewsTrace convenience targets.
-# Every target uses `uv run`; see README for the pip fallback.
+#
+# Commands run through scripts/run.sh, which uses uv when it is installed and
+# the project virtualenv when it is not -- a missing uv used to fail every
+# target on a checkout that already had a working .venv.
 
-UV ?= uv
-PY ?= $(UV) run
+PY ?= scripts/run.sh
 
 .DEFAULT_GOAL := help
-.PHONY: help setup db demo api ui ingest experiment report labels screenshots test lint format typecheck check fixtures clean
+.PHONY: help setup db demo api ui refresh ingest experiment ann beir backfill report labels screenshots test coverage lint format typecheck check fixtures clean
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-setup:  ## Install dependencies and create .env
-	$(UV) sync --all-extras
+setup:  ## Install dependencies and create .env (uv if present, pip into .venv otherwise)
+	$(PY) --sync
 	@test -f .env || cp .env.example .env
 	@echo "Setup complete. Run 'make db' next."
 
@@ -27,6 +29,9 @@ api:  ## Serve the FastAPI application
 ui:  ## Serve the Streamlit interface
 	$(PY) streamlit run app/streamlit_app.py
 
+refresh:  ## Pull fresh RSS + GDELT articles (override TOPIC/TIMESPAN)
+	TIMESPAN=$(or $(TIMESPAN),24h) scripts/refresh.sh $(TOPIC)
+
 ingest:  ## Live GDELT ingestion (override TOPIC/TIMESPAN/MAX)
 	$(PY) newstrace ingest --source gdelt $(if $(TOPIC),--topic $(TOPIC),) \
 		--timespan $(or $(TIMESPAN),24h) --max-records $(or $(MAX),250)
@@ -36,6 +41,16 @@ experiment:  ## Run the dimensionality-reduction sweep
 		--methods full,svd,gaussian_rp,sparse_rp \
 		--dimensions 32,64,128,256 \
 		--seed 549
+
+ann:  ## Sweep approximate retrieval (IVF / IVF-PQ) against exact search
+	$(PY) python scripts/run_ann.py $(if $(SINCE),--since-days $(SINCE),)
+
+beir:  ## Run the compression sweep on a BEIR dataset (DATASET=scifact, DOWNLOAD=1 first time)
+	$(PY) python scripts/run_beir.py --dataset $(or $(DATASET),scifact) \
+		$(if $(DOWNLOAD),--download,)
+
+backfill:  ## Build blocking keys and the full-text index for an existing database
+	$(PY) python scripts/backfill_search_indexes.py
 
 report:  ## Re-render the report for the latest experiment
 	$(PY) python scripts/export_report.py
@@ -51,6 +66,9 @@ fixtures:  ## Regenerate the synthetic fixtures
 
 test:  ## Run the test suite (network tests excluded)
 	$(PY) pytest -q
+
+coverage:  ## Run the test suite with a coverage report
+	$(PY) pytest -q --cov=newstrace --cov-report=term-missing
 
 lint:  ## Lint and check formatting
 	$(PY) ruff format --check .
