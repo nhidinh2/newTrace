@@ -138,6 +138,7 @@ def column_config(frame: pd.DataFrame) -> dict[str, object]:
 
 
 METHOD_LABELS = {
+    "bm25": "BM25 (lexical)",
     "full": "Full",
     "gaussian_rp": "Gaussian RP",
     "sparse_rp": "Sparse RP",
@@ -457,6 +458,7 @@ def page_search() -> None:
             reps = available_representations(session)
             methods = [
                 "full",
+                "bm25",
                 "tfidf",
                 *sorted({str(r["method"]) for r in reps if r["method"] != "full"}),
             ]
@@ -464,7 +466,7 @@ def page_search() -> None:
             dims = sorted({int(r["dimension"]) for r in reps if r["method"] == method})
             dimension = (
                 st.selectbox("Dimension", dims)
-                if dims and method not in ("full", "tfidf")
+                if dims and method not in ("full", "bm25", "tfidf")
                 else None
             )
             domain = st.text_input("Limit to source domain", value="")

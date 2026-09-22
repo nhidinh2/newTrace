@@ -266,12 +266,80 @@ for the 2,609 new articles of run 4, with p50 cluster-update latency 1.1 ms and
 p95 18.5 ms. The gap between 21 and 118 is entirely HTTP: 36 feeds fetched
 politely with a per-host interval.
 
+Duplicate detection no longer scales with the corpus. It used to compare each
+incoming article against every non-duplicate article in a 96-hour window,
+capped at 2,000 rows, recomputing a 64-bit SimHash for both sides of every
+pair. It now retrieves candidates by shared blocking key. Measured on the
+6,320-article live corpus, over a 250-article sample:
+
+| | Window scan | Blocking |
+| --- | ---: | ---: |
+| Candidates per article | 644 | 25 |
+| Scoring time per article | 20.8 ms | 1.9 ms |
+| Verdicts that differ | — | 0 |
+
+The scoring-time column compares like with like: both sides used the stored
+SimHash. Against the original code, which hashed both excerpts per pair at
+0.57 ms a pair, the old path cost hundreds of milliseconds an article. The
+throughput figures above predate the change and are unaffected by it -- they
+were measured on 135 articles, where the window scan had almost nothing to
+scan. The point of the change is what happens at 6,320 and beyond.
+
 Run 3 is kept in the table deliberately. GDELT answers 429 with "limit requests
 to one every 5 seconds" and applies a longer-term per-IP allowance on top; the
 windowed sweep exhausted its retries, the run was recorded as `failed`, and the
 stored corpus was untouched. That is the acceptance criterion for Milestone 1
 ("live ingestion failure does not corrupt the database") being exercised for
 real rather than in a test.
+
+## Approximate retrieval
+
+`scripts/run_ann.py` measures the other way of buying memory and latency: an
+inverted file over the full-dimensional vectors, with or without product
+quantisation, against the exhaustive scan over the same vectors.
+
+It reports two different things, deliberately:
+
+- **recall@10 against exact retrieval** -- of the ten documents the exhaustive
+  scan returns, how many does the approximate index return. This needs no
+  relevance judgments and is a property of the index alone, which is what
+  makes it usable on this corpus at all.
+- **nDCG@10 against the silver judgments** -- the same weak signal the
+  compression sweep uses, reported so the two arms can be compared, and read
+  with the same caution.
+
+Every row carries the fraction of the corpus its vectors cover. A compressed
+representation stored by an earlier sweep covers only the articles that
+existed then, and scoring it against an exact baseline over the whole corpus
+reads as a quality collapse when it is really a stale index; re-run
+`scripts/run_experiments.py` before comparing those rows.
+
+```bash
+make ann                       # defaults: 64 lists, probes 1/4/8/16, PQ 0/48/96
+python scripts/run_ann.py --lists 128 --probes 1,8,32 --subvectors 96 --since-days 30
+```
+
+## Public benchmark (BEIR)
+
+The live sweep's conclusion is that 23 silver queries cannot separate the
+representations. `scripts/run_beir.py` runs the identical projectors on a
+dataset that has human judgments and enough queries for a paired interval to
+mean something:
+
+```bash
+python scripts/run_beir.py --download --dataset scifact
+python scripts/run_beir.py --dataset scifact --dimensions 32,64,128,256
+```
+
+The output table is the same shape as the live one -- nDCG@10, Recall@10,
+top-10 overlap with the full-dimensional baseline, index memory, p95 -- plus a
+paired bootstrap interval on the nDCG delta against `full`. Projectors are
+fitted on a random 60% of the corpus and scored on all of it, mirroring the
+chronological fit used on the live corpus; relevance is binarised.
+
+Nothing in this section has a committed run. The harness is tested on a
+synthetic dataset in `tests/unit/test_beir.py`; the numbers are for whoever
+runs it.
 
 ## Reproducing
 
@@ -286,10 +354,10 @@ The live run, against a separate database so the fixture demo stays intact:
 ```bash
 export NEWSTRACE_DATABASE_URL=sqlite:///./newstrace_live.db
 export NEWSTRACE_TOPICS_FILE=configs/topics.live.yaml
-uv run alembic upgrade head
-uv run newstrace ingest --source rss
-uv run newstrace ingest --source gdelt --timespan 7d --windows 7
-uv run python scripts/run_experiments.py --since-days 30 --max-queries 200 --seed 549
+scripts/run.sh alembic upgrade head
+scripts/run.sh newstrace ingest --source rss
+scripts/run.sh newstrace ingest --source gdelt --timespan 7d --windows 7
+scripts/run.sh python scripts/run_experiments.py --since-days 30 --max-queries 200 --seed 549
 ```
 
 Seeded runs reproduce exactly on a *fixed* corpus. The live corpus is not
