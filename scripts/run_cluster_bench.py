@@ -41,6 +41,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Grid swept on the dev split",
     )
     parser.add_argument("--no-tune", action="store_true", help="Score the shipped threshold only")
+    parser.add_argument(
+        "--no-learn", action="store_true", help="Tune the threshold but keep the shipped weights"
+    )
     parser.add_argument("--window-hours", type=int, default=None)
     parser.add_argument("--max-documents", type=int, default=None, help="Prefix of each stream")
     parser.add_argument("--seed", type=int, default=549)
@@ -56,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         language=args.language,
         thresholds=[float(t) for t in args.thresholds.split(",") if t.strip()],
         tune=not args.no_tune,
+        learn_weights=not args.no_learn,
         window_hours=args.window_hours,
         max_documents=args.max_documents,
         seed=args.seed,

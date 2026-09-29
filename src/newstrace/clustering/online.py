@@ -151,6 +151,31 @@ class OnlineClusterer:
     def article_features(article: Article) -> tuple[set[str], set[str]]:
         return content_tokens(article.title), set(extract_entities(article.body_text))
 
+    def signals(
+        self,
+        article: Article,
+        vector: Vector,
+        cluster: StoryCluster,
+        *,
+        features: tuple[set[str], set[str]] | None = None,
+    ) -> tuple[float, float, float]:
+        """The raw (cosine, title overlap, entity overlap) that ``score`` blends.
+
+        ``features`` is the article's (title tokens, entities), which ``assign``
+        extracts once rather than per candidate: entity extraction dominates the
+        cost, and an article is scored against every story in the window."""
+        centroid = from_blob(cluster.centroid_blob, cluster.centroid_dimension or vector.shape[0])
+        denom = float(np.linalg.norm(vector) * np.linalg.norm(centroid))
+        cosine = float(np.dot(vector, centroid) / denom) if denom > 1e-9 else 0.0
+        cluster_title_tokens = set((cluster.extra or {}).get("title_tokens") or [])
+        cluster_entities = set((cluster.extra or {}).get("entities") or [])
+        title_tokens, entities = features or self.article_features(article)
+        return (
+            cosine,
+            jaccard(title_tokens, cluster_title_tokens),
+            jaccard(entities, cluster_entities),
+        )
+
     def score(
         self,
         article: Article,
@@ -159,18 +184,10 @@ class OnlineClusterer:
         *,
         features: tuple[set[str], set[str]] | None = None,
     ) -> float:
-        """Score one candidate. ``features`` is the article's (title tokens,
-        entities), which ``assign`` extracts once rather than per candidate:
-        entity extraction dominates the cost, and an article is scored against
-        every story in the window."""
-        centroid = from_blob(cluster.centroid_blob, cluster.centroid_dimension or vector.shape[0])
-        denom = float(np.linalg.norm(vector) * np.linalg.norm(centroid))
-        cosine = float(np.dot(vector, centroid) / denom) if denom > 1e-9 else 0.0
-        cluster_title_tokens = set((cluster.extra or {}).get("title_tokens") or [])
-        cluster_entities = set((cluster.extra or {}).get("entities") or [])
-        title_tokens, entities = features or self.article_features(article)
-        title_overlap = jaccard(title_tokens, cluster_title_tokens)
-        entity_overlap = jaccard(entities, cluster_entities)
+        """Score one candidate; see ``signals`` for ``features``."""
+        cosine, title_overlap, entity_overlap = self.signals(
+            article, vector, cluster, features=features
+        )
         return combined_score(
             cosine,
             title_overlap,

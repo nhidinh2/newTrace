@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from sklearn.linear_model import LogisticRegression
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -44,7 +45,7 @@ from newstrace.clustering.online import OnlineClusterer, default_threshold
 from newstrace.config import Settings, get_settings
 from newstrace.evaluation.clustering import evaluate_clustering
 from newstrace.logging import get_logger
-from newstrace.models import Article, Base
+from newstrace.models import Article, Base, StoryCluster
 from newstrace.representations.embedder import Embedder, get_embedder
 from newstrace.utils import set_global_seed
 
@@ -68,7 +69,9 @@ PUBLISHED_EN: list[dict[str, Any]] = [
     {"system": "Miranda et al.: + timestamps", "f1": 94.1, "precision": 98.2, "recall": 90.3},
 ]
 
-DEFAULT_GRID = tuple(round(x, 3) for x in np.arange(0.50, 0.975, 0.025))
+# Wide enough for both blends: learned weights put more of the score in the
+# overlap bonuses, which moves the best threshold down (0.425 on the English dev split).
+DEFAULT_GRID = tuple(round(x, 3) for x in np.arange(0.30, 0.975, 0.025))
 
 
 @dataclass
@@ -77,6 +80,7 @@ class ClusterBenchConfig:
     language: str = "eng"
     thresholds: list[float] = field(default_factory=lambda: list(DEFAULT_GRID))
     tune: bool = True
+    learn_weights: bool = True
     window_hours: int | None = None
     max_documents: int | None = None
     seed: int = 549
@@ -229,6 +233,105 @@ def cluster_stream(
         engine.dispose()
 
 
+@dataclass
+class LearnedWeights:
+    """Blend weights fitted on labelled pairs, plus the fit they came from."""
+
+    title_weight: float
+    entity_weight: float
+    coefficients: list[float]
+    intercept: float
+    implied_threshold: float
+    pairs: int
+    positives: int
+
+    def as_dict(self) -> dict[str, Any]:
+        return {k: round(v, 4) if isinstance(v, float) else v for k, v in asdict(self).items()}
+
+
+def oracle_signals(
+    documents: Sequence[BenchDocument],
+    vectors: np.ndarray,
+    *,
+    settings: Settings,
+    window_hours: int | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Replay the stream with the gold assignments and record, for every article,
+    the clusterer's (cosine, title, entity) signals against each story in its
+    window, labelled by whether that story is the article's own.
+
+    Stories evolve exactly as the production clusterer evolves them -- centroid,
+    title tokens, entities, time span -- but membership comes from the labels, so
+    the training pairs do not inherit the clusterer's own mistakes. Miranda et al.
+    train their ranker the same way.
+    """
+    engine = create_engine("sqlite://", future=True)
+    Base.metadata.create_all(engine)
+    rows: list[tuple[float, float, float]] = []
+    labels: list[bool] = []
+    try:
+        with Session(engine) as session:
+            articles = [_as_article(i, d) for i, d in enumerate(documents)]
+            session.add_all(articles)
+            session.flush()
+            clusterer = OnlineClusterer(session, settings=settings, window_hours=window_hours)
+            stories: dict[str, StoryCluster] = {}
+            for i, (document, article) in enumerate(zip(documents, articles, strict=True)):
+                own = stories.get(document.cluster)
+                features = clusterer.article_features(article)
+                for cluster in clusterer.candidate_clusters(article.published_at, article.topic):
+                    rows.append(clusterer.signals(article, vectors[i], cluster, features=features))
+                    labels.append(own is not None and cluster.id == own.id)
+                # The clusterer's own state updates, driven by the label instead
+                # of by its decision.
+                if own is None:
+                    own = stories[document.cluster] = clusterer._new_cluster(article, vectors[i])
+                clusterer._record(article, own, vectors[i], 1.0, "oracle")
+    finally:
+        engine.dispose()
+    return np.asarray(rows, dtype=np.float64).reshape(-1, 3), np.asarray(labels, dtype=bool)
+
+
+def fit_weights(signals: np.ndarray, labels: np.ndarray) -> LearnedWeights:
+    """Fit the title and entity weights of ``combined_score`` by logistic regression.
+
+    The model's boundary ``a*cos + b*title + c*entity + d = 0`` is the blend
+    ``cos + (b/a)*title + (c/a)*entity = -d/a``, so the ratios are the weights in
+    the units the threshold is already in, and the production scorer needs no
+    change to use them. The threshold is still swept on dev rather than taken
+    from ``-d/a``: the pairwise boundary is not the clustering decision, which
+    takes the best candidate first and thresholds second.
+    """
+    if not labels.any() or labels.all():
+        raise ValueError("fitting blend weights needs both matching and non-matching pairs")
+    model = LogisticRegression(C=1e4, max_iter=5000).fit(signals, labels)
+    cosine, title, entity = (float(c) for c in model.coef_[0])
+    intercept = float(model.intercept_[0])
+    if cosine <= 0:
+        raise ValueError(
+            f"cosine got a non-positive coefficient ({cosine:.3f}); "
+            "the blend cannot express this fit"
+        )
+    return LearnedWeights(
+        title_weight=title / cosine,
+        entity_weight=entity / cosine,
+        coefficients=[cosine, title, entity],
+        intercept=intercept,
+        implied_threshold=-intercept / cosine,
+        pairs=int(labels.size),
+        positives=int(labels.sum()),
+    )
+
+
+def _with_weights(settings: Settings, weights: LearnedWeights) -> Settings:
+    return settings.model_copy(
+        update={
+            "cluster_title_overlap_weight": weights.title_weight,
+            "cluster_entity_overlap_weight": weights.entity_weight,
+        }
+    )
+
+
 def _truth(documents: Sequence[BenchDocument]) -> dict[int, int]:
     ids: dict[str, int] = {}
     return {i + 1: ids.setdefault(d.cluster, len(ids)) for i, d in enumerate(documents)}
@@ -247,6 +350,8 @@ def _score(
     metrics = evaluate_clustering(_truth(documents), predicted).as_dict()
     return {
         "threshold": round(float(threshold), 4),
+        "title_weight": round(settings.cluster_title_overlap_weight, 4),
+        "entity_weight": round(settings.cluster_entity_overlap_weight, 4),
         **metrics,
         "cluster_seconds": round(seconds, 2),
         "articles_per_second": round(len(documents) / seconds, 1) if seconds else None,
@@ -266,10 +371,38 @@ def _describe(documents: Sequence[BenchDocument]) -> dict[str, Any]:
     }
 
 
+def _sweep(
+    documents: Sequence[BenchDocument],
+    vectors: np.ndarray,
+    settings: Settings,
+    config: ClusterBenchConfig,
+    name: str,
+) -> tuple[list[dict[str, Any]], float]:
+    sweep = []
+    for threshold in config.thresholds:
+        row = _score(documents, vectors, threshold, settings, config)
+        sweep.append(row)
+        logger.info(
+            "dev %s threshold=%.3f pairwise F1=%.4f (%s clusters)",
+            name,
+            threshold,
+            row["pairwise_f1"],
+            row["predicted_clusters"],
+        )
+    # Pairwise F1 is what the paper selects and reports on; ties go to the
+    # higher threshold, which fragments rather than merges.
+    best = max(sweep, key=lambda r: (r["pairwise_f1"], r["threshold"]))["threshold"]
+    return sweep, best
+
+
 def run_cluster_bench(
     config: ClusterBenchConfig | None = None, *, settings: Settings | None = None
 ) -> dict[str, Any]:
-    """Tune the threshold on dev (optionally), then score shipped and tuned on test."""
+    """Tune on dev (optionally), then score the shipped and dev-fitted settings on test.
+
+    ``dev-tuned`` keeps the shipped blend weights and fits only the threshold;
+    ``dev-learned`` also fits the weights (``fit_weights``), then its threshold.
+    """
     settings = settings or get_settings()
     config = config or ClusterBenchConfig()
     set_global_seed(config.seed)
@@ -284,28 +417,42 @@ def run_cluster_bench(
     embed_seconds = time.perf_counter() - started
 
     sweep: list[dict[str, Any]] = []
+    learned_sweep: list[dict[str, Any]] = []
     tuned: float | None = None
+    learned: LearnedWeights | None = None
+    learned_threshold: float | None = None
     dev: list[BenchDocument] = []
     if config.tune:
         dev = load_split(config, "dev", settings)
         dev_vectors = _embed(dev, embedder)
-        for threshold in config.thresholds:
-            row = _score(dev, dev_vectors, threshold, settings, config)
-            sweep.append(row)
-            logger.info(
-                "dev threshold=%.3f pairwise F1=%.4f (%s clusters)",
-                threshold,
-                row["pairwise_f1"],
-                row["predicted_clusters"],
+        sweep, tuned = _sweep(dev, dev_vectors, settings, config, "shipped weights")
+        if config.learn_weights:
+            signals, labels = oracle_signals(
+                dev, dev_vectors, settings=settings, window_hours=config.window_hours
             )
-        # Pairwise F1 is what the paper selects and reports on; ties go to the
-        # higher threshold, which fragments rather than merges.
-        tuned = max(sweep, key=lambda r: (r["pairwise_f1"], r["threshold"]))["threshold"]
+            learned = fit_weights(signals, labels)
+            logger.info(
+                "learned weights on %s dev pairs: title=%.3f entity=%.3f",
+                learned.pairs,
+                learned.title_weight,
+                learned.entity_weight,
+            )
+            learned_sweep, learned_threshold = _sweep(
+                dev, dev_vectors, _with_weights(settings, learned), config, "learned weights"
+            )
 
     results = [{"setting": "shipped", **_score(test, test_vectors, shipped, settings, config)}]
     if tuned is not None and abs(tuned - shipped) > 1e-9:
         results.append(
             {"setting": "dev-tuned", **_score(test, test_vectors, tuned, settings, config)}
+        )
+    if learned is not None and learned_threshold is not None:
+        fitted = _with_weights(settings, learned)
+        results.append(
+            {
+                "setting": "dev-learned",
+                **_score(test, test_vectors, learned_threshold, fitted, config),
+            }
         )
     for row in results:
         logger.info(
@@ -333,15 +480,19 @@ def run_cluster_bench(
             "window_hours": config.window_hours or settings.cluster_window_hours,
             "title_overlap_weight": settings.cluster_title_overlap_weight,
             "entity_overlap_weight": settings.cluster_entity_overlap_weight,
+            "learned_weights": learned.as_dict() if learned else None,
+            "dev_learned_threshold": learned_threshold,
         },
         "results": results,
         "dev_sweep": sweep,
+        "dev_sweep_learned": learned_sweep,
         "published": PUBLISHED_EN if config.language == "eng" else [],
         "notes": [
             "Pairwise P/R/F1 over all test documents of the language, as in Miranda et "
             "al. (2018), so the published rows are directly comparable.",
             "The published systems are supervised (an SVM ranker trained on the train "
-            "split); NewsTrace fits one threshold on dev and nothing else.",
+            "split). NewsTrace fits a threshold on dev (dev-tuned), or two blend weights "
+            "and then a threshold (dev-learned); nothing is fitted on test.",
             "The embedder sees the headline and the start of the body only: "
             "all-MiniLM-L6-v2 truncates input at 256 word pieces.",
             "No confidence intervals: resampling stories does not give a clean "
@@ -361,26 +512,30 @@ def render_table(metrics: dict[str, Any]) -> str:
         f"stories from {test.get('sources', 0)} sources, replayed in publication order; "
         f"embedder `{dataset.get('embedding_model', '?')}`.",
         "",
-        "| System | threshold | pairwise F1 | P | R | B-cubed F1 | stories predicted |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| System | title w | entity w | threshold | pairwise F1 | P | R | B-cubed F1 "
+        "| stories predicted |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in metrics.get("results", []):
         lines.append(
-            f"| NewsTrace, {row['setting']} | {row['threshold']:.3f} | "
+            f"| NewsTrace, {row['setting']} | {row.get('title_weight', float('nan')):.2f} | "
+            f"{row.get('entity_weight', float('nan')):.2f} | {row['threshold']:.3f} | "
             f"{100 * row['pairwise_f1']:.1f} | {100 * row['pairwise_precision']:.1f} | "
             f"{100 * row['pairwise_recall']:.1f} | {100 * row['bcubed_f1']:.1f} | "
             f"{int(row['predicted_clusters'])} |"
         )
     for row in metrics.get("published", []):
         lines.append(
-            f"| {row['system']} | - | {row['f1']:.1f} | {row['precision']:.1f} | "
+            f"| {row['system']} | - | - | - | {row['f1']:.1f} | {row['precision']:.1f} | "
             f"{row['recall']:.1f} | - | - |"
         )
-    sweep = metrics.get("dev_sweep") or []
-    if sweep:
+    for key, label in (("dev_sweep", "shipped weights"), ("dev_sweep_learned", "learned weights")):
+        sweep = metrics.get(key) or []
+        if not sweep:
+            continue
         lines += [
             "",
-            "Dev sweep (threshold selected on pairwise F1):",
+            f"Dev sweep, {label} (threshold selected on pairwise F1):",
             "",
             "| threshold | pairwise F1 | P | R | stories predicted |",
             "| ---: | ---: | ---: | ---: | ---: |",
