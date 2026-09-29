@@ -9,7 +9,12 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from newstrace.clustering.online import OnlineClusterer, combined_score, content_tokens
+from newstrace.clustering.online import (
+    OnlineClusterer,
+    combined_score,
+    content_tokens,
+    time_gap_days,
+)
 from newstrace.evaluation.clustering import (
     bcubed_scores,
     evaluate_clustering,
@@ -31,6 +36,23 @@ def test_combined_score_boosts_and_clamps() -> None:
     assert boosted == pytest.approx(0.8)
     assert combined_score(1.0, 1.0, 1.0, title_weight=0.2, entity_weight=0.1) == 1.0
     assert combined_score(-5.0, 0.0, 0.0, title_weight=0.2, entity_weight=0.1) == 0.0
+
+
+def test_combined_score_time_penalty_is_off_by_default() -> None:
+    weights = {"title_weight": 0.2, "entity_weight": 0.1}
+    assert combined_score(0.7, 0.0, 0.0, gap_days=3.0, **weights) == pytest.approx(0.7)
+    penalised = combined_score(0.7, 0.0, 0.0, gap_days=2.0, time_weight=0.1, **weights)
+    assert penalised == pytest.approx(0.5)
+
+
+def test_time_gap_is_measured_to_the_nearest_end_of_the_story() -> None:
+    story = StoryCluster(
+        first_published_at=BASE_TIME, last_published_at=BASE_TIME + timedelta(days=1)
+    )
+    assert time_gap_days(BASE_TIME + timedelta(hours=12), story) == 0.0
+    assert time_gap_days(BASE_TIME + timedelta(days=3), story) == pytest.approx(2.0)
+    assert time_gap_days(BASE_TIME - timedelta(hours=6), story) == pytest.approx(0.25)
+    assert time_gap_days(None, story) == 0.0
 
 
 def test_content_tokens_drops_stopwords() -> None:

@@ -2,14 +2,15 @@
 
 8726 test documents in 222 human-labelled stories from 1935 sources, replayed in publication order; embedder `sentence-transformers/all-MiniLM-L6-v2`.
 
-| System | title w | entity w | threshold | pairwise F1 | P | R | B-cubed F1 | stories predicted |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| NewsTrace, shipped | 0.20 | 0.10 | 0.880 | 10.2 | 99.7 | 5.3 | 33.4 | 3215 |
-| NewsTrace, dev-tuned | 0.20 | 0.10 | 0.425 | 92.2 | 97.4 | 87.4 | 91.0 | 502 |
-| NewsTrace, dev-learned | 0.43 | 0.52 | 0.425 | 91.3 | 97.0 | 86.2 | 90.7 | 478 |
-| CluStream (Aggarwal & Yu 2006) | - | - | - | 79.0 | 98.6 | 65.9 | - | - |
-| Miranda et al.: tokens+lemmas+entities | - | - | - | 92.7 | 92.9 | 92.5 | - | - |
-| Miranda et al.: + timestamps | - | - | - | 94.1 | 98.2 | 90.3 | - | - |
+| System | title w | entity w | time w/day | threshold | pairwise F1 | P | R | B-cubed F1 | stories predicted |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| NewsTrace, shipped | 0.20 | 0.10 | 0.000 | 0.880 | 10.2 | 99.7 | 5.3 | 33.4 | 3215 |
+| NewsTrace, dev-tuned | 0.20 | 0.10 | 0.000 | 0.425 | 92.2 | 97.4 | 87.4 | 91.0 | 502 |
+| NewsTrace, dev-learned-time | 0.20 | 0.10 | 0.218 | 0.550 | 83.8 | 97.9 | 73.2 | 86.1 | 880 |
+| NewsTrace, dev-learned | 0.52 | 0.64 | 0.218 | 0.400 | 96.9 | 97.5 | 96.2 | 92.6 | 534 |
+| CluStream (Aggarwal & Yu 2006) | - | - | - | - | 79.0 | 98.6 | 65.9 | - | - |
+| Miranda et al.: tokens+lemmas+entities | - | - | - | - | 92.7 | 92.9 | 92.5 | - | - |
+| Miranda et al.: + timestamps | - | - | - | - | 94.1 | 98.2 | 90.3 | - | - |
 
 Dev sweep, shipped weights (threshold selected on pairwise F1):
 
@@ -43,39 +44,71 @@ Dev sweep, shipped weights (threshold selected on pairwise F1):
 | 0.925 | 17.5 | 98.9 | 9.6 | 5909 |
 | 0.950 | 12.9 | 98.9 | 6.9 | 6623 |
 
-Dev sweep, learned weights (threshold selected on pairwise F1):
+Dev sweep, dev-learned-time (threshold selected on pairwise F1):
 
 | threshold | pairwise F1 | P | R | stories predicted |
 | ---: | ---: | ---: | ---: | ---: |
-| 0.300 | 76.5 | 64.3 | 94.4 | 669 |
-| 0.325 | 79.4 | 68.6 | 94.3 | 753 |
-| 0.350 | 83.5 | 75.8 | 92.8 | 839 |
-| 0.375 | 85.4 | 78.8 | 93.1 | 930 |
-| 0.400 | 86.5 | 80.8 | 93.0 | 1010 |
-| 0.425 | 87.0 | 82.2 | 92.3 | 1094 |
-| 0.450 | 85.5 | 82.1 | 89.0 | 1163 |
-| 0.475 | 85.9 | 83.5 | 88.4 | 1227 |
-| 0.500 | 83.8 | 83.6 | 83.9 | 1298 |
-| 0.525 | 84.4 | 84.2 | 84.7 | 1363 |
-| 0.550 | 86.3 | 90.4 | 82.5 | 1430 |
-| 0.575 | 82.4 | 91.1 | 75.2 | 1496 |
-| 0.600 | 81.3 | 91.2 | 73.3 | 1572 |
-| 0.625 | 80.8 | 92.3 | 71.8 | 1665 |
-| 0.650 | 79.9 | 96.5 | 68.2 | 1756 |
-| 0.675 | 76.4 | 97.0 | 62.9 | 1874 |
-| 0.700 | 70.8 | 97.2 | 55.6 | 1996 |
-| 0.725 | 68.5 | 97.3 | 52.9 | 2121 |
-| 0.750 | 63.5 | 97.4 | 47.1 | 2243 |
-| 0.775 | 60.9 | 96.8 | 44.4 | 2409 |
-| 0.800 | 55.6 | 97.4 | 38.9 | 2593 |
-| 0.825 | 47.7 | 97.9 | 31.5 | 2811 |
-| 0.850 | 40.4 | 98.3 | 25.4 | 3086 |
-| 0.875 | 35.3 | 97.5 | 21.6 | 3347 |
-| 0.900 | 30.8 | 98.4 | 18.3 | 3653 |
-| 0.925 | 27.2 | 98.5 | 15.8 | 3983 |
-| 0.950 | 23.4 | 98.5 | 13.3 | 4370 |
+| 0.300 | 86.8 | 80.8 | 93.8 | 985 |
+| 0.325 | 87.6 | 82.3 | 93.6 | 1064 |
+| 0.350 | 88.0 | 83.4 | 93.0 | 1134 |
+| 0.375 | 88.3 | 84.3 | 92.7 | 1204 |
+| 0.400 | 88.1 | 84.5 | 92.0 | 1274 |
+| 0.425 | 88.2 | 85.3 | 91.4 | 1354 |
+| 0.450 | 87.2 | 85.1 | 89.3 | 1432 |
+| 0.475 | 86.9 | 85.1 | 88.8 | 1498 |
+| 0.500 | 85.5 | 84.9 | 86.2 | 1572 |
+| 0.525 | 86.1 | 86.0 | 86.2 | 1634 |
+| 0.550 | 88.6 | 93.6 | 84.0 | 1728 |
+| 0.575 | 87.2 | 93.5 | 81.7 | 1825 |
+| 0.600 | 86.5 | 93.9 | 80.1 | 1938 |
+| 0.625 | 82.4 | 94.1 | 73.2 | 2059 |
+| 0.650 | 80.5 | 97.3 | 68.7 | 2194 |
+| 0.675 | 78.0 | 97.2 | 65.1 | 2378 |
+| 0.700 | 76.1 | 97.3 | 62.5 | 2578 |
+| 0.725 | 71.4 | 97.5 | 56.3 | 2791 |
+| 0.750 | 68.5 | 97.4 | 52.8 | 3078 |
+| 0.775 | 64.0 | 97.4 | 47.6 | 3442 |
+| 0.800 | 50.2 | 97.2 | 33.8 | 3854 |
+| 0.825 | 41.7 | 97.5 | 26.5 | 4348 |
+| 0.850 | 34.5 | 97.6 | 21.0 | 4931 |
+| 0.875 | 26.8 | 99.0 | 15.5 | 5564 |
+| 0.900 | 20.2 | 99.2 | 11.3 | 6170 |
+| 0.925 | 14.9 | 99.7 | 8.0 | 6823 |
+| 0.950 | 10.9 | 99.7 | 5.8 | 7409 |
+
+Dev sweep, dev-learned (threshold selected on pairwise F1):
+
+| threshold | pairwise F1 | P | R | stories predicted |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.300 | 87.5 | 82.0 | 93.8 | 942 |
+| 0.325 | 87.8 | 82.6 | 93.8 | 1002 |
+| 0.350 | 87.9 | 83.3 | 93.1 | 1088 |
+| 0.375 | 88.2 | 84.0 | 92.9 | 1139 |
+| 0.400 | 88.3 | 84.4 | 92.6 | 1198 |
+| 0.425 | 88.2 | 85.0 | 91.6 | 1284 |
+| 0.450 | 86.6 | 85.0 | 88.1 | 1350 |
+| 0.475 | 86.5 | 85.1 | 88.0 | 1405 |
+| 0.500 | 83.4 | 84.3 | 82.6 | 1474 |
+| 0.525 | 82.3 | 84.2 | 80.5 | 1533 |
+| 0.550 | 84.7 | 91.9 | 78.5 | 1594 |
+| 0.575 | 84.3 | 93.0 | 77.1 | 1657 |
+| 0.600 | 82.8 | 92.9 | 74.7 | 1732 |
+| 0.625 | 82.1 | 93.3 | 73.3 | 1822 |
+| 0.650 | 76.9 | 96.8 | 63.8 | 1929 |
+| 0.675 | 74.4 | 97.3 | 60.2 | 2055 |
+| 0.700 | 69.9 | 97.4 | 54.5 | 2169 |
+| 0.725 | 64.6 | 97.6 | 48.2 | 2315 |
+| 0.750 | 57.6 | 97.3 | 40.9 | 2476 |
+| 0.775 | 52.8 | 97.6 | 36.2 | 2660 |
+| 0.800 | 48.3 | 97.2 | 32.1 | 2852 |
+| 0.825 | 45.0 | 97.7 | 29.2 | 3062 |
+| 0.850 | 40.0 | 98.2 | 25.1 | 3340 |
+| 0.875 | 34.8 | 97.9 | 21.2 | 3654 |
+| 0.900 | 30.7 | 98.6 | 18.2 | 3939 |
+| 0.925 | 26.2 | 98.7 | 15.1 | 4255 |
+| 0.950 | 23.0 | 99.1 | 13.0 | 4593 |
 
 - Pairwise P/R/F1 over all test documents of the language, as in Miranda et al. (2018), so the published rows are directly comparable.
-- The published systems are supervised (an SVM ranker trained on the train split). NewsTrace fits a threshold on dev (dev-tuned), or two blend weights and then a threshold (dev-learned); nothing is fitted on test.
+- The published systems are supervised (an SVM ranker trained on the train split). NewsTrace fits a threshold on dev (dev-tuned), or blend weights and then a threshold (dev-learned*); nothing is fitted on test.
 - The embedder sees the headline and the start of the body only: all-MiniLM-L6-v2 truncates input at 256 word pieces.
 - No confidence intervals: resampling stories does not give a clean bootstrap for pairwise metrics, and the paper reports none to compare with.
