@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from itertools import combinations
 
 from sklearn.metrics import adjusted_rand_score
 
@@ -29,6 +28,10 @@ class ClusteringMetrics:
         return {k: round(float(v), 4) for k, v in self.__dict__.items()}
 
 
+def _pairs(n: int) -> int:
+    return n * (n - 1) // 2
+
+
 def _f1(precision: float, recall: float) -> float:
     return (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
 
@@ -36,18 +39,19 @@ def _f1(precision: float, recall: float) -> float:
 def pairwise_scores(
     truth: Mapping[int, int], predicted: Mapping[int, int]
 ) -> tuple[float, float, float]:
-    """Precision/recall/F1 over co-membership pairs."""
+    """Precision/recall/F1 over co-membership pairs.
+
+    Counted from the contingency table rather than by enumerating pairs: a
+    benchmark split of ~9k documents has ~38M pairs, which a Python loop takes
+    minutes over, while the counts below are exact and linear in the items.
+    """
     items = sorted(set(truth) & set(predicted))
-    tp = fp = fn = 0
-    for a, b in combinations(items, 2):
-        same_true = truth[a] == truth[b]
-        same_pred = predicted[a] == predicted[b]
-        if same_pred and same_true:
-            tp += 1
-        elif same_pred and not same_true:
-            fp += 1
-        elif same_true and not same_pred:
-            fn += 1
+    joint: Counter[tuple[int, int]] = Counter((truth[i], predicted[i]) for i in items)
+    true_sizes: Counter[int] = Counter(truth[i] for i in items)
+    pred_sizes: Counter[int] = Counter(predicted[i] for i in items)
+    tp = sum(_pairs(n) for n in joint.values())
+    fp = sum(_pairs(n) for n in pred_sizes.values()) - tp
+    fn = sum(_pairs(n) for n in true_sizes.values()) - tp
     precision = tp / (tp + fp) if (tp + fp) else 0.0
     recall = tp / (tp + fn) if (tp + fn) else 0.0
     return precision, recall, _f1(precision, recall)
@@ -60,20 +64,17 @@ def bcubed_scores(
     items = sorted(set(truth) & set(predicted))
     if not items:
         return 0.0, 0.0, 0.0
-    by_pred: dict[int, list[int]] = defaultdict(list)
-    by_true: dict[int, list[int]] = defaultdict(list)
-    for item in items:
-        by_pred[predicted[item]].append(item)
-        by_true[truth[item]].append(item)
+    # An item's "correct" count is the size of its (true, predicted) cell, so
+    # the sums come straight from the contingency table.
+    joint: Counter[tuple[int, int]] = Counter((truth[i], predicted[i]) for i in items)
+    true_sizes: Counter[int] = Counter(truth[i] for i in items)
+    pred_sizes: Counter[int] = Counter(predicted[i] for i in items)
 
     precision_sum = 0.0
     recall_sum = 0.0
-    for item in items:
-        pred_cluster = by_pred[predicted[item]]
-        true_cluster = by_true[truth[item]]
-        correct = sum(1 for other in pred_cluster if truth[other] == truth[item])
-        precision_sum += correct / len(pred_cluster)
-        recall_sum += correct / len(true_cluster)
+    for (true_label, pred_label), correct in joint.items():
+        precision_sum += correct * correct / pred_sizes[pred_label]
+        recall_sum += correct * correct / true_sizes[true_label]
     precision = precision_sum / len(items)
     recall = recall_sum / len(items)
     return precision, recall, _f1(precision, recall)

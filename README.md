@@ -266,11 +266,12 @@ corroboration, and source counts do not establish truth. Full list in
 - [Architecture](docs/architecture.md) — data flow, module map, design decisions
 - [Evaluation](docs/evaluation.md) — protocol, metrics, uncertainty, reproduction
 - [Limitations](docs/limitations.md) · [Model card](docs/model_card.md)
-- [Experiments](docs/experiments) — committed runs on [fixtures](docs/experiments/baseline), [live data](docs/experiments/live-30d), [SciFact](docs/experiments/beir-scifact) and [approximate retrieval](docs/experiments/ann-live)
+- [Experiments](docs/experiments) — committed runs on [fixtures](docs/experiments/baseline), [live data](docs/experiments/live-30d), [SciFact](docs/experiments/beir-scifact), [approximate retrieval](docs/experiments/ann-live) and [story clustering on human labels](docs/experiments/cluster-bench)
 - [Specification](docs/spec.md) — the original design brief
 - Harnesses: [`scripts/run_experiments.py`](scripts/run_experiments.py) (compression),
   [`scripts/run_ann.py`](scripts/run_ann.py) (approximate retrieval),
-  [`scripts/run_beir.py`](scripts/run_beir.py) (public benchmark)
+  [`scripts/run_beir.py`](scripts/run_beir.py) (public benchmark),
+  [`scripts/run_cluster_bench.py`](scripts/run_cluster_bench.py) (clustering benchmark)
 
 <details>
 <summary><b>Techniques → implementation</b></summary>

@@ -147,14 +147,30 @@ class OnlineClusterer:
         return list(self.session.execute(stmt).scalars())
 
     # -- scoring -------------------------------------------------------------
-    def score(self, article: Article, vector: Vector, cluster: StoryCluster) -> float:
+    @staticmethod
+    def article_features(article: Article) -> tuple[set[str], set[str]]:
+        return content_tokens(article.title), set(extract_entities(article.body_text))
+
+    def score(
+        self,
+        article: Article,
+        vector: Vector,
+        cluster: StoryCluster,
+        *,
+        features: tuple[set[str], set[str]] | None = None,
+    ) -> float:
+        """Score one candidate. ``features`` is the article's (title tokens,
+        entities), which ``assign`` extracts once rather than per candidate:
+        entity extraction dominates the cost, and an article is scored against
+        every story in the window."""
         centroid = from_blob(cluster.centroid_blob, cluster.centroid_dimension or vector.shape[0])
         denom = float(np.linalg.norm(vector) * np.linalg.norm(centroid))
         cosine = float(np.dot(vector, centroid) / denom) if denom > 1e-9 else 0.0
         cluster_title_tokens = set((cluster.extra or {}).get("title_tokens") or [])
         cluster_entities = set((cluster.extra or {}).get("entities") or [])
-        title_overlap = jaccard(content_tokens(article.title), cluster_title_tokens)
-        entity_overlap = jaccard(set(extract_entities(article.body_text)), cluster_entities)
+        title_tokens, entities = features or self.article_features(article)
+        title_overlap = jaccard(title_tokens, cluster_title_tokens)
+        entity_overlap = jaccard(entities, cluster_entities)
         return combined_score(
             cosine,
             title_overlap,
@@ -254,8 +270,9 @@ class OnlineClusterer:
 
         best_cluster: StoryCluster | None = None
         best_score = -1.0
+        features = self.article_features(article)
         for cluster in self.candidate_clusters(article.published_at, article.topic):
-            score = self.score(article, vector, cluster)
+            score = self.score(article, vector, cluster, features=features)
             if score > best_score:
                 best_cluster, best_score = cluster, score
 
