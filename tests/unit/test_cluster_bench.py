@@ -99,12 +99,18 @@ def test_run_tunes_on_dev_and_scores_test(bench_dir: Path) -> None:
 
     settings = {row["setting"] for row in metrics["results"]}
     assert "shipped" in settings
-    assert "dev-learned" in settings
+    assert {"dev-learned", "dev-learned-time"} <= settings
     learned = metrics["clusterer"]["learned_weights"]
     row = next(r for r in metrics["results"] if r["setting"] == "dev-learned")
     assert row["title_weight"] == pytest.approx(learned["title_weight"], abs=1e-4)
     assert row["entity_weight"] == pytest.approx(learned["entity_weight"], abs=1e-4)
-    assert [r["threshold"] for r in metrics["dev_sweep_learned"]] == [0.3, 0.62, 0.95]
+    assert row["time_weight"] == pytest.approx(learned["time_weight"], abs=1e-4)
+    # The time-only variant keeps the shipped overlap weights.
+    row = next(r for r in metrics["results"] if r["setting"] == "dev-learned-time")
+    assert (row["title_weight"], row["entity_weight"]) == (0.2, 0.1)
+    assert row["time_weight"] == pytest.approx(learned["time_weight"], abs=1e-4)
+    for sweep in metrics["dev_sweep_learned"].values():
+        assert [r["threshold"] for r in sweep] == [0.3, 0.62, 0.95]
     for row in metrics["results"]:
         assert row["items"] == 12
         assert row["true_clusters"] == 3
@@ -112,7 +118,7 @@ def test_run_tunes_on_dev_and_scores_test(bench_dir: Path) -> None:
 
     table = render_table(metrics)
     assert "NewsTrace, shipped" in table
-    assert "learned weights" in table
+    assert "dev-learned-time" in table
     assert "Miranda et al.: + timestamps" in table
 
 
@@ -130,7 +136,7 @@ def test_oracle_signals_label_each_article_against_its_own_story(bench_dir: Path
     vectors = _embed(documents, get_embedder(settings))
     signals, labels = oracle_signals(documents, vectors, settings=settings)
 
-    assert signals.shape == (labels.size, 3)
+    assert signals.shape == (labels.size, 4)
     # Every article after the first of its story matches exactly one candidate:
     # 12 articles in 3 stories, all inside one window.
     assert int(labels.sum()) == 12 - 3
@@ -139,17 +145,19 @@ def test_oracle_signals_label_each_article_against_its_own_story(bench_dir: Path
 
 def test_fit_weights_recovers_the_blend_that_generated_the_labels() -> None:
     rng = np.random.default_rng(0)
-    signals = rng.uniform(0.0, 1.0, size=(20_000, 3))
-    blend = signals[:, 0] + 0.5 * signals[:, 1] + 0.25 * signals[:, 2]
+    signals = rng.uniform(0.0, 1.0, size=(20_000, 4))
+    signals[:, 3] *= 3.0  # days
+    blend = signals[:, 0] + 0.5 * signals[:, 1] + 0.25 * signals[:, 2] - 0.1 * signals[:, 3]
     labels = rng.uniform(size=blend.size) < 1.0 / (1.0 + np.exp(-12.0 * (blend - 0.9)))
 
     fitted = fit_weights(signals, labels)
     assert fitted.title_weight == pytest.approx(0.5, abs=0.05)
     assert fitted.entity_weight == pytest.approx(0.25, abs=0.05)
+    assert fitted.time_weight == pytest.approx(0.1, abs=0.03)
     assert fitted.implied_threshold == pytest.approx(0.9, abs=0.05)
 
 
 def test_fit_weights_needs_both_classes() -> None:
-    signals = np.ones((4, 3))
+    signals = np.ones((4, 4))
     with pytest.raises(ValueError, match="both"):
         fit_weights(signals, np.zeros(4, dtype=bool))

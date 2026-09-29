@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     cluster_threshold_hashing: float = 0.74
     cluster_title_overlap_weight: float = 0.2
     cluster_entity_overlap_weight: float = 0.1
+    # Score penalty per day between an article and the nearest end of a story's
+    # time span. 0 leaves time to the candidate window alone; see
+    # docs/experiments/cluster-bench for what a fitted value does.
+    cluster_time_gap_weight: float = 0.0
 
     near_duplicate_title_threshold: float = 0.9
     near_duplicate_window_hours: int = 96

@@ -97,6 +97,8 @@ def combined_score(
     *,
     title_weight: float,
     entity_weight: float,
+    gap_days: float = 0.0,
+    time_weight: float = 0.0,
 ) -> float:
     """Blend the three signals, keeping the result in ``[0, 1]``.
 
@@ -105,9 +107,31 @@ def combined_score(
     drag every score down, because token-overlap Jaccards are small even for two
     reports of the same event -- which shifts the threshold away from any
     interpretable cosine value.
+
+    ``gap_days`` (see ``time_gap_days``) is a *penalty*, off by default: the
+    candidate window already bounds how far apart a story's articles can be.
     """
-    score = cosine + title_weight * title_overlap + entity_weight * entity_overlap
+    score = (
+        cosine
+        + title_weight * title_overlap
+        + entity_weight * entity_overlap
+        - time_weight * gap_days
+    )
     return float(min(1.0, max(0.0, score)))
+
+
+def time_gap_days(when: datetime | None, cluster: StoryCluster) -> float:
+    """Days from ``when`` to the nearest end of the story's span; 0 inside it."""
+    published = ensure_utc(when)
+    first = ensure_utc(cluster.first_published_at)
+    last = ensure_utc(cluster.last_published_at)
+    if published is None or first is None or last is None:
+        return 0.0
+    if published > last:
+        return (published - last) / timedelta(days=1)
+    if published < first:
+        return (first - published) / timedelta(days=1)
+    return 0.0
 
 
 class OnlineClusterer:
@@ -131,6 +155,7 @@ class OnlineClusterer:
         self.embedding_method = embedding_method
         self.title_weight = self.settings.cluster_title_overlap_weight
         self.entity_weight = self.settings.cluster_entity_overlap_weight
+        self.time_weight = self.settings.cluster_time_gap_weight
 
     # -- candidate selection -------------------------------------------------
     def candidate_clusters(self, when: datetime | None, topic: str | None) -> list[StoryCluster]:
@@ -158,8 +183,9 @@ class OnlineClusterer:
         cluster: StoryCluster,
         *,
         features: tuple[set[str], set[str]] | None = None,
-    ) -> tuple[float, float, float]:
-        """The raw (cosine, title overlap, entity overlap) that ``score`` blends.
+    ) -> tuple[float, float, float, float]:
+        """The raw (cosine, title overlap, entity overlap, gap in days) that
+        ``score`` blends.
 
         ``features`` is the article's (title tokens, entities), which ``assign``
         extracts once rather than per candidate: entity extraction dominates the
@@ -174,6 +200,7 @@ class OnlineClusterer:
             cosine,
             jaccard(title_tokens, cluster_title_tokens),
             jaccard(entities, cluster_entities),
+            time_gap_days(article.published_at, cluster),
         )
 
     def score(
@@ -185,7 +212,7 @@ class OnlineClusterer:
         features: tuple[set[str], set[str]] | None = None,
     ) -> float:
         """Score one candidate; see ``signals`` for ``features``."""
-        cosine, title_overlap, entity_overlap = self.signals(
+        cosine, title_overlap, entity_overlap, gap_days = self.signals(
             article, vector, cluster, features=features
         )
         return combined_score(
@@ -194,6 +221,8 @@ class OnlineClusterer:
             entity_overlap,
             title_weight=self.title_weight,
             entity_weight=self.entity_weight,
+            gap_days=gap_days,
+            time_weight=self.time_weight,
         )
 
     # -- mutation ------------------------------------------------------------
