@@ -27,11 +27,14 @@ from newstrace.representations.embedder import detect_device, get_embedder
 from newstrace.representations.registry import available_representations
 from newstrace.search import SearchFilters, SearchRequest
 from newstrace.search import search as run_search
-from newstrace.stories import build_timeline, list_stories, load_story, story_keywords
+from newstrace.stories import build_timeline, list_stories, load_story
 from newstrace.summarization.extractive import ExtractiveSummarizer
 from newstrace.utils import truncate
 
-st.set_page_config(page_title="NewsTrace", layout="wide")
+# Centered, not wide: a single reading column. The inspection tables scroll
+# horizontally inside it, which is a fair price for a comfortable measure on
+# the pages people actually read.
+st.set_page_config(page_title="NewsTrace", layout="centered")
 
 DISCLAIMER = (
     "NewsTrace reports repetition, provenance, duplication and source diversity. "
@@ -40,8 +43,8 @@ DISCLAIMER = (
     "counted as independent confirmation."
 )
 
-# The sidebar carries the disclaimer in full on every page, so the reading pages
-# only need the one line that changes how you read the numbers on them.
+# The sidebar carries this one line on every page, with the full disclaimer
+# folded behind it, so the reading pages themselves stay free of boilerplate.
 SHORT_DISCLAIMER = "Counts corroboration and provenance, never accuracy."
 
 
@@ -52,25 +55,32 @@ CARD_CSS = """
 <style>
 .ns-eyebrow {
   font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase;
-  color: #8A8073; margin-bottom: 0.35rem;
+  color: #8F8679; margin-bottom: 0.35rem;
 }
 .ns-headline {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.42rem; line-height: 1.28; font-weight: 600;
-  color: #1A1A1A; margin-bottom: 0.7rem;
+  font-size: 1.32rem; line-height: 1.3; font-weight: 700;
+  letter-spacing: -0.01em; color: #EFE9DD; margin-bottom: 0.7rem;
 }
-.ns-signal { font-size: 0.92rem; color: #3A3A3A; margin-bottom: 0.55rem; }
-.ns-signal b { font-weight: 700; }
-.ns-dots { letter-spacing: 0.14em; color: #8C2F1E; margin-right: 0.45rem; }
-.ns-dots .off { color: #D8D0C2; }
-.ns-warn { color: #8C2F1E; font-weight: 600; }
+.ns-signal { font-size: 0.92rem; color: #B5AC9E; margin-bottom: 0.55rem; }
+.ns-signal b { font-weight: 700; color: #DED7CB; }
+.ns-dots { letter-spacing: 0.14em; color: #C9774F; margin-right: 0.45rem; }
+.ns-dots .off { color: #332E28; }
+.ns-warn { color: #D4805A; font-weight: 600; }
 .ns-chips { margin-bottom: 0.5rem; line-height: 2.1; }
 .ns-chip {
-  border: 1px solid #E4DED3; background: #F7F4EE; border-radius: 3px;
-  padding: 0.16rem 0.46rem; margin-right: 0.3rem; font-size: 0.78rem; color: #4A443B;
+  border: 1px solid #332E28; background: #1C1917; border-radius: 3px;
+  padding: 0.16rem 0.46rem; margin-right: 0.3rem; font-size: 0.78rem; color: #A89F90;
   white-space: nowrap;
 }
-.ns-kw { font-size: 0.8rem; color: #8A8073; }
+.ns-summary {
+  font-size: 1rem; line-height: 1.55; color: #C9C1B2;
+  margin-bottom: 0.7rem;
+}
+.ns-read {
+  font-size: 0.9rem; font-weight: 600; color: #D99A6C !important;
+  text-decoration: none !important; border-bottom: 1px solid #54402F;
+}
+.ns-read:hover { color: #E8B48A !important; border-bottom-color: #D99A6C; }
 </style>
 """
 
@@ -185,12 +195,26 @@ def chips(values: list[str], cap: int = 6) -> str:
     return f'<div class="ns-chips">{"".join(shown)}</div>'
 
 
+def standfirst(article: Article) -> str:
+    """The article's own summary text, if it reads like prose.
+
+    Returns an empty string for feeds that put metadata where the standfirst
+    belongs: bare URLs, "Comments URL: … Points: 9" dumps, or a repeat of the
+    headline.
+    """
+    text = " ".join((article.excerpt or article.description or "").split())
+    if len(text) < 40 or "http://" in text or "https://" in text:
+        return ""
+    if text.rstrip(".!?") == article.title.strip().rstrip(".!?"):
+        return ""
+    return truncate(text, 360)
+
+
 WINDOWS = {"24 hours": 24, "3 days": 72, "7 days": 24 * 7, "30 days": 24 * 30, "All time": 0}
 
 
 def page_top_stories() -> None:
     st.header("Stories")
-    st.caption(SHORT_DISCLAIMER)
     with session_scope() as session:
         keys = list(load_topics())
         # Topics as pills: there are six of them, and a pill row shows every
@@ -201,7 +225,7 @@ def page_top_stories() -> None:
         topic = None if chosen in (None, "All topics") else chosen
         window = st.segmented_control("Published within", list(WINDOWS), default="All time")
         with st.popover("More filters"):
-            limit = st.slider("Stories to show", 5, 60, 20)
+            limit = st.slider("Stories to show", 5, 60, 30)
             min_articles = st.slider("Minimum articles per story", 1, 6, 1)
         hours = WINDOWS.get(window or "All time", 0)
         start = datetime.now(UTC) - timedelta(hours=hours) if hours else None
@@ -223,6 +247,21 @@ def page_top_stories() -> None:
             with st.container(border=True):
                 sources = bundle.independent_domains
                 near_dupes = len(bundle.duplicates)
+                # The summary under the headline is a report's own standfirst,
+                # never generated prose, and the read link opens that same
+                # article: what you read here is what you open. Independent
+                # articles are preferred, but a syndicated copy's standfirst
+                # beats none at all - some feeds ship link dumps ("Article
+                # URL: … Points: 9") instead of a standfirst, and GDELT rows
+                # carry no text. A story with no readable prose anywhere keeps
+                # a headline-only card linking its earliest report.
+                independents = bundle.sorted_by_time()
+                everything = bundle.sorted_by_time(include_duplicates=True)
+                candidates = [*independents, *(a for a in everything if a.is_near_duplicate)]
+                lead = next((a for a in candidates if standfirst(a)), None)
+                summary = standfirst(lead) if lead else ""
+                if lead is None:
+                    lead = independents[0] if independents else None
                 # Independent sources is the number the tool exists to report, so
                 # it carries the dots and the bold; everything else is secondary.
                 dupe_note = (
@@ -231,25 +270,29 @@ def page_top_stories() -> None:
                     if near_dupes
                     else " · no near-duplicates"
                 )
+                summary_html = (
+                    f'<div class="ns-summary">{html.escape(summary)}</div>' if summary else ""
+                )
+                read_link = (
+                    f'<div><a class="ns-read" href="{html.escape(lead.url)}" target="_blank" '
+                    f'rel="noopener">Read at {html.escape(lead.source_domain)}&thinsp;↗</a></div>'
+                    if lead
+                    else ""
+                )
                 st.markdown(
                     f'<div class="ns-eyebrow">{html.escape(topic_label(story.topic))}'
                     f" &nbsp;·&nbsp; {fmt_date_short(story.last_published_at)}</div>"
                     f'<div class="ns-headline">{html.escape(headline(story.display_title))}</div>'
+                    f"{summary_html}"
                     f'<div class="ns-signal">{dots(len(sources))}'
                     f"<b>{len(sources)}</b> independent source"
                     f"{'' if len(sources) == 1 else 's'}"
                     f" · {story.article_count} article"
                     f"{'' if story.article_count == 1 else 's'}{dupe_note}</div>"
-                    f"{chips(sources)}",
+                    f"{read_link}",
                     unsafe_allow_html=True,
                 )
-                keywords = story_keywords(bundle)
-                if keywords:
-                    st.markdown(
-                        f'<div class="ns-kw">{html.escape(" · ".join(keywords))}</div>',
-                        unsafe_allow_html=True,
-                    )
-                if st.button("Open story", key=f"open-{story.id}"):
+                if st.button("Story details", key=f"open-{story.id}"):
                     # ``story_id`` is the story page's select box key, so writing
                     # it here is what preselects the story once that page runs.
                     st.session_state["story_id"] = story.id
@@ -258,7 +301,6 @@ def page_top_stories() -> None:
 
 def page_story_detail() -> None:
     st.header("Story")
-    st.caption(SHORT_DISCLAIMER)
     with session_scope() as session:
         # Newest first, and capped: the picker is for getting back to something
         # you were reading, not for scrolling four thousand rows.
@@ -438,7 +480,6 @@ def page_story_detail() -> None:
 
 def page_search() -> None:
     st.header("Search")
-    st.caption(SHORT_DISCLAIMER)
     with session_scope() as session:
         query = st.text_input(
             "Query",
@@ -727,22 +768,31 @@ TOPICS_PAGE = st.Page(page_topics, title="Topics", url_path="topics")
 EXPERIMENTS_PAGE = st.Page(page_experiments, title="Experiments", url_path="experiments")
 HEALTH_PAGE = st.Page(page_health, title="Health", url_path="health")
 
-# Reading the news is one job and inspecting the system is another; the grouping
-# says so, rather than presenting six equal-weight pages.
-NAVIGATION = {
-    "Read": [STORIES_PAGE, STORY_PAGE, SEARCH_PAGE],
-    "Inspect": [TOPICS_PAGE, EXPERIMENTS_PAGE, HEALTH_PAGE],
-}
+ALL_PAGES = [STORIES_PAGE, STORY_PAGE, SEARCH_PAGE, TOPICS_PAGE, EXPERIMENTS_PAGE, HEALTH_PAGE]
 
 
 def main() -> None:
     _init()
     st.markdown(CARD_CSS, unsafe_allow_html=True)
-    st.sidebar.title("NewsTrace")
-    st.sidebar.caption(f"Version {__version__}")
-    page = st.navigation(NAVIGATION)
-    st.sidebar.markdown("---")
-    st.sidebar.caption(DISCLAIMER)
+    # The generated sidebar nav always renders above everything else, which
+    # puts the menu over the masthead and gives the diagnostic pages the same
+    # weight as the news. So the nav is hidden and the sidebar is laid out by
+    # hand: masthead first, then the two reading destinations - the Story
+    # detail page is reached from a card, never from a menu - and the system
+    # pages and the full disclaimer folded away until asked for.
+    page = st.navigation(ALL_PAGES, position="hidden")
+    with st.sidebar:
+        st.title("NewsTrace")
+        st.caption(SHORT_DISCLAIMER)
+        st.page_link(STORIES_PAGE, label="Stories", icon=":material/newspaper:")
+        st.page_link(SEARCH_PAGE, label="Search", icon=":material/search:")
+        with st.expander("System"):
+            st.page_link(TOPICS_PAGE, label="Topics", icon=":material/tag:")
+            st.page_link(EXPERIMENTS_PAGE, label="Experiments", icon=":material/science:")
+            st.page_link(HEALTH_PAGE, label="Health", icon=":material/monitor_heart:")
+        with st.expander("What the counts mean"):
+            st.caption(DISCLAIMER)
+        st.caption(f"Version {__version__}")
     page.run()
 
 

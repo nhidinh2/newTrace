@@ -7,7 +7,7 @@
 PY ?= scripts/run.sh
 
 .DEFAULT_GOAL := help
-.PHONY: help setup db demo api ui refresh ingest experiment ann beir backfill report labels screenshots test coverage lint format typecheck check fixtures clean
+.PHONY: help setup db demo api ui refresh ingest experiment ann beir cluster-bench backfill report labels screenshots test coverage lint format typecheck check fixtures clean
 
 help:  ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -48,6 +48,9 @@ ann:  ## Sweep approximate retrieval (IVF / IVF-PQ) against exact search
 beir:  ## Run the compression sweep on a BEIR dataset (DATASET=scifact, DOWNLOAD=1 first time)
 	$(PY) python scripts/run_beir.py --dataset $(or $(DATASET),scifact) \
 		$(if $(DOWNLOAD),--download,)
+
+cluster-bench:  ## Score story clustering on human-labelled news (DOWNLOAD=1 first time)
+	$(PY) python scripts/run_cluster_bench.py $(if $(DOWNLOAD),--download,)
 
 backfill:  ## Build blocking keys and the full-text index for an existing database
 	$(PY) python scripts/backfill_search_indexes.py

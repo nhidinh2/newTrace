@@ -77,7 +77,6 @@ allowed-confusables = ["\u00d7", "\u2212", "\u00b7", "\u2013", "\u2014"]
 "tests/*" = ["E501"]
 
 [tool.mypy]
-python_version = "3.11"
 files = ["src"]
 plugins = ["pydantic.mypy"]
 strict_optional = true

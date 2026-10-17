@@ -1,21 +1,30 @@
 # NewsTrace visual theme: editorial rather than dashboard.
 #
-# The palette is deliberately restrained - one muted accent, warm paper
-# background - so that the corroboration counts on each card are the only
-# strong colour on the page. See app/streamlit_app.py for the card styles.
+# Dark, low-glare "reading at night" palette. The background is a warm
+# near-black rather than pure black, body text is warm ivory rather than
+# white, and there is one muted terracotta accent - so that the
+# corroboration counts on each card are the only strong colour on the page.
+# See app/streamlit_app.py for the card styles.
 
 [theme]
-base = "light"
-primaryColor = "#8C2F1E"              # muted brick, used only for emphasis
-backgroundColor = "#FBFAF7"           # warm paper
-secondaryBackgroundColor = "#F2EFE9"  # sidebar, inputs
-textColor = "#1A1A1A"
-linkColor = "#8C2F1E"
-borderColor = "#E4DED3"
-font = "sans-serif"
-headingFont = "serif"
+base = "dark"
+primaryColor = "#C9774F"              # muted terracotta, used only for emphasis
+backgroundColor = "#131110"           # warm near-black
+secondaryBackgroundColor = "#1C1917"  # sidebar, inputs
+textColor = "#DED7CB"                 # warm ivory
+linkColor = "#D99A6C"
+borderColor = "#2B2622"
+# Twitter's own stack minus the proprietary Chirp: the system UI font,
+# which is what Twitter falls back to (SF Pro on macOS, Segoe UI on
+# Windows, Roboto on Android).
+font = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+headingFont = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 codeFont = "monospace"
 baseRadius = "small"
+baseFontSize = 17
+
+[client]
+toolbarMode = "minimal"
 
 [server]
 headless = true

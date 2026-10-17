@@ -14,10 +14,14 @@ relevance judgments and that result reverses: the same 12× index loses 0.19
 nDCG@10, with an interval nowhere near zero. **The live corpus was not
 measuring compression. It was measuring 23 queries.** Both runs are below.
 
+The interface is a dark reading feed: pick a topic, scroll headlines with each
+article's own standfirst underneath, and every card links to the original
+report. The diagnostic pages stay one fold away in the sidebar.
+
 | | |
 | --- | --- |
 | ![Stories](docs/screenshots/stories.png) | ![Story](docs/screenshots/story.png) |
-| **Stories** — article and *independent*-source counts | **Story** — timeline, earliest report, near-duplicates marked |
+| **Stories** — the feed: standfirst, *independent*-source count, and a link to the original under each headline | **Story** — timeline, earliest report, near-duplicates marked |
 | ![Search](docs/screenshots/search.png) | ![Experiments](docs/screenshots/experiments.png) |
 | **Search** — every hit carries provenance and a "why this ranked here" line | **Experiments** — full vs. compressed retrieval, from saved metrics |
 
@@ -170,6 +174,43 @@ The latency column is the catch: IVF-PQ is *slower* than the exhaustive scan
 at 6,320 vectors, because a BLAS matrix-vector product beats a Python-driven
 quantised lookup at this size. At this scale ANN buys memory, not latency.
 
+### Story clustering, on human labels
+
+Clustering had the same problem as retrieval: its only score came from 135
+fixture articles labelled for this repository. The production clusterer now
+also replays a public news stream with human story labels, the English test
+split of Miranda et al. (EMNLP 2018): 8,726 articles in 222 stories, scored
+with the paper's own pairwise F1 so its published rows compare directly
+([`docs/experiments/cluster-bench`](docs/experiments/cluster-bench)):
+
+| System | pairwise F1 | P | R |
+| --- | ---: | ---: | ---: |
+| NewsTrace, shipped threshold (0.88) | 10.2 | 99.7 | 5.3 |
+| NewsTrace, threshold fitted on dev (0.425) | 92.2 | 97.4 | 87.4 |
+| NewsTrace, + time penalty, thresholds 0.35–0.425 | 96.8–96.9 | — | — |
+| CluStream, as published | 79.0 | 98.6 | 65.9 |
+| Miranda et al., best system, as published | 94.1 | 98.2 | 90.3 |
+
+- **The shipped threshold does not transfer.** It splits 92% of the true
+  stories. It was tuned on headline-plus-snippet text; the benchmark carries
+  full articles, which tend to score lower cosine for the same event.
+- **Refitted, the hand-set blend is level with the published supervised
+  system without timestamps (92.7).** Learning the title and entity weights by
+  logistic regression on dev pairs does not beat the hand-set 0.2 / 0.1.
+- **Time is the signal that helps.** A penalty of 0.22 per day between an
+  article and the story's span, fitted on dev, adds 4–7 points at every
+  threshold from 0.35 to 0.45.
+- **The threshold is the weak point.** Dev F1 is flat from 0.35 to 0.60 while
+  test F1 collapses above about 0.47, so dev alone picked 0.55 for the time
+  blend and scored 83.8. The band in the table was located by scoring test at
+  every threshold, as a diagnostic; claim the 4–7-point difference, not the
+  peak.
+
+None of it is shipped. The time penalty is off by default and the live
+threshold stays at 0.88, because both depend on text length, and the median
+live article is 169 characters. Settling them needs live articles labelled by
+story, which is the next step.
+
 ## Serving the index
 
 The retrieval numbers above are scan times. What a query actually costs is a
@@ -223,12 +264,13 @@ BM25 over SQLite's FTS5 is available as `--method bm25`, and is what the
 
 ## Running the sweeps
 
-Three harnesses, all reproducible from a committed corpus or a public one:
+Four harnesses, all reproducible from a committed corpus or a public one:
 
 ```bash
 make experiment SINCE=30 QUERIES=200     # compression, on the live corpus
 make ann SINCE=30                        # approximate retrieval vs exact
 make beir DATASET=scifact DOWNLOAD=1     # compression, on human judgments
+make cluster-bench DOWNLOAD=1            # story clustering, on human labels
 ```
 
 `make experiment` refreshes the stored compressed representations, so run it
@@ -236,9 +278,9 @@ before `make ann` — the comparison arm reads them, and every row in the ANN
 table reports what fraction of the corpus its vectors cover so a stale fit
 cannot be mistaken for a quality collapse.
 
-The BEIR download is the only networked step in this repository, and it is
-opt-in. `nfcorpus` and `arguana` are the same flag away; running them would
-turn one benchmark result into a pattern.
+The BEIR and clustering-benchmark downloads are the only networked steps in
+this repository, and both are opt-in. `nfcorpus` and `arguana` are the same
+flag away; running them would turn one benchmark result into a pattern.
 
 ## How it works
 
@@ -266,11 +308,12 @@ corroboration, and source counts do not establish truth. Full list in
 - [Architecture](docs/architecture.md) — data flow, module map, design decisions
 - [Evaluation](docs/evaluation.md) — protocol, metrics, uncertainty, reproduction
 - [Limitations](docs/limitations.md) · [Model card](docs/model_card.md)
-- [Experiments](docs/experiments) — committed runs on [fixtures](docs/experiments/baseline), [live data](docs/experiments/live-30d), [SciFact](docs/experiments/beir-scifact) and [approximate retrieval](docs/experiments/ann-live)
+- [Experiments](docs/experiments) — committed runs on [fixtures](docs/experiments/baseline), [live data](docs/experiments/live-30d), [SciFact](docs/experiments/beir-scifact), [approximate retrieval](docs/experiments/ann-live) and [story clustering on human labels](docs/experiments/cluster-bench)
 - [Specification](docs/spec.md) — the original design brief
 - Harnesses: [`scripts/run_experiments.py`](scripts/run_experiments.py) (compression),
   [`scripts/run_ann.py`](scripts/run_ann.py) (approximate retrieval),
-  [`scripts/run_beir.py`](scripts/run_beir.py) (public benchmark)
+  [`scripts/run_beir.py`](scripts/run_beir.py) (public benchmark),
+  [`scripts/run_cluster_bench.py`](scripts/run_cluster_bench.py) (clustering benchmark)
 
 <details>
 <summary><b>Techniques → implementation</b></summary>
