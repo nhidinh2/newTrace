@@ -6,7 +6,7 @@ Duplicate articles are always visible but never counted as independent sources.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -14,6 +14,13 @@ from sqlalchemy.orm import Session
 from newstrace.clustering.labeling import keyword_summary, split_sentences
 from newstrace.models import Article, ClusterMembership, StoryCluster
 from newstrace.utils import ensure_utc, jaccard, token_set, truncate
+
+UNKNOWN_PUBLICATION_TIME = datetime.max.replace(tzinfo=UTC)
+
+
+def publication_time_or_last(article: Article) -> datetime:
+    """Return an aware timestamp that consistently sorts undated articles last."""
+    return ensure_utc(article.published_at) or UNKNOWN_PUBLICATION_TIME
 
 
 @dataclass
@@ -40,7 +47,7 @@ class StoryArticles:
         pool = self.articles if include_duplicates else self.independent
         return sorted(
             pool,
-            key=lambda a: (ensure_utc(a.published_at) or datetime.max.replace(tzinfo=None), a.id),
+            key=lambda a: (publication_time_or_last(a), a.id),
         )
 
 
@@ -132,7 +139,7 @@ def build_timeline(
     ordered = sorted(
         bundle.articles,
         key=lambda a: (
-            ensure_utc(a.published_at) or datetime.max.replace(tzinfo=None),
+            publication_time_or_last(a),
             a.is_near_duplicate,
             a.id,
         ),
