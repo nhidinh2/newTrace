@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 import numpy as np
 
@@ -46,10 +46,14 @@ class ChronologicalSplit:
 def chronological_split(
     articles: Sequence[Article], *, fit_fraction: float = 0.6, validation_fraction: float = 0.2
 ) -> ChronologicalSplit:
-    """Split articles by publication time into 60 / 20 / 20 by default."""
+    """Split articles by publication time into 60 / 20 / 20 by default.
+
+    Undated articles sort first, with article ids breaking ties. This preserves
+    the existing missing-date policy; it does not infer their publication times.
+    """
     ordered = sorted(
         articles,
-        key=lambda a: (ensure_utc(a.published_at) or datetime.min.replace(tzinfo=None), a.id),
+        key=lambda a: (ensure_utc(a.published_at) or datetime.min.replace(tzinfo=UTC), a.id),
     )
     n = len(ordered)
     if n == 0:

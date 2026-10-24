@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
 import numpy as np
 import pytest
@@ -172,6 +172,36 @@ def test_chronological_split_is_ordered_and_leak_free(populated_session: Session
 def test_chronological_split_on_empty_input() -> None:
     split = chronological_split([])
     assert split.fit_ids == [] and split.test_ids == []
+    split.assert_no_leakage()
+
+
+def test_chronological_split_with_mixed_publication_dates() -> None:
+    articles = [
+        Article(id=6, published_at=datetime(2026, 1, 4, tzinfo=UTC)),
+        Article(id=2, published_at=None),
+        Article(id=5, published_at=datetime(2026, 1, 3)),
+        Article(id=3, published_at=datetime(2026, 1, 2, tzinfo=UTC)),
+        Article(id=1, published_at=None),
+        # Same instant as article 3, expressed in a different timezone.
+        Article(id=4, published_at=datetime(2026, 1, 1, 18, tzinfo=timezone(timedelta(hours=-6)))),
+    ]
+    split = chronological_split(articles)
+    assert split.fit_ids == [1, 2, 3]
+    assert split.validation_ids == [4]
+    assert split.test_ids == [5, 6]
+    assert split.fit_cutoff == datetime(2026, 1, 2, tzinfo=UTC)
+    assert split.validation_cutoff == split.fit_cutoff
+    assert chronological_split(list(reversed(articles))) == split
+    split.assert_no_leakage()
+
+
+def test_chronological_split_with_only_undated_articles() -> None:
+    split = chronological_split([Article(id=i, published_at=None) for i in [5, 3, 1, 4, 2]])
+    assert split.fit_ids == [1, 2, 3]
+    assert split.validation_ids == [4]
+    assert split.test_ids == [5]
+    assert split.fit_cutoff is None
+    assert split.validation_cutoff is None
     split.assert_no_leakage()
 
 
