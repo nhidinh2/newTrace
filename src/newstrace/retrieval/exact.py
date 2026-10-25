@@ -14,6 +14,7 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from newstrace.representations.embedder import Embedder, get_embedder, l2_normalize
@@ -183,16 +184,20 @@ class TfidfRetriever:
             ngram_range=(1, 2),
             min_df=1,
         )
-        self.matrix = (
-            self.vectorizer.fit_transform(list(texts))
-            if texts
-            else self.vectorizer.fit_transform([""])
-        )
+        # Preserve document rows even when tokenization removes every term.
+        # Such corpora have no lexical matches and no fitted query transformer.
+        self.matrix = csr_matrix((len(texts), 0), dtype=np.float64)
+        if texts:
+            try:
+                self.matrix = self.vectorizer.fit_transform(list(texts))
+            except ValueError as exc:
+                if not str(exc).startswith("empty vocabulary;"):
+                    raise
 
     def search(
         self, query: str, *, k: int = 10, allowed_ids: set[int] | None = None
     ) -> list[ScoredHit]:
-        if not self.article_ids:
+        if not self.article_ids or self.matrix.shape[1] == 0:
             return []
         q = self.vectorizer.transform([query])
         scores = np.asarray((self.matrix @ q.T).todense()).reshape(-1).astype(np.float32)

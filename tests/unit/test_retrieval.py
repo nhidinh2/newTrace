@@ -84,6 +84,25 @@ def test_tfidf_returns_nothing_for_unmatched_query(populated_session: Session) -
     assert retriever.search("zzzz qqqq unmatched vocabulary", k=5) == []
 
 
+@pytest.mark.parametrize(
+    "texts",
+    [[], [""], ["  \t\n"], ["!!! ..."], ["a I x"], ["the and or"], ["", "the and", "..."]],
+)
+def test_tfidf_handles_corpora_without_indexable_terms(texts: list[str]) -> None:
+    article_ids = list(range(1, len(texts) + 1))
+    retriever = TfidfRetriever(article_ids, texts)
+    assert retriever.matrix.shape == (len(texts), 0)
+    assert retriever.search("news") == []
+    assert retriever.search("the", allowed_ids=set(article_ids)) == []
+    assert retriever.memory_bytes() >= 0
+
+
+def test_tfidf_preserves_rows_for_documents_without_terms() -> None:
+    retriever = TfidfRetriever([10, 20, 30], ["the and", "solar energy", "..."])
+    assert [hit.article_id for hit in retriever.search("solar")] == [20]
+    assert retriever.search("solar", allowed_ids={10, 30}) == []
+
+
 def test_recency_weight_decays() -> None:
     now = utcnow()
     assert recency_weight(now, now, 48) == 1.0

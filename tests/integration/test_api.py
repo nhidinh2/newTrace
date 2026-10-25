@@ -168,6 +168,31 @@ def test_tfidf_search_method(api_client: TestClient) -> None:
     assert body["results"][0]["ranking_method"].startswith("tfidf")
 
 
+def test_tfidf_search_with_stopword_only_filtered_articles(
+    api_client: TestClient, populated_session: Session
+) -> None:
+    article = populated_session.query(Article).filter_by(is_near_duplicate=False).first()
+    assert article is not None
+    article.title = "The and"
+    article.description = "or the"
+    article.excerpt = "and or"
+    article.source_domain = "stopwords.example"
+    populated_session.commit()
+
+    response = api_client.post(
+        "/search",
+        json={
+            "query": "gigawatts demand",
+            "method": "tfidf",
+            "source_domain": "stopwords.example",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["results"] == []
+    assert body["candidates_considered"] == 0
+
+
 def test_summary_endpoint_is_fully_cited(
     api_client: TestClient, populated_session: Session
 ) -> None:
