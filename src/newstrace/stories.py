@@ -6,7 +6,7 @@ Duplicate articles are always visible but never counted as independent sources.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -49,6 +49,46 @@ class StoryArticles:
             pool,
             key=lambda a: (publication_time_or_last(a), a.id),
         )
+
+
+@dataclass
+class DailyStoryActivity:
+    day: date
+    report_count: int = 0
+    duplicate_count: int = 0
+
+
+@dataclass
+class StoryActivity:
+    days: list[DailyStoryActivity] = field(default_factory=list)
+    undated_report_count: int = 0
+    undated_duplicate_count: int = 0
+
+
+def build_story_activity(bundle: StoryArticles) -> StoryActivity:
+    """Count articles by UTC publication day, keeping undated reports separate.
+
+    Counts represent articles, not independent sources: several reports from
+    one domain each contribute. Near-duplicates occupy a separate series.
+    """
+    activity = StoryActivity()
+    days: dict[date, DailyStoryActivity] = {}
+    for article in bundle.articles:
+        published = ensure_utc(article.published_at)
+        if published is None:
+            if article.is_near_duplicate:
+                activity.undated_duplicate_count += 1
+            else:
+                activity.undated_report_count += 1
+            continue
+        day = published.astimezone(UTC).date()
+        counts = days.setdefault(day, DailyStoryActivity(day))
+        if article.is_near_duplicate:
+            counts.duplicate_count += 1
+        else:
+            counts.report_count += 1
+    activity.days = [days[day] for day in sorted(days)]
+    return activity
 
 
 def load_story(session: Session, story_id: int) -> StoryArticles | None:

@@ -29,6 +29,10 @@ That story page is the duplicate handling doing real work: nine articles, eight
 of them regional syndications of a single wire story, counted as **one**
 independent source rather than nine.
 
+The Timeline tab includes daily reporting activity in UTC, with near-duplicates
+in a separate series. These are article counts, not independent-source counts.
+Undated articles are counted separately and remain in the report list below.
+
 ## Quickstart
 
 No API key, no GPU, no network — the demo runs on committed fixtures.

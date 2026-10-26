@@ -27,7 +27,13 @@ from newstrace.representations.embedder import detect_device, get_embedder
 from newstrace.representations.registry import available_representations
 from newstrace.search import SearchFilters, SearchRequest
 from newstrace.search import search as run_search
-from newstrace.stories import build_timeline, list_stories, load_story
+from newstrace.stories import (
+    StoryArticles,
+    build_story_activity,
+    build_timeline,
+    list_stories,
+    load_story,
+)
 from newstrace.summarization.extractive import ExtractiveSummarizer
 from newstrace.utils import truncate
 
@@ -299,6 +305,79 @@ def page_top_stories() -> None:
                     st.switch_page(STORY_PAGE)
 
 
+def render_story_activity(bundle: StoryArticles) -> None:
+    """A compact view of publication volume before the individual reports."""
+    activity = build_story_activity(bundle)
+    st.markdown("#### Reporting activity")
+    if activity.days:
+        frame = pd.DataFrame(
+            [
+                {
+                    "Publication day (UTC)": day.day.isoformat(),
+                    "UTC day": day.day.isoformat(),
+                    "Non-duplicate reports": day.report_count,
+                    "Near-duplicates": day.duplicate_count,
+                }
+                for day in activity.days
+            ]
+        )
+        st.vega_lite_chart(
+            frame,
+            {
+                "height": 280,
+                "mark": "bar",
+                "transform": [
+                    {
+                        "fold": ["Non-duplicate reports", "Near-duplicates"],
+                        "as": ["Report type", "Articles"],
+                    }
+                ],
+                "encoding": {
+                    "x": {
+                        "field": "Publication day (UTC)",
+                        "title": "Publication day (UTC)",
+                        "type": "temporal",
+                        "timeUnit": "utcyearmonthdate",
+                        "scale": {"type": "utc"},
+                        "axis": {"format": "%d %b", "tickMinStep": 86400000},
+                    },
+                    "y": {
+                        "field": "Articles",
+                        "type": "quantitative",
+                        "axis": {"tickMinStep": 1},
+                    },
+                    "color": {
+                        "field": "Report type",
+                        "type": "nominal",
+                        "scale": {
+                            "domain": ["Non-duplicate reports", "Near-duplicates"],
+                            "range": ["#C9774F", "#8F8679"],
+                        },
+                        "legend": {"orient": "bottom", "title": None},
+                    },
+                    "tooltip": [
+                        {"field": "UTC day", "type": "nominal"},
+                        {"field": "Report type", "type": "nominal"},
+                        {"field": "Articles", "type": "quantitative"},
+                    ],
+                },
+            },
+            width="stretch",
+        )
+    else:
+        st.info("No publication dates available for this story.")
+    st.caption(
+        "Daily article counts, not independent-source counts; near-duplicates shown separately."
+    )
+    undated = activity.undated_report_count + activity.undated_duplicate_count
+    if undated:
+        st.caption(
+            f"Undated articles excluded from chart: non-duplicate reports "
+            f"{activity.undated_report_count}, near-duplicates {activity.undated_duplicate_count}. "
+            "These articles remain available below."
+        )
+
+
 def page_story_detail() -> None:
     st.header("Story")
     with session_scope() as session:
@@ -371,6 +450,7 @@ def page_story_detail() -> None:
         )
 
         with tab_timeline:
+            render_story_activity(bundle)
             st.caption(
                 "Ordering reflects publication timestamps in this dataset only. The earliest "
                 "available report is not proof of who reported a claim first."
