@@ -38,7 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--thresholds",
         default=",".join(str(t) for t in DEFAULT_GRID),
-        help="Grid swept on the dev split",
+        help="Comma-separated finite thresholds swept on dev; non-empty unless --no-tune",
     )
     parser.add_argument("--no-tune", action="store_true", help="Score the shipped threshold only")
     parser.add_argument(
@@ -54,16 +54,19 @@ def main(argv: list[str] | None = None) -> int:
     configure_logging(settings.log_level)
     set_global_seed(args.seed)
 
-    config = ClusterBenchConfig(
-        data_dir=args.data_dir,
-        language=args.language,
-        thresholds=[float(t) for t in args.thresholds.split(",") if t.strip()],
-        tune=not args.no_tune,
-        learn_weights=not args.no_learn,
-        window_hours=args.window_hours,
-        max_documents=args.max_documents,
-        seed=args.seed,
-    )
+    try:
+        config = ClusterBenchConfig(
+            data_dir=args.data_dir,
+            language=args.language,
+            thresholds=[float(t) for t in args.thresholds.split(",") if t.strip()],
+            tune=not args.no_tune,
+            learn_weights=not args.no_learn,
+            window_hours=args.window_hours,
+            max_documents=args.max_documents,
+            seed=args.seed,
+        )
+    except ValueError as exc:
+        parser.error(f"--thresholds: {exc}")
 
     if args.download:
         console.print("Downloading the Miranda et al. (2018) splits (this needs the network)...")

@@ -179,6 +179,13 @@ Threshold tuned on fit+validation only (`newstrace.evaluation.tuning`), selectin
 fallback. Cosine similarity is not comparable across backends, so they carry
 separate values.
 
+For the public clustering benchmark (`make cluster-bench`), `--thresholds` must
+contain at least one finite number when tuning is enabled. Empty grids, NaN,
+and infinities are rejected before data downloads or embedding work. The CLI
+reports these as argument errors; Python callers receive `ValueError` when
+constructing `ClusterBenchConfig`. `--no-tune` permits an empty grid because it
+scores only the shipped threshold.
+
 Held-out clustering quality, full-dimensional representation:
 
 | metric | value |

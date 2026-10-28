@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import ftplib
 import json
+import math
 import time
 from collections import Counter
 from collections.abc import Sequence
@@ -84,6 +85,12 @@ class ClusterBenchConfig:
     window_hours: int | None = None
     max_documents: int | None = None
     seed: int = 549
+
+    def __post_init__(self) -> None:
+        if self.tune and (
+            not self.thresholds or not all(math.isfinite(t) for t in self.thresholds)
+        ):
+            raise ValueError("thresholds must be a non-empty list of finite numbers when tuning")
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)

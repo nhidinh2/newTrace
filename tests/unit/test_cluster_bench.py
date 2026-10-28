@@ -124,10 +124,71 @@ def test_run_tunes_on_dev_and_scores_test(bench_dir: Path) -> None:
 
 def test_no_tune_scores_only_the_shipped_threshold(bench_dir: Path) -> None:
     (bench_dir / "dataset.dev.json").unlink()
-    metrics = run_cluster_bench(ClusterBenchConfig(data_dir=str(bench_dir), tune=False))
+    metrics = run_cluster_bench(
+        ClusterBenchConfig(data_dir=str(bench_dir), tune=False, thresholds=[])
+    )
     assert [row["setting"] for row in metrics["results"]] == ["shipped"]
     assert metrics["dev_sweep"] == []
     assert metrics["dataset"]["dev"] is None
+
+
+@pytest.mark.parametrize(
+    "thresholds", [[], [float("nan")], [float("inf")], [float("-inf")], [0.3, float("nan")]]
+)
+def test_invalid_threshold_grid_is_rejected_before_embedding(
+    bench_dir: Path, monkeypatch: pytest.MonkeyPatch, thresholds: list[float]
+) -> None:
+    from newstrace.evaluation import cluster_bench
+
+    def unexpected_embedder(*args, **kwargs):
+        pytest.fail("Invalid thresholds must be rejected before loading an embedder")
+
+    monkeypatch.setattr(cluster_bench, "get_embedder", unexpected_embedder)
+    with pytest.raises(ValueError, match=r"thresholds.*non-empty.*finite"):
+        run_cluster_bench(ClusterBenchConfig(data_dir=str(bench_dir), thresholds=thresholds))
+
+
+@pytest.mark.parametrize("thresholds", ["", ", ,", "nan", "inf", "-inf", "0.3,nan", "oops"])
+def test_cli_rejects_invalid_thresholds_before_download(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], thresholds: str
+) -> None:
+    from scripts import run_cluster_bench as cli
+
+    def unexpected_download(*args, **kwargs):
+        pytest.fail("Invalid thresholds must be rejected before downloading data")
+
+    monkeypatch.setattr(cli, "download", unexpected_download)
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--download", f"--thresholds={thresholds}"])
+    assert exc.value.code == 2
+    assert "--thresholds:" in capsys.readouterr().err
+
+
+def test_cli_no_tune_accepts_an_empty_grid(
+    bench_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from scripts.run_cluster_bench import main
+
+    (bench_dir / "dataset.dev.json").unlink()
+    assert (
+        main(
+            [
+                "--data-dir",
+                str(bench_dir),
+                "--artifacts-dir",
+                str(tmp_path / "artifacts"),
+                "--no-tune",
+                "--thresholds=",
+            ]
+        )
+        == 0
+    )
+    artifacts = list((tmp_path / "artifacts").glob("cluster_bench/*/metrics.json"))
+    assert len(artifacts) == 1
+    metrics = json.loads(artifacts[0].read_text(encoding="utf-8"))
+    assert metrics["dev_sweep"] == []
+    assert [row["setting"] for row in metrics["results"]] == ["shipped"]
+    assert "Artifacts:" in capsys.readouterr().out
 
 
 def test_oracle_signals_label_each_article_against_its_own_story(bench_dir: Path) -> None:
