@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import timedelta
 
 import numpy as np
@@ -172,6 +173,32 @@ def test_bcubed_penalises_a_single_giant_cluster() -> None:
 
 def test_pairwise_scores_on_empty_input() -> None:
     assert pairwise_scores({}, {}) == (0.0, 0.0, 0.0)
+
+
+@pytest.mark.parametrize(
+    "scorer", [pairwise_scores, bcubed_scores, fragmentation_and_merge, evaluate_clustering]
+)
+@pytest.mark.parametrize("predicted", [{1: 10, 2: 10}, {}, {5: 10}])
+def test_clustering_metrics_reject_missing_predictions(
+    scorer: Callable[[dict[int, int], dict[int, int]], object], predicted: dict[int, int]
+) -> None:
+    # Dropping the second story used to turn incomplete output into a perfect score.
+    truth = {1: 1, 2: 1, 3: 2, 4: 2}
+    missing = len(set(truth) - set(predicted))
+    with pytest.raises(ValueError, match=rf"Missing predictions for {missing} of 4 labelled items"):
+        scorer(truth, predicted)
+
+
+@pytest.mark.parametrize(
+    "scorer", [pairwise_scores, bcubed_scores, fragmentation_and_merge, evaluate_clustering]
+)
+def test_clustering_metrics_allow_predictions_for_unlabelled_items(
+    scorer: Callable[[dict[int, int], dict[int, int]], object],
+) -> None:
+    truth = {1: 1, 2: 1, 3: 2, 4: 2}
+    predicted = {4: 20, 3: 20, 2: 10, 1: 10}
+    assert scorer(truth, {**predicted, 5: 10, 6: 20}) == scorer(truth, predicted)
+    assert scorer({}, predicted) == scorer({}, {})
 
 
 def test_labels_from_pairs_builds_transitive_groups() -> None:

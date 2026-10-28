@@ -130,6 +130,17 @@ def test_no_tune_scores_only_the_shipped_threshold(bench_dir: Path) -> None:
     assert metrics["dataset"]["dev"] is None
 
 
+def test_benchmark_rejects_incomplete_cluster_output(
+    bench_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "newstrace.evaluation.cluster_bench.cluster_stream",
+        lambda *args, **kwargs: (dict.fromkeys(range(1, 12), 0), 1.0),
+    )
+    with pytest.raises(ValueError, match="Missing predictions for 1 of 12 labelled items"):
+        run_cluster_bench(ClusterBenchConfig(data_dir=str(bench_dir), tune=False))
+
+
 def test_oracle_signals_label_each_article_against_its_own_story(bench_dir: Path) -> None:
     settings = get_settings()
     documents = load_split(ClusterBenchConfig(data_dir=str(bench_dir)), "dev")

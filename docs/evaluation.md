@@ -41,6 +41,13 @@ what produces a signal.
 silver labels derived from the system's own clustering. The report records which
 was used. This run used `synthetic_fixture_labels`.
 
+**Clustering evaluation population.** Each labelled article must have a predicted
+cluster. The metric functions raise `ValueError` if any predictions are missing,
+so incomplete output cannot silently improve a score by excluding articles.
+Predictions for unlabelled articles are ignored. To score an intentional subset,
+restrict the truth mapping explicitly before calling the metrics. Empty truth
+mappings still return zero-valued metrics.
+
 ## Retrieval quality versus cost
 
 Baseline embedding: `all-MiniLM-L6-v2`, d=384, 27 queries over 135 articles.

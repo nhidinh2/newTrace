@@ -1,4 +1,9 @@
-"""Clustering metrics: pairwise, B-cubed, ARI, fragmentation and merge errors."""
+"""Clustering metrics: pairwise, B-cubed, ARI, fragmentation and merge errors.
+
+Every metric requires a prediction for each labelled item and raises ValueError
+if one is missing. Predictions for unlabelled items are ignored. To evaluate a
+subset, callers must explicitly restrict the truth mapping to that subset.
+"""
 
 from __future__ import annotations
 
@@ -36,6 +41,18 @@ def _f1(precision: float, recall: float) -> float:
     return (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
 
 
+def _evaluation_items(truth: Mapping[int, int], predicted: Mapping[int, int]) -> list[int]:
+    """Use the labelled population without silently dropping missing predictions."""
+    missing = set(truth).difference(predicted)
+    if missing:
+        raise ValueError(
+            f"Missing predictions for {len(missing)} of {len(truth)} labelled items; "
+            "provide a prediction for every labelled item or explicitly restrict truth "
+            "to the intended evaluation subset"
+        )
+    return sorted(truth)
+
+
 def pairwise_scores(
     truth: Mapping[int, int], predicted: Mapping[int, int]
 ) -> tuple[float, float, float]:
@@ -45,7 +62,7 @@ def pairwise_scores(
     benchmark split of ~9k documents has ~38M pairs, which a Python loop takes
     minutes over, while the counts below are exact and linear in the items.
     """
-    items = sorted(set(truth) & set(predicted))
+    items = _evaluation_items(truth, predicted)
     joint: Counter[tuple[int, int]] = Counter((truth[i], predicted[i]) for i in items)
     true_sizes: Counter[int] = Counter(truth[i] for i in items)
     pred_sizes: Counter[int] = Counter(predicted[i] for i in items)
@@ -61,7 +78,7 @@ def bcubed_scores(
     truth: Mapping[int, int], predicted: Mapping[int, int]
 ) -> tuple[float, float, float]:
     """B-cubed precision/recall/F1 (per-item, cluster-size normalised)."""
-    items = sorted(set(truth) & set(predicted))
+    items = _evaluation_items(truth, predicted)
     if not items:
         return 0.0, 0.0, 0.0
     # An item's "correct" count is the size of its (true, predicted) cell, so
@@ -84,7 +101,7 @@ def fragmentation_and_merge(
     truth: Mapping[int, int], predicted: Mapping[int, int]
 ) -> tuple[float, float]:
     """Fraction of true stories split apart, and of predicted stories that merge events."""
-    items = sorted(set(truth) & set(predicted))
+    items = _evaluation_items(truth, predicted)
     if not items:
         return 0.0, 0.0
     true_groups: dict[int, set[int]] = defaultdict(set)
@@ -100,7 +117,7 @@ def fragmentation_and_merge(
 def evaluate_clustering(
     truth: Mapping[int, int], predicted: Mapping[int, int]
 ) -> ClusteringMetrics:
-    items = sorted(set(truth) & set(predicted))
+    items = _evaluation_items(truth, predicted)
     p, r, f = pairwise_scores(truth, predicted)
     bp, br, bf = bcubed_scores(truth, predicted)
     frag, merge = fragmentation_and_merge(truth, predicted)
