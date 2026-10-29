@@ -14,7 +14,7 @@ import platform
 import sys
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -259,7 +259,11 @@ def _cluster_predictions_for(
     settings: Settings,
     method: str,
 ) -> dict[int, int]:
-    """Cluster a representation in memory (no writes) to score clustering quality."""
+    """Cluster in memory, in UTC publication order with undated articles last.
+
+    Article IDs break timestamp ties, including among undated articles.
+    No database writes are performed.
+    """
     from newstrace.clustering.online import combined_score, content_tokens, default_threshold
     from newstrace.utils import jaccard
 
@@ -270,7 +274,7 @@ def _cluster_predictions_for(
     order = sorted(
         article_ids,
         key=lambda aid: (
-            ensure_utc(articles[aid].published_at) or datetime.max.replace(tzinfo=None),
+            ensure_utc(articles[aid].published_at) or datetime.max.replace(tzinfo=UTC),
             aid,
         ),
     )

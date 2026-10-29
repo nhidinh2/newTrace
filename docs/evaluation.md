@@ -179,6 +179,11 @@ Threshold tuned on fit+validation only (`newstrace.evaluation.tuning`), selectin
 fallback. Cosine similarity is not comparable across backends, so they carry
 separate values.
 
+The dimension sweep's in-memory clustering processes articles in UTC publication
+order, with undated articles last and article IDs breaking timestamp ties.
+Naive timestamps are treated as UTC. The undated-last policy makes missing-date
+handling deterministic; it does not establish when those reports were published.
+
 Held-out clustering quality, full-dimensional representation:
 
 | metric | value |
