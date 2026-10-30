@@ -45,12 +45,26 @@ def cosine_scores(query: NDArray[np.float32], matrix: Matrix) -> NDArray[np.floa
 
 
 def top_k(scores: NDArray[np.float32], k: int) -> NDArray[np.int64]:
-    """Indices of the ``k`` highest scores, ties broken by index for determinism."""
-    if scores.size == 0:
+    """Highest-score indices, breaking cutoff ties by index; NaNs sort last.
+
+    Nonpositive limits return no indices. Selection costs O(n + k log k),
+    without sorting the entire corpus when k is small.
+    """
+    if scores.size == 0 or k <= 0:
         return np.zeros(0, dtype=np.int64)
     k = min(k, scores.size)
     partial = np.argpartition(-scores, k - 1)[:k]
-    return partial[np.lexsort((partial, -scores[partial]))].astype(np.int64)
+    cutoff = scores[partial[-1]]
+    # argpartition may choose any subset of a cutoff tie. Keep strictly better
+    # rows, then fill the remaining places from tied rows in corpus order.
+    if np.isnan(cutoff):
+        better = partial[~np.isnan(scores[partial])]
+        tied = np.flatnonzero(np.isnan(scores))
+    else:
+        better = partial[scores[partial] > cutoff]
+        tied = np.flatnonzero(scores == cutoff)
+    selected = np.concatenate((better, tied[: k - better.size]))
+    return selected[np.lexsort((selected, -scores[selected]))].astype(np.int64)
 
 
 class DenseRetriever:

@@ -53,6 +53,46 @@ def test_top_k_clamps_to_available_items() -> None:
     assert len(top_k(np.array([0.2, 0.1], dtype=np.float32), 10)) == 2
 
 
+@pytest.mark.parametrize(
+    "values",
+    [
+        [1.0] * 20,
+        [0.5, 0.9, 0.5, 0.5, 0.1] * 4,
+        [-0.5, 0.0, -0.5, -1.0, 0.0] * 4,
+        [np.nan, -np.inf, np.inf, 0.5, np.nan, -np.inf, np.inf] * 3,
+    ],
+)
+def test_top_k_matches_full_sort_at_every_cutoff(values: list[float]) -> None:
+    scores = np.asarray(values, dtype=np.float32)
+    expected = np.lexsort((np.arange(scores.size), -scores))
+    for k in range(1, scores.size + 3):
+        actual = top_k(scores, k)
+        np.testing.assert_array_equal(actual, expected[:k], err_msg=f"cutoff k={k}")
+        assert actual.dtype == np.int64
+
+
+@pytest.mark.parametrize("k", [0, -1, -25])
+def test_top_k_nonpositive_limit_is_empty(k: int) -> None:
+    assert top_k(np.ones(20, dtype=np.float32), k).size == 0
+
+
+@pytest.mark.parametrize("method", ["dense", "tfidf"])
+@pytest.mark.parametrize("filtered", [False, True])
+def test_retriever_cutoff_ties_preserve_corpus_row_order(method: str, filtered: bool) -> None:
+    # IDs deliberately descend: the documented tiebreaker is row index, not ID.
+    article_ids = list(range(120, 100, -1))
+    if method == "dense":
+        retriever = DenseRetriever(article_ids, np.ones((20, 2), dtype=np.float32))
+        query = np.ones(2, dtype=np.float32)
+    else:
+        retriever = TfidfRetriever(article_ids, ["shared news report"] * 20)
+        query = "shared news"
+    candidates = article_ids[::2] if filtered else article_ids
+    hits = retriever.search(query, k=5, allowed_ids=set(candidates) if filtered else None)
+    assert [hit.article_id for hit in hits] == candidates[:5]
+    assert [hit.rank for hit in hits] == [1, 2, 3, 4, 5]
+
+
 def test_dense_retriever_orders_and_filters(populated_session: Session) -> None:
     from newstrace.representations.registry import load_vectors
 

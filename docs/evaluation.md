@@ -36,6 +36,13 @@ every method score identically — the first version of this sweep did exactly
 that and returned 0.952 nDCG@10 for all twelve configurations. The task above is
 what produces a signal.
 
+**Exact retrieval ties.** Dense cosine and TF-IDF retrieval break equal scores
+by ascending corpus row index, including ties crossing the top-k cutoff. This
+depends on the supplied corpus order, not article ID. Nonpositive limits return
+no hits. Cutoff selection uses partitioning and a tie scan, sorting only the
+selected rows. This ranking fix does not regenerate the historical measurements
+below; rerun evaluation before comparing results under the updated tie policy.
+
 **Relevance judgments** come, in order of preference, from reviewer labels
 (`data/labels/retrieval_judgments.csv`), the synthetic fixture story labels, or
 silver labels derived from the system's own clustering. The report records which
