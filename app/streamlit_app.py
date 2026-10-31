@@ -301,6 +301,14 @@ def page_top_stories() -> None:
 
 def page_story_detail() -> None:
     st.header("Story")
+    # Deep links are user input. Parse once, before either a database lookup or
+    # picker selection, and keep IDs within SQLite's signed integer range.
+    try:
+        requested_id = int(query_param("story"))
+    except ValueError:
+        requested_id = None
+    if requested_id is not None and not 0 < requested_id <= 2**63 - 1:
+        requested_id = None
     with session_scope() as session:
         # Newest first, and capped: the picker is for getting back to something
         # you were reading, not for scrolling four thousand rows.
@@ -313,7 +321,7 @@ def page_story_detail() -> None:
         # A story reached by link or by the Stories page may be older than the
         # cap, so it is added rather than silently swapped for another story.
         held = st.session_state.get("story_id")
-        for candidate in (held, int(query_param("story") or 0)):
+        for candidate in (held, requested_id):
             if isinstance(candidate, int) and candidate and candidate not in headlines:
                 story = session.get(StoryCluster, candidate)
                 if story is not None:
@@ -322,8 +330,7 @@ def page_story_detail() -> None:
         if not ids:
             st.info("No stories yet. Run `make demo` first.")
             return
-        requested = query_param("story")
-        from_url = int(requested) if requested.isdigit() and int(requested) in ids else None
+        from_url = requested_id if requested_id in ids else None
         # ``?story=`` is written back on every render, so it only wins when it
         # changes; otherwise it would override the story the "Open story" button
         # just selected. The selectbox is keyed on ``story_id`` so that widget
