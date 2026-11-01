@@ -15,6 +15,7 @@ from newstrace.api.serializers import (
 )
 from newstrace.claims.evidence import load_claims
 from newstrace.db import get_db
+from newstrace.models import StoryCluster
 from newstrace.schemas import (
     ClaimsResponse,
     StoryDetailResponse,
@@ -79,11 +80,10 @@ def get_timeline(
 
 @router.get("/stories/{story_id}/claims", response_model=ClaimsResponse)
 def get_claims(story_id: int, session: Session = Depends(get_db)) -> ClaimsResponse:
-    bundle = load_story(session, story_id)
-    if bundle is None:
+    if session.get(StoryCluster, story_id) is None:
         raise HTTPException(status_code=404, detail=f"story {story_id} not found")
     claims = load_claims(session, story_id)
     return ClaimsResponse(
         story_id=story_id,
-        claims=[claim_to_schema(session, claim, evidence) for claim, evidence in claims],
+        claims=[claim_to_schema(claim, evidence) for claim, evidence in claims],
     )

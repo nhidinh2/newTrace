@@ -17,6 +17,7 @@ import streamlit as st
 from sqlalchemy import func, select
 
 from newstrace import __version__
+from newstrace.api.serializers import claim_to_schema
 from newstrace.claims.evidence import load_claims
 from newstrace.config import get_llm_settings, get_settings, load_topics
 from newstrace.db import create_all, session_scope
@@ -428,17 +429,13 @@ def page_story_detail() -> None:
             if not claims:
                 st.info("No claims extracted for this story.")
             for claim, evidence in claims[:30]:
-                domains = {e.article_id: e for e in evidence}
-                independent = len(
-                    {
-                        a.source_domain
-                        for a in bundle.articles
-                        if a.id in domains and not a.is_near_duplicate
-                    }
-                )
-                status = "Repeated" if independent > 1 else "Single source"
-                if any(e.stance in ("disputes", "unclear") for e in evidence):
-                    status = "Disputed or unclear"
+                view = claim_to_schema(claim, evidence)
+                independent = view.independent_domain_count
+                status = {
+                    "repeated": "Repeated",
+                    "single_source": "Single source",
+                    "unclear": "Disputed or unclear",
+                }[view.status]
                 with st.expander(f"{status} — {truncate(claim.normalized_claim, 110)}"):
                     st.caption(
                         f"Extraction: {claim.extraction_method.replace('_', ' ')} · "
@@ -446,14 +443,11 @@ def page_story_detail() -> None:
                         f"{independent} independent source"
                         f"{'' if independent == 1 else 's'}"
                     )
-                    for ev in evidence:
-                        article = next((a for a in bundle.articles if a.id == ev.article_id), None)
-                        if article is None:
-                            continue
-                        dup = " *(near-duplicate)*" if article.is_near_duplicate else ""
+                    for ev in view.evidence:
+                        dup = " *(near-duplicate)*" if ev.is_near_duplicate else ""
                         st.markdown(
-                            f"- **{article.source_domain}** ({ev.stance}){dup}: {ev.excerpt}  \n"
-                            f"  [{article.url}]({article.url})"
+                            f"- **{ev.source_domain}** ({ev.stance}){dup}: {ev.excerpt}  \n"
+                            f"  [{ev.url}]({ev.url})"
                         )
 
         with tab_sources:

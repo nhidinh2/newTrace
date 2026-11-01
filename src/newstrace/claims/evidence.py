@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from newstrace.claims.compare import ClaimGroup, ClaimOccurrence, group_claims
 from newstrace.claims.extract import extract_claims
@@ -112,7 +112,11 @@ def _articles_for(articles: Sequence[Article], group: ClaimGroup) -> list[Articl
 
 
 def load_claims(session: Session, story_id: int) -> list[tuple[Claim, list[ClaimEvidence]]]:
-    """Load a story's claims with their evidence, ordered by confidence."""
+    """Load ordered claims and evidence, including articles, in at most two reads.
+
+    Join through the story filter rather than building an IN list of claim IDs,
+    so large stories do not hit the database's bound-parameter limit.
+    """
     claims = list(
         session.execute(
             select(Claim)
@@ -120,14 +124,16 @@ def load_claims(session: Session, story_id: int) -> list[tuple[Claim, list[Claim
             .order_by(Claim.confidence.desc(), Claim.id)
         ).scalars()
     )
-    out: list[tuple[Claim, list[ClaimEvidence]]] = []
-    for claim in claims:
-        evidence = list(
-            session.execute(
-                select(ClaimEvidence)
-                .where(ClaimEvidence.claim_id == claim.id)
-                .order_by(ClaimEvidence.id)
-            ).scalars()
-        )
-        out.append((claim, evidence))
-    return out
+    if not claims:
+        return []
+    by_claim: dict[int, list[ClaimEvidence]] = {claim.id: [] for claim in claims}
+    evidence = session.scalars(
+        select(ClaimEvidence)
+        .join(Claim, Claim.id == ClaimEvidence.claim_id)
+        .where(Claim.story_cluster_id == story_id)
+        .options(joinedload(ClaimEvidence.article))
+        .order_by(ClaimEvidence.id)
+    )
+    for item in evidence:
+        by_claim[item.claim_id].append(item)
+    return [(claim, by_claim[claim.id]) for claim in claims]

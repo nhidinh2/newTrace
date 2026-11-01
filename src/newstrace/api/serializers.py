@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
-
 from newstrace.claims.compare import ClaimGroup
 from newstrace.models import Article, Claim, ClaimEvidence, IngestionRun, StoryCluster
 from newstrace.schemas import (
@@ -80,17 +78,14 @@ def timeline_entry_to_schema(entry: TimelineEntry) -> TimelineEntryResponse:
     )
 
 
-def claim_to_schema(session: Session, claim: Claim, evidence: list[ClaimEvidence]) -> ClaimResponse:
-    articles = {
-        a.id: a
-        for a in session.query(Article).filter(Article.id.in_([e.article_id for e in evidence]))
-    }
+def claim_to_schema(claim: Claim, evidence: list[ClaimEvidence]) -> ClaimResponse:
+    """Convert evidence whose articles are eagerly loaded by ``load_claims``."""
     rows: list[ClaimEvidenceResponse] = []
     independent_domains: set[str] = set()
     duplicates = 0
     disputed = False
     for ev in evidence:
-        article = articles.get(ev.article_id)
+        article = ev.article
         if article is None:
             continue
         if article.is_near_duplicate:
