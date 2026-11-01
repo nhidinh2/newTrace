@@ -113,6 +113,18 @@ not in the library.
 
 ## Persistence
 
+Claim reads use a fixed query budget. `claims.evidence.load_claims` reads the
+ordered claims once, then their evidence joined to source articles once. The
+evidence query filters through the story's claims instead of passing a list of
+IDs, avoiding parameter limits for large stories. Claims without evidence remain
+visible; confidence/claim-ID ordering and evidence-ID ordering are preserved.
+The API and Streamlit share `claim_to_schema`, which consumes those preloaded
+articles without further queries or repeated scans of the story's article list.
+`GET /stories/{id}/claims` uses three SELECTs for a nonempty story (including
+existence checking), two for a story with no claims, and one for an unknown ID.
+This bounds database round trips; returned rows and memory still grow with the
+amount of evidence. It makes no wall-clock latency claim.
+
 SQLite via SQLAlchemy 2.x, with Alembic migrations in `migrations/`.
 `IngestionRun` and `EvaluationRun` record configuration, seed, git commit,
 counts, failures and artifact paths, so any run can be traced back to the code
