@@ -44,6 +44,20 @@ Every target runs through [`scripts/run.sh`](scripts/run.sh), which uses
 [uv](https://docs.astral.sh/uv/) when it is installed and falls back to
 `.venv` when it is not, so a checkout without uv still works.
 
+Open a story's **Compare sources** tab to inspect stored claims across up to
+four domains. The matrix distinguishes recorded stances, copies only, and no
+extracted evidence; select a claim to read its exact stored excerpts and open
+the original articles side by side. The optional disputed/unclear filter uses
+recorded non-duplicate stances across the whole story. Missing evidence is not
+a denial, heuristic confidence is not a probability of truth, and distinct
+domains are only a proxy for independent reporting.
+
+The same complete, sparse comparison is available from
+`GET /stories/{story_id}/comparison`. It includes every stored claim, including
+claims without evidence, source article counts, and linked evidence per domain.
+Near-duplicate articles remain inspectable but do not contribute to independent
+counts or the matrix's stance labels.
+
 Live ingestion once that works:
 
 ```bash

@@ -138,6 +138,42 @@ class ClaimsResponse(BaseModel):
     )
 
 
+class ComparisonSource(BaseModel):
+    source_domain: str
+    article_count: int
+    duplicate_article_count: int
+
+
+class ComparisonCell(BaseModel):
+    source_domain: str
+    independent_article_count: int
+    duplicate_article_count: int
+    # Recorded stances from non-duplicate articles only; copies remain inspectable.
+    stances: list[str]
+    evidence: list[ClaimEvidenceResponse]
+
+
+class ComparisonClaim(BaseModel):
+    claim_id: int
+    text: str
+    extraction_method: str
+    confidence: float
+    independent_domain_count: int
+    cells: list[ComparisonCell]
+
+
+class StoryComparisonResponse(BaseModel):
+    story_id: int
+    sources: list[ComparisonSource]
+    claims: list[ComparisonClaim]
+    note: str = (
+        "No extracted evidence does not mean a source denies a claim or did not report it. "
+        "Stances are heuristic labels, not truth judgments. Distinct domains are a proxy "
+        "for independence; shared ownership or reporting origins may remain undetected. "
+        "Near-duplicates are visible but excluded from independent counts and stances."
+    )
+
+
 class SearchFiltersRequest(BaseModel):
     topic: str | None = None
     start_time: datetime | None = None

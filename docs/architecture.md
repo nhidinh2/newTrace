@@ -117,3 +117,23 @@ SQLite via SQLAlchemy 2.x, with Alembic migrations in `migrations/`.
 `IngestionRun` and `EvaluationRun` record configuration, seed, git commit,
 counts, failures and artifact paths, so any run can be traced back to the code
 and settings that produced it.
+
+### Source evidence comparison
+
+`claims/comparison.py` builds the shared API/Streamlit comparison from stored
+claims and evidence without running extraction or inferring new disagreements.
+After loading the story and its articles, one outer-joined query reads claims,
+evidence and source articles, retaining claims with no evidence. A cold API
+request therefore uses three SELECTs, independent of claim count. Sources with
+articles but no extracted claims stay visible; persisted evidence from an
+article whose story membership changed also stays inspectable. Source article
+counts cover the union of current story articles and cited evidence articles.
+
+Cells are sparse and ordered by domain; claims retain confidence/ID order and
+passages retain evidence-ID order. Counts deduplicate article IDs rather than
+counting excerpts. Duplicate-only cells have no independent stances. The UI
+limits simultaneous comparison to four domains while the API returns all
+domains and claims. Returned rows and memory still grow with evidence volume;
+the query budget is not a wall-clock performance guarantee. The default tests
+cover the API and query counts; CI installs the UI extra to also exercise source
+selection, filters, linked excerpts, and empty states with Streamlit AppTest.

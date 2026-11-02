@@ -13,10 +13,12 @@ from newstrace.api.serializers import (
     story_to_schema,
     timeline_entry_to_schema,
 )
+from newstrace.claims.comparison import build_source_comparison
 from newstrace.claims.evidence import load_claims
 from newstrace.db import get_db
 from newstrace.schemas import (
     ClaimsResponse,
+    StoryComparisonResponse,
     StoryDetailResponse,
     StorySummaryResponse,
     TimelineResponse,
@@ -24,6 +26,14 @@ from newstrace.schemas import (
 from newstrace.stories import build_timeline, list_stories, load_story
 
 router = APIRouter(tags=["stories"])
+
+
+@router.get("/stories/{story_id}/comparison", response_model=StoryComparisonResponse)
+def get_comparison(story_id: int, session: Session = Depends(get_db)) -> StoryComparisonResponse:
+    bundle = load_story(session, story_id)
+    if bundle is None:
+        raise HTTPException(status_code=404, detail=f"story {story_id} not found")
+    return build_source_comparison(session, bundle)
 
 
 @router.get("/stories", response_model=list[StorySummaryResponse])
