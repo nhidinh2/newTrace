@@ -126,6 +126,8 @@ class StoryCluster(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     display_title: Mapped[str] = mapped_column(Text, nullable=False, default="")
     topic: Mapped[str | None] = mapped_column(String(128), index=True)
+    # OnlineClusterer seeds at 1, then advances once per non-duplicate vector
+    # contribution. Version - 1 supplies the incremental centroid weight.
     centroid_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     centroid_blob: Mapped[bytes | None] = mapped_column(LargeBinary)
     centroid_dimension: Mapped[int | None] = mapped_column(Integer)
