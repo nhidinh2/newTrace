@@ -64,6 +64,24 @@ centroids incrementally, so memory grows with live clusters rather than with
 articles seen. Near-duplicates follow the article they duplicate and never move
 a centroid or a source count.
 
+The centroid update uses the number of original-report contributions rather
+than total story membership: inserting syndicated copies cannot dilute the
+next original's vector update. The existing `centroid_version` starts at 1
+for the provisional seed and advances once per non-duplicate contribution,
+so `centroid_version - 1` supplies this weight without another query or a
+schema migration. A duplicate-only seed is replaced by the first original
+vector to join it. `article_count` still includes every report. The centroid
+is normalised after each update; this is an incremental directional estimate,
+not the exact arithmetic mean of all original vectors.
+
+This corrects future vector updates on stored stories, including after a
+restart. It does not undo earlier assignments or centroid drift. Changing
+duplicate flags after assignment does not rewind vector contributions; a
+fresh clustering replay is needed to evaluate that change. Copies still
+extend the story's publication span and title/entity metadata, so removing
+copies from a stream can still change non-vector scoring and candidate
+eligibility. Distinct domains remain a proxy for source independence.
+
 **Duplicates are preserved, never deleted.** They stay queryable, carry
 `duplicate_of_article_id` and a reason, and are excluded from
 `distinct_domain_count`, independent-source counts and default search results.

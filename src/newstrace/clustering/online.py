@@ -250,12 +250,23 @@ class OnlineClusterer:
         return cluster
 
     def _update_cluster(self, cluster: StoryCluster, article: Article, vector: Vector) -> None:
-        """Incremental centroid update: c <- c + (x - c)/n over non-duplicates."""
+        """Normalised incremental update, weighted only by original reports.
+
+        Version 1 is the provisional seed, then each non-duplicate update
+        advances the version once. Thus version - 1 counts contributions,
+        including for stored clusters created before this weighting rule.
+        Article count includes copies and cannot supply the denominator.
+        """
         dim = cluster.centroid_dimension or int(vector.shape[0])
         centroid = from_blob(cluster.centroid_blob, dim)
-        n_effective = max(1, cluster.article_count)
         if not article.is_near_duplicate:
-            centroid = centroid + (vector - centroid) / float(n_effective + 1)
+            n_effective = max(0, cluster.centroid_version - 1)
+            # Discard a duplicate-only seed when the first original joins.
+            centroid = (
+                centroid + (vector - centroid) / float(n_effective + 1)
+                if n_effective
+                else vector.copy()
+            )
             norm = float(np.linalg.norm(centroid))
             if norm > 1e-9:
                 centroid = centroid / norm
