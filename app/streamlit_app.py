@@ -17,6 +17,7 @@ import streamlit as st
 from sqlalchemy import func, select
 
 from newstrace import __version__
+from newstrace.claims.comparison import build_source_comparison
 from newstrace.claims.evidence import load_claims
 from newstrace.config import get_llm_settings, get_settings, load_topics
 from newstrace.db import create_all, session_scope
@@ -25,6 +26,7 @@ from newstrace.ingestion.pipeline import latest_run
 from newstrace.models import Article, EvaluationRun, IngestionRun, StoryCluster
 from newstrace.representations.embedder import detect_device, get_embedder
 from newstrace.representations.registry import available_representations
+from newstrace.schemas import StoryComparisonResponse
 from newstrace.search import SearchFilters, SearchRequest
 from newstrace.search import search as run_search
 from newstrace.stories import build_timeline, list_stories, load_story
@@ -366,8 +368,8 @@ def page_story_detail() -> None:
             unsafe_allow_html=True,
         )
 
-        tab_timeline, tab_summary, tab_claims, tab_sources = st.tabs(
-            ["Timeline", "Grounded summary", "Claims", "Sources"]
+        tab_timeline, tab_summary, tab_claims, tab_comparison, tab_sources = st.tabs(
+            ["Timeline", "Grounded summary", "Claims", "Compare sources", "Sources"]
         )
 
         with tab_timeline:
@@ -456,6 +458,9 @@ def page_story_detail() -> None:
                             f"  [{article.url}]({article.url})"
                         )
 
+        with tab_comparison:
+            render_source_comparison(build_source_comparison(session, bundle))
+
         with tab_sources:
             by_id = {a.id: a for a in bundle.articles}
             rows = [
@@ -476,6 +481,97 @@ def page_story_detail() -> None:
             ]
             frame = pd.DataFrame(rows)
             st.dataframe(frame, width="stretch", column_config=column_config(frame))
+
+
+def render_source_comparison(view: StoryComparisonResponse) -> None:
+    st.caption(view.note)
+    if not view.claims:
+        st.info("No claims extracted for this story. Source articles remain available in Sources.")
+        return
+    domains = [s.source_domain for s in view.sources]
+    if not domains:
+        st.info("No source evidence is available for the extracted claims.")
+        return
+    sources = st.multiselect(
+        "Compare sources (up to four)",
+        domains,
+        default=domains[:3],
+        max_selections=4,
+        format_func=lambda d: d or "Unknown domain",
+        key=f"comparison_sources_{view.story_id}",
+    )
+    if not sources:
+        st.info("Choose at least one source to inspect its extracted evidence.")
+        return
+    flagged_only = st.checkbox(
+        "Only claims with disputed or unclear evidence",
+        key=f"comparison_flagged_{view.story_id}",
+        help="Uses recorded non-duplicate stances across all sources in the story.",
+    )
+    claims = [
+        c
+        for c in view.claims
+        if not flagged_only
+        or any(s in {"disputes", "unclear"} for cell in c.cells for s in cell.stances)
+    ]
+    if not claims:
+        st.info("No claims match this filter. This does not establish agreement between sources.")
+        return
+    rows = []
+    for claim in claims:
+        cells = {c.source_domain: c for c in claim.cells}
+        row = {"Claim": f"#{claim.claim_id} · {claim.text}"}
+        for domain in sources:
+            cell = cells.get(domain)
+            if cell is None:
+                label = "No extracted evidence"
+            elif not cell.independent_article_count:
+                count = cell.duplicate_article_count
+                label = f"Copies only · {count} article{'' if count == 1 else 's'}"
+            else:
+                count = cell.independent_article_count
+                label = f"{', '.join(cell.stances)} · {count} article{'' if count == 1 else 's'}"
+                if cell.duplicate_article_count:
+                    count = cell.duplicate_article_count
+                    label += f" + {count} {'copy' if count == 1 else 'copies'}"
+            # Prefix prevents a source named 'Claim' from replacing the claim column.
+            row[f"Source: {domain or 'Unknown domain'}"] = label
+        rows.append(row)
+    st.caption(f"{len(claims)} of {len(view.claims)} stored claims · counts are distinct articles")
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    by_id = {c.claim_id: c for c in claims}
+    selected = st.selectbox(
+        "Inspect claim evidence",
+        list(by_id),
+        format_func=lambda i: f"#{i} · {truncate(by_id[i].text, 120)}",
+        key=f"comparison_claim_{view.story_id}",
+    )
+    claim = by_id[selected]
+    st.write(claim.text)
+    st.caption(
+        f"Extraction: {claim.extraction_method.replace('_', ' ')} · "
+        f"heuristic confidence {claim.confidence:.2f} (not probability of truth) · "
+        f"{claim.independent_domain_count} non-duplicate domains across all sources"
+    )
+    cells = {c.source_domain: c for c in claim.cells}
+    for column, domain in zip(st.columns(len(sources)), sources, strict=True):
+        with column:
+            st.write(f"**{domain or 'Unknown domain'}**")
+            cell = cells.get(domain)
+            if cell is None:
+                st.info("No extracted evidence")
+                continue
+            for ev in cell.evidence:
+                st.caption(
+                    f"{ev.stance} · {fmt_time(ev.published_at)}"
+                    + (
+                        " · near-duplicate, excluded from independent counts"
+                        if ev.is_near_duplicate
+                        else ""
+                    )
+                )
+                st.write(ev.excerpt)
+                st.markdown(f"[{ev.title or 'Original article'}]({ev.url})")
 
 
 def page_search() -> None:
