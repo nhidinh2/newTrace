@@ -145,7 +145,11 @@ def evaluate_rankings(
     *,
     baseline: Mapping[str, Sequence[int]] | None = None,
 ) -> tuple[RetrievalMetrics, list[dict[str, object]]]:
-    """Aggregate metrics plus a per-query breakdown."""
+    """Aggregate metrics plus a per-query breakdown.
+
+    Mapping keys are opaque query identities shared by rankings, judgments and
+    baseline. Use stable query IDs when distinct queries can have identical text.
+    """
     rows: list[dict[str, object]] = []
     for query, ranked in rankings.items():
         relevant = judgments.get(query, set())

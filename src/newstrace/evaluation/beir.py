@@ -153,10 +153,14 @@ def load_dataset(config: BeirConfig, settings: Settings | None = None) -> BeirDa
     judged_queries = set(qrels)
     query_ids: list[str] = []
     queries: list[str] = []
+    seen_query_ids: set[str] = set()
     with queries_path.open(encoding="utf-8") as handle:
         for line in handle:
             record = json.loads(line)
             if record["_id"] in judged_queries:
+                if record["_id"] in seen_query_ids:
+                    raise ValueError(f"duplicate judged query ID: {record['_id']!r}")
+                seen_query_ids.add(record["_id"])
                 query_ids.append(record["_id"])
                 queries.append(record.get("text", ""))
     if config.max_queries:
@@ -217,18 +221,22 @@ def run_beir(
     embed_seconds = time.perf_counter() - started
 
     row_by_doc = {doc_id: index for index, doc_id in enumerate(dataset.doc_ids)}
-    # Judgments are keyed by query *text* because that is what
-    # ``evaluate_rankings`` keys on, and graded scores are binarised: the
-    # aggregate metrics take relevance as a set.
+    # Metric keys are opaque identities. Text is only retrieval input: distinct
+    # BEIR query IDs can share wording but carry different relevance judgments.
+    # Graded scores are binarised because the aggregate metrics take a set.
     judgments: dict[str, set[int]] = {}
-    for query_id, query_text in zip(dataset.query_ids, dataset.queries, strict=True):
+    for query_id in dataset.query_ids:
         relevant = {
             row_by_doc[doc_id] for doc_id in dataset.qrels.get(query_id, {}) if doc_id in row_by_doc
         }
         if relevant:
-            judgments[query_text] = relevant
-    query_texts = [q for q in dataset.queries if q in judgments]
-    if not query_texts:
+            judgments[query_id] = relevant
+    queries = [
+        (qid, text)
+        for qid, text in zip(dataset.query_ids, dataset.queries, strict=True)
+        if qid in judgments
+    ]
+    if not queries:
         raise ValueError("no judged queries survived; check the qrels split")
 
     # The projectors are fitted on a held-out slice of the corpus, as they are
@@ -243,6 +251,30 @@ def run_beir(
     baseline_rows: list[dict[str, Any]] | None = None
     baseline_rankings: dict[str, list[int]] | None = None
     row_ids = list(range(len(dataset.doc_ids)))
+    per_query: list[dict[str, Any]] = []
+    text_by_query = dict(queries)
+
+    def record_queries(
+        method: str,
+        dimension: int,
+        rows: list[dict[str, object]],
+        rankings: dict[str, list[int]],
+    ) -> None:
+        for row in rows:
+            query_id = str(row["query"])
+            per_query.append(
+                {
+                    **{key: value for key, value in row.items() if key != "query"},
+                    "query_id": query_id,
+                    "query_text": text_by_query[query_id],
+                    "method": method,
+                    "dimension": dimension,
+                    "ranked_document_ids": [dataset.doc_ids[i] for i in rankings[query_id]],
+                    "relevant_document_ids": [
+                        dataset.doc_ids[i] for i in sorted(judgments[query_id])
+                    ],
+                }
+            )
 
     for method in config.methods:
         dimensions = (
@@ -256,14 +288,14 @@ def run_beir(
             projected = projector.transform(matrix)
 
             retriever = DenseRetriever(row_ids, projected, method=method, projector=projector)
-            vectors = [retriever.embed_query(q) for q in query_texts]
+            vectors = [retriever.embed_query(text) for _, text in queries]
             rankings: dict[str, list[int]] = {}
             latency: list[float] = []
-            for query, vector in zip(query_texts, vectors, strict=True):
+            for (query_id, _), vector in zip(queries, vectors, strict=True):
                 start = time.perf_counter()
                 hits = retriever.search(vector, k=config.top_k)
                 latency.append((time.perf_counter() - start) * 1000.0)
-                rankings[query] = [h.article_id for h in hits]
+                rankings[query_id] = [h.article_id for h in hits]
 
             metrics, rows = evaluate_rankings(rankings, judgments, baseline=baseline_rankings)
             if method == "full":
@@ -271,12 +303,14 @@ def run_beir(
             intervals = bootstrap_intervals(
                 rows, baseline_rows=None if method == "full" else baseline_rows, seed=config.seed
             )
+            actual_dimension = (
+                int(projector.dimension) if method != "full" else int(matrix.shape[1])
+            )
+            record_queries(method, actual_dimension, rows, rankings)
             results.append(
                 {
                     "method": method,
-                    "dimension": int(projector.dimension)
-                    if method != "full"
-                    else int(matrix.shape[1]),
+                    "dimension": actual_dimension,
                     **metrics.as_dict(),
                     "index_memory_mib": round(retriever.memory_bytes() / 1048576, 4),
                     "p95_ms": round(float(np.percentile(latency, 95)), 4),
@@ -290,12 +324,13 @@ def run_beir(
         lexical = TfidfRetriever(row_ids, dataset.documents)
         rankings = {}
         latency = []
-        for query in query_texts:
+        for query_id, text in queries:
             start = time.perf_counter()
-            hits = lexical.search(query, k=config.top_k)
+            hits = lexical.search(text, k=config.top_k)
             latency.append((time.perf_counter() - start) * 1000.0)
-            rankings[query] = [h.article_id for h in hits]
+            rankings[query_id] = [h.article_id for h in hits]
         metrics, rows = evaluate_rankings(rankings, judgments, baseline=baseline_rankings)
+        record_queries("tfidf", 0, rows, rankings)
         results.append(
             {
                 "method": "tfidf",
@@ -314,15 +349,19 @@ def run_beir(
         "dataset": {
             "name": dataset.name,
             "documents": len(dataset),
-            "queries": len(query_texts),
+            "queries": len(queries),
             "judgment_source": "human (BEIR qrels, binarised)",
             "embedding_model": embedder.name,
             "embed_seconds": round(embed_seconds, 2),
         },
         "config": config.as_dict(),
         "results": results,
+        "per_query": per_query,
         "notes": [
             "Relevance is binarised: a graded qrel of 2 counts the same as 1.",
+            "Queries are scored and paired by BEIR query ID; identical text does not merge "
+            "distinct judgments. per_query.jsonl records each configuration's query scores "
+            "and document IDs.",
             "Projectors are fitted on a random 60% of the corpus and scored on every "
             "document, mirroring the chronological fit used on the live corpus.",
         ],
@@ -338,9 +377,9 @@ def render_table(metrics: dict[str, Any]) -> str:
         f"{dataset.get('documents', 0)} documents, {dataset.get('queries', 0)} judged queries, "
         f"embedder `{dataset.get('embedding_model', '?')}`.",
         "",
-        "| Retrieval | dim | nDCG@10 | Recall@10 | top-10 overlap | Index | p95 | "
+        "| Retrieval | dim | queries | nDCG@10 | Recall@10 | top-10 overlap | Index | p95 | "
         "delta nDCG vs full (95% CI) |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in metrics.get("results", []):
         delta = (row.get("intervals") or {}).get("ndcg_at_10_delta")
@@ -350,7 +389,8 @@ def render_table(metrics: dict[str, Any]) -> str:
             else "baseline"
         )
         lines.append(
-            f"| {row['method']} | {row['dimension'] or '-'} | {row['ndcg_at_10']:.3f} | "
+            f"| {row['method']} | {row['dimension'] or '-'} | {row.get('queries', '-')} | "
+            f"{row['ndcg_at_10']:.3f} | "
             f"{row['recall_at_10']:.3f} | {row['topk_overlap_at_10']:.2f} | "
             f"{row['index_memory_mib']:.2f} MiB | {row['p95_ms']:.2f} ms | {ci} |"
         )
