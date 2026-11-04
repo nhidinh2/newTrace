@@ -338,6 +338,24 @@ paired bootstrap interval on the nDCG delta against `full`. Projectors are
 fitted on a random 60% of the corpus and scored on all of it, mirroring the
 chronological fit used on the live corpus; relevance is binarised.
 
+Queries are evaluated and paired by their original BEIR **query ID**. Two IDs
+with the same text remain separate observations with their own judgments;
+duplicate judged IDs in `queries.jsonl` are rejected before embedding. Earlier
+versions keyed by text, which could silently overwrite judgments and rankings
+while still reporting the original query count. Rerun affected datasets before
+comparing results; historical committed measurements have not been recomputed.
+
+Each CLI run writes `metrics.json`, `results.md`, and `per_query.jsonl` under
+`artifacts/beir/<dataset>-<timestamp>/`. The table includes each configuration's
+scored query count. Each JSONL record contains the query ID and text, method,
+actual dimension, ranked and relevant document IDs, result counts, and unrounded
+per-query scores. These records support recomputing the aggregate metrics and
+seeded paired intervals without embedding again. `run_beir()` exposes the same
+records as `per_query`; the CLI stores them separately to keep `metrics.json`
+compact. Query text and document IDs come from the input dataset, so review them
+before sharing artifacts from private datasets. Repeated wording still counts
+once per ID; the bootstrap does not model dependence between related queries.
+
 One run is committed: [`experiments/beir-scifact`](experiments/beir-scifact),
 300 human-judged queries over 5,183 documents. It reverses the live sweep's
 compression result -- every dimension below 256 is worse than the baseline by

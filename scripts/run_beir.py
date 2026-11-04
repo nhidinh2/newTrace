@@ -63,14 +63,20 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         metrics = run_beir(config, settings=settings)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         console.print(f"[red]{exc}[/red]")
         return 1
 
     root = Path(args.artifacts_dir or settings.resolve(settings.artifacts_dir))
     outdir = root / "beir" / f"{config.dataset}-{utcnow().strftime('%Y-%m-%dT%H%M%SZ')}"
     outdir.mkdir(parents=True, exist_ok=True)
-    (outdir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    (outdir / "metrics.json").write_text(
+        json.dumps({key: value for key, value in metrics.items() if key != "per_query"}, indent=2),
+        encoding="utf-8",
+    )
+    with (outdir / "per_query.jsonl").open("w", encoding="utf-8") as handle:
+        for row in metrics["per_query"]:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
     (outdir / "results.md").write_text(render_table(metrics), encoding="utf-8")
 
     console.print(render_table(metrics))
