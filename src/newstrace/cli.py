@@ -111,6 +111,10 @@ def search(
     domain: Annotated[str | None, typer.Option(help="Restrict to a source domain")] = None,
     pagerank: Annotated[bool, typer.Option(help="Rerank with personalized PageRank")] = False,
     include_duplicates: Annotated[bool, typer.Option(help="Include near-duplicates")] = False,
+    one_per_story: Annotated[
+        bool,
+        typer.Option(help="Keep the highest-ranked report per story in a bounded candidate pool"),
+    ] = False,
     as_json: Annotated[bool, typer.Option("--json", help="Emit JSON")] = False,
 ) -> None:
     """Search stored articles and show why each result ranked where it did."""
@@ -123,6 +127,7 @@ def search(
         dimension=dimension,
         rerank_with_pagerank=pagerank,
         top_k=top_k,
+        one_per_story=one_per_story,
     )
     with session_scope() as session:
         response = run_search(session, request)
@@ -139,6 +144,8 @@ def search(
                             search_item_to_schema(i).model_dump(mode="json") for i in response.items
                         ],
                         "notes": response.notes,
+                        "one_per_story": response.one_per_story,
+                        "collapsed_candidates": response.collapsed_candidates,
                     }
                 )
             )
@@ -160,6 +167,11 @@ def search(
                 else "—",
             )
         console.print(table)
+        if response.one_per_story:
+            console.print(
+                f"  [dim]One result per story; {response.collapsed_candidates} additional "
+                "reports grouped in the candidate pool. Unclustered reports kept separately.[/dim]"
+            )
         for item in response.items[:3]:
             console.print(f"  [dim]{item.explanation}[/dim]")
         for note in response.notes:

@@ -492,6 +492,12 @@ def page_search() -> None:
         )
         topic = None if chosen == "All topics" else chosen
         top_k = right.number_input("Results", min_value=1, max_value=30, value=10)
+        one_per_story = st.checkbox(
+            "One result per story",
+            value=False,
+            help="Keep the highest-ranked report from each story after reranking. "
+            "Unclustered reports stay separate. Grouping does not establish source independence.",
+        )
 
         # Everything below changes how retrieval runs rather than what you are
         # asking for, and the experiment dashboard is where it is compared.
@@ -526,14 +532,23 @@ def page_search() -> None:
                 dimension=dimension,
                 rerank_with_pagerank=pagerank,
                 top_k=top_k,
+                one_per_story=one_per_story,
             )
             response = run_search(session, request)
             st.caption(
                 f"{len(response.items)} results · {response.method.replace('_', ' ')} · "
                 f"{response.took_ms:.1f} ms · {response.candidates_considered} candidates"
             )
+            if response.one_per_story:
+                st.caption(
+                    f"{response.collapsed_candidates} additional reports grouped in the candidate "
+                    "pool · Unclustered reports stay separate · Story grouping does not "
+                    "establish source independence."
+                )
             for note in response.notes:
                 st.warning(note)
+            if not response.items:
+                st.info("No results. Try another query or broaden the filters.")
             for item in response.items:
                 with st.container(border=True):
                     st.markdown(f"**{item.article.title}**")
@@ -545,6 +560,11 @@ def page_search() -> None:
                     st.caption(f"Why this ranked here — {item.explanation}")
                     if item.story_id:
                         st.caption(f"Part of story {item.story_id}")
+                        if st.button("Story details", key=f"search-story-{item.article.id}"):
+                            st.session_state["story_id"] = item.story_id
+                            st.switch_page(STORY_PAGE)
+                    else:
+                        st.caption("Unclustered report")
 
 
 def page_topics() -> None:

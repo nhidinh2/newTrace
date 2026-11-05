@@ -33,6 +33,7 @@ def post_search(
         fit_version=payload.fit_version,
         rerank_with_pagerank=payload.rerank_with_pagerank,
         top_k=payload.top_k,
+        one_per_story=payload.one_per_story,
     )
     response = search(session, request)
     return SearchResponseModel(
@@ -42,4 +43,6 @@ def post_search(
         candidates_considered=response.candidates_considered,
         results=[search_item_to_schema(item) for item in response.items],
         notes=response.notes,
+        one_per_story=response.one_per_story,
+        collapsed_candidates=response.collapsed_candidates,
     )

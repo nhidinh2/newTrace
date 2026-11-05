@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Any
 
@@ -46,6 +46,7 @@ class SearchRequest:
     rerank_with_pagerank: bool = False
     apply_signal_rerank: bool = True
     top_k: int = 10
+    one_per_story: bool = False
 
 
 @dataclass
@@ -65,6 +66,8 @@ class SearchResponse:
     took_ms: float = 0.0
     candidates_considered: int = 0
     notes: list[str] = field(default_factory=list)
+    one_per_story: bool = False
+    collapsed_candidates: int = 0
 
 
 def _matching_article_ids(session: Session, filters: SearchFilters) -> set[int]:
@@ -98,13 +101,17 @@ def _matching_article_ids(session: Session, filters: SearchFilters) -> set[int]:
     return ids
 
 
-def _story_map(session: Session, article_ids: list[int]) -> dict[int, int]:
+def _story_memberships(session: Session, article_ids: list[int]) -> dict[int, set[int]]:
+    """Load all memberships in one query, including historical multi-story rows."""
     rows = session.execute(
         select(ClusterMembership.article_id, ClusterMembership.story_cluster_id).where(
             ClusterMembership.article_id.in_(article_ids)
         )
     ).all()
-    return {int(article_id): int(story_id) for article_id, story_id in rows}
+    memberships: dict[int, set[int]] = {}
+    for article_id, story_id in rows:
+        memberships.setdefault(int(article_id), set()).add(int(story_id))
+    return memberships
 
 
 def search(
@@ -117,10 +124,17 @@ def search(
     allowed = _matching_article_ids(session, request.filters)
     if not allowed:
         return SearchResponse(
-            request.query, request.method, [], 0.0, 0, ["no articles matched the filters"]
+            request.query,
+            request.method,
+            notes=["no articles matched the filters"],
+            one_per_story=request.one_per_story,
         )
 
     candidate_k = max(request.top_k * 4, request.top_k)
+    if request.one_per_story:
+        # A crowded event can otherwise occupy the entire normal candidate pool.
+        # Bound ORM loading and graph reranking rather than scanning all stories.
+        candidate_k = min(1000, max(100, request.top_k * 10))
     method = request.method
     if method == "bm25" and not fulltext.available(session):
         notes.append("no full-text index in this database; using the TF-IDF baseline")
@@ -149,7 +163,12 @@ def search(
             )
             retriever = get_index(session, method="full", settings=settings)
         if retriever is None:
-            return SearchResponse(request.query, method, [], 0.0, 0, ["no embeddings available"])
+            return SearchResponse(
+                request.query,
+                method,
+                notes=[*notes, "no embeddings available"],
+                one_per_story=request.one_per_story,
+            )
         hits = retriever.search(request.query, k=candidate_k, allowed_ids=allowed)
 
     hits = [h for h in hits if h.article_id in allowed]
@@ -179,8 +198,33 @@ def search(
             f"{result.iterations} iterations (converged={result.converged})"
         )
 
-    hits = hits[: request.top_k]
-    story_by_article = _story_map(session, [h.article_id for h in hits])
+    collapsed = 0
+    if request.one_per_story:
+        memberships = _story_memberships(session, [h.article_id for h in hits])
+        seen: set[int] = set()
+        diverse_hits: list[ScoredHit] = []
+        for hit in hits:
+            stories = memberships.get(hit.article_id, set())
+            if stories & seen:
+                collapsed += 1
+                continue
+            seen.update(stories)
+            diverse_hits.append(replace(hit, rank=len(diverse_hits) + 1))
+        hits = diverse_hits[: request.top_k]
+        if candidates >= candidate_k:
+            notes.append(
+                f"Story grouping is limited to {candidate_k} retrieved candidates; "
+                "other stories may exist outside this pool."
+            )
+        if len(hits) < request.top_k:
+            notes.append(
+                f"Only {len(hits)} {'result remains' if len(hits) == 1 else 'results remain'} "
+                "in the retrieved candidate pool "
+                "after story grouping. Unclustered reports are kept separately."
+            )
+    else:
+        hits = hits[: request.top_k]
+        memberships = _story_memberships(session, [h.article_id for h in hits])
 
     items: list[SearchResultItem] = []
     for hit in hits:
@@ -191,7 +235,7 @@ def search(
             SearchResultItem(
                 article=article,
                 hit=hit,
-                story_id=story_by_article.get(article.id),
+                story_id=min(memberships[article.id]) if memberships.get(article.id) else None,
                 excerpt=evidence_excerpt(article, request.query),
                 explanation=explain_hit(hit, article, request.query),
             )
@@ -204,6 +248,8 @@ def search(
         took_ms=(time.perf_counter() - started) * 1000.0,
         candidates_considered=candidates,
         notes=notes,
+        one_per_story=request.one_per_story,
+        collapsed_candidates=collapsed,
     )
 
 

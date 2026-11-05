@@ -72,6 +72,30 @@ make db && make backfill    # SimHash bands, title prefix tokens, FTS5 rows
 is also what CI runs on every push, alongside a job that replays this
 quickstart offline.
 
+### Explore more stories in search
+
+Enable **One result per story** on the Search page to keep the highest-ranked
+report from each stored story. Unclustered reports stay separate. Each result
+keeps its source link, excerpt and ranking explanation; **Story details** opens
+the complete coverage and timeline. Leave the option off to compare individual
+reports as before. Story grouping does not establish source independence.
+
+The same mode is available through the CLI and API:
+
+```bash
+scripts/run.sh newstrace search "AI agent security evaluations" --one-per-story --top-k 10
+curl -X POST http://localhost:8000/search -H 'Content-Type: application/json' \
+  -d '{"query":"AI agent security evaluations","one_per_story":true,"top_k":10}'
+```
+
+Grouping follows reranking over a larger, bounded candidate pool (100–1,000
+reports, depending on the requested result count), so it can return fewer than
+the requested results and is not an exhaustive story search. Responses disclose
+pool limits and report `collapsed_candidates`, the number of additional
+same-story reports omitted across that pool. Existing filters and duplicate
+settings still apply. This mode changes presentation, not stored memberships
+or the article-level benchmark protocol.
+
 ## Results
 
 From [`docs/experiments/live-30d`](docs/experiments/live-30d), a run committed
