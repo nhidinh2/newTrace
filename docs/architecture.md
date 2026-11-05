@@ -72,6 +72,28 @@ a centroid or a source count.
 signal and `retrieval/explain.py` renders it. There is no publisher-reputation
 term anywhere, because it could not be explained or justified.
 
+**Story exploration is opt-in and follows reranking.** `SearchRequest.one_per_story`
+(also exposed by the API, CLI and Streamlit) expands the retrieval budget to
+`min(1000, max(100, top_k * 10))`. Filters and duplicate exclusion run as before;
+signal and optional PageRank reranking run on this candidate pool. A single
+membership query then supports a greedy pass: retain the first report for each
+story, keeping unclustered articles separately, before truncating to `top_k`.
+Scores, signals, excerpts and source links are retained; displayed ranks are
+renumbered. With PageRank the larger graph can change scores compared with
+ordinary article search. Normal search retains its existing candidate budget.
+
+Memberships can contain historical multi-story rows. A retained report reserves
+all of its story IDs, so no two retained reports share any membership. The
+smallest ID is the deterministic `story_id` used for navigation; this does not
+merge clusters or infer source independence. `collapsed_candidates` counts
+additional same-story reports omitted across the whole pool, including beyond
+the displayed `top_k`. The response preserves the requested `one_per_story`
+flag even for empty or unavailable representations. Notes disclose a saturated
+candidate pool and fewer-than-requested results. The cap bounds hydrated
+articles and graph size, not the underlying dense scan, TF-IDF fit or BM25
+overfetch. No guarantee of exhaustive story recall is made, and the existing
+article-level retrieval evaluation remains unchanged.
+
 **Fitting is chronological.** Projectors and the clustering threshold are fitted
 on the earliest 60% / next 20% of articles; the final numbers come from the last
 20%. `ChronologicalSplit.assert_no_leakage` is called before every experiment.

@@ -162,6 +162,11 @@ class SearchRequestModel(BaseModel):
     fit_version: str | None = None
     rerank_with_pagerank: bool = False
     top_k: int = Field(default=10, ge=1, le=100)
+    one_per_story: bool = Field(
+        default=False,
+        description="Keep the highest-ranked report per stored story after reranking; "
+        "unclustered reports stay separate. Uses a bounded candidate pool.",
+    )
 
 
 class SearchResultResponse(BaseModel):
@@ -186,6 +191,10 @@ class SearchResponseModel(BaseModel):
     candidates_considered: int
     results: list[SearchResultResponse] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+    one_per_story: bool = False
+    collapsed_candidates: int = Field(
+        default=0, description="Additional same-story reports omitted across the candidate pool."
+    )
 
 
 class IngestionRunRequest(BaseModel):
