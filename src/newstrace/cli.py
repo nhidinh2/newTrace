@@ -243,6 +243,47 @@ def story(story_id: Annotated[int, typer.Argument(help="Story cluster id")]) -> 
 
 
 @app.command()
+def digest(
+    topic: Annotated[
+        list[str] | None, typer.Option(help="Topic to include (repeatable); default: all")
+    ] = None,
+    since: Annotated[float, typer.Option(help="Look back this many hours")] = 48,
+    per_topic: Annotated[int, typer.Option(help="Stories per topic")] = 5,
+    min_sources: Annotated[int, typer.Option(help="Minimum independent sources")] = 1,
+    all_languages: Annotated[bool, typer.Option(help="Keep non-English stories")] = False,
+    as_json: Annotated[bool, typer.Option("--json", help="Emit JSON")] = False,
+) -> None:
+    """Top recent stories per topic, each with its sources, for notes and websites."""
+    from newstrace.digest import build_digest
+
+    topics = topic or list(load_topics())
+    with session_scope() as session:
+        result = build_digest(
+            session,
+            topics=topics,
+            since_hours=since,
+            per_topic=per_topic,
+            min_sources=min_sources,
+            english_only=not all_languages,
+        )
+    if as_json:
+        # Plain print: Rich would wrap long URLs and break the JSON for other tools.
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+    for name, items in result["topics"].items():
+        console.print(f"\n[bold]{name}[/bold]")
+        if not items:
+            console.print(f"  [dim]No stories in the last {since:g} hours.[/dim]")
+        for item in items:
+            console.print(
+                f"  {truncate(item['title'], 80)}  [cyan]{item['independent_sources']} "
+                f"independent[/cyan]  [dim]{item['earliest_report']['url']}[/dim]"
+            )
+    if result["newest_article_at"] is None:
+        console.print("\n[yellow]Nothing recent. Run `make refresh` first.[/yellow]")
+
+
+@app.command()
 def experiment(
     methods: Annotated[
         str, typer.Option(help="Comma-separated methods")
