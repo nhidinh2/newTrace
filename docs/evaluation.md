@@ -25,6 +25,21 @@ test asserts it too.
 On the fixture corpus that is 81 / 27 / 27 articles, with a fit cutoff of
 `2026-08-22T05:30:00Z`.
 
+**Embedding coverage.** A live sweep reads only original vectors matching the
+configured encoder's model name and dimension. If the database holds vectors
+from several models, each run measures a single embedding space. The report and
+`metrics.json` show coverage by chronological partition and count articles in
+the evaluation window without matching vectors. Those articles cannot be
+retrieved; this does not change their relevance judgments. If the window has
+no matching vectors, or a compression sweep has none in its fit period, the
+run fails with an indexing hint before writing any projection. Index the
+missing articles with the configured model for full coverage.
+
+The configured encoder embeds the query set once. Every dense method uses the
+same input vectors, applying its own projection when needed, and PageRank uses
+those same vectors for its dense seed search. Query encoding and projection
+are outside the dense retrieval latency measurement.
+
 **The retrieval task.** For each held-out article, a short keyword query is built
 from its headline's content words. The system must return *the other* articles
 covering the same event: the source article is removed from both the candidate

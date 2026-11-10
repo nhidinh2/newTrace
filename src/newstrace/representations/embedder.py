@@ -123,7 +123,7 @@ def detect_device() -> str:
 
 
 _EMBEDDER: Embedder | None = None
-_EMBEDDER_KEY: tuple[str, str] | None = None
+_EMBEDDER_KEY: tuple[str, str, int] | None = None
 
 
 def build_embedder(settings: Settings | None = None) -> Embedder:
@@ -153,7 +153,11 @@ def get_embedder(settings: Settings | None = None) -> Embedder:
     """Process-wide cached embedder."""
     global _EMBEDDER, _EMBEDDER_KEY
     settings = settings or get_settings()
-    key = (settings.embedding_backend, settings.embedding_model)
+    key = (
+        settings.embedding_backend,
+        settings.embedding_model,
+        settings.embedding_dimension_fallback,
+    )
     if _EMBEDDER is None or key != _EMBEDDER_KEY:
         _EMBEDDER = build_embedder(settings)
         _EMBEDDER_KEY = key
