@@ -34,13 +34,18 @@ from newstrace.evaluation.retrieval import (
 from newstrace.evaluation.summaries import evaluate_summary
 from newstrace.logging import get_logger
 from newstrace.models import Article, EvaluationRun, ProjectionArtifact, StoryCluster
-from newstrace.representations.embedder import get_embedder
+from newstrace.representations.embedder import Embedder, Matrix, get_embedder
 from newstrace.representations.projection import (
     cosine_distortion,
     make_projector,
     pairwise_distortion,
 )
-from newstrace.representations.registry import load_vectors, store_vectors
+from newstrace.representations.registry import (
+    FULL_FIT_VERSION,
+    VectorSet,
+    load_vectors,
+    store_vectors,
+)
 from newstrace.retrieval.exact import DenseRetriever, TfidfRetriever
 from newstrace.stories import load_story
 from newstrace.summarization.extractive import ExtractiveSummarizer
@@ -69,7 +74,7 @@ class ExperimentConfig:
         return asdict(self)
 
 
-def environment_snapshot(settings: Settings) -> dict[str, Any]:
+def environment_snapshot(settings: Settings, *, embedder: Embedder | None = None) -> dict[str, Any]:
     """Everything needed to reproduce a run."""
     import sklearn
 
@@ -80,7 +85,7 @@ def environment_snapshot(settings: Settings) -> dict[str, Any]:
             packages[name] = getattr(module, "__version__", "unknown")
         except ImportError:
             packages[name] = "not installed"
-    embedder = get_embedder(settings)
+    embedder = embedder if embedder is not None else get_embedder(settings)
     return {
         "python": sys.version,
         "platform": platform.platform(),
@@ -391,22 +396,36 @@ def _execute(
     split.assert_no_leakage()
     story_labels = load_story_labels(articles)
 
-    full = load_vectors(session, method="full")
-    if len(full) == 0:
-        raise ValueError("no full-dimensional embeddings found; run indexing first")
     embedder = get_embedder(settings)
+    full = load_vectors(
+        session,
+        method="full",
+        fit_version=FULL_FIT_VERSION,
+        model_name=embedder.name,
+        dimension=embedder.dimension,
+    )
     index_by_article = full.index_by_article
 
-    fit_ids = [aid for aid in split.fit_ids if aid in index_by_article]
-    test_ids = [aid for aid in split.test_ids if aid in index_by_article]
-    fit_matrix = full.matrix[[index_by_article[a] for a in fit_ids]] if fit_ids else full.matrix
-
-    # The retrieval pool is the whole corpus -- at query time a live index holds
-    # everything ingested so far. Only the *queries* come from the held-out
-    # period, so no fitted artefact ever saw the articles being scored.
+    # Every method searches the same window of articles with compatible vectors.
     in_window = {a.id for a in articles}
     eval_ids = [aid for aid in full.article_ids if aid in in_window]
-    test_articles = [a for a in articles if a.id in set(test_ids)]
+    model = f"{embedder.name} (d={embedder.dimension})"
+    if not eval_ids:
+        raise ValueError(
+            f"no full-dimensional embeddings for {model} in the evaluation window; "
+            "index those articles with the configured model first"
+        )
+    fit_ids = [aid for aid in split.fit_ids if aid in index_by_article]
+    if not fit_ids and any(method != "full" for method in config.methods):
+        raise ValueError(
+            f"no full-dimensional embeddings for {model} in the chronological fit period; "
+            "index those articles before fitting projections"
+        )
+    test_ids = [aid for aid in split.test_ids if aid in index_by_article]
+    fit_matrix = full.matrix[[index_by_article[a] for a in fit_ids]]
+
+    test_id_set = set(test_ids)
+    test_articles = [a for a in articles if a.id in test_id_set]
     queries = build_queries(test_articles, limit=config.max_queries)
     if not queries:
         queries = build_queries(articles, limit=config.max_queries)
@@ -422,6 +441,9 @@ def _execute(
     queries = list(collapsed.items())
     query_texts = [q for q, _ in queries]
     exclude_by_query = dict(queries)
+    # The same raw query vectors feed every projection and PageRank seed search.
+    # Encoding and query projection both stay outside the measured search time.
+    raw_query_vectors = embedder.encode(query_texts) if query_texts else full.matrix[:0]
 
     baseline_rankings: dict[str, list[int]] | None = None
 
@@ -478,7 +500,14 @@ def _execute(
             )
             if method != "full":
                 _save_projector(
-                    session, projector, fit_version, embedder.name, config, split, outdir
+                    session,
+                    projector,
+                    fit_version,
+                    embedder.name,
+                    config,
+                    split,
+                    outdir,
+                    fit_article_count=len(fit_ids),
                 )
                 store_vectors(
                     session,
@@ -492,13 +521,11 @@ def _execute(
 
             eval_rows = [index_by_article[a] for a in eval_ids]
             eval_matrix = projected_all[eval_rows]
-            retriever = DenseRetriever(eval_ids, eval_matrix, method=method, projector=projector)
-
-            # Embed each query once, outside the timed region: query encoding is
-            # identical across methods, so including it would mask the very
-            # differences the sweep exists to measure.
-            query_vectors = [retriever.embed_query(q) for q in query_texts]
-            if query_vectors:
+            retriever = DenseRetriever(eval_ids, eval_matrix, method=method)
+            query_vectors = raw_query_vectors
+            if method != "full" and query_texts:
+                query_vectors = projector.transform(raw_query_vectors)
+            if query_texts:
                 retriever.search(query_vectors[0], k=config.top_k)  # warm up BLAS
 
             rankings: dict[str, list[int]] = {}
@@ -604,6 +631,7 @@ def _execute(
             full,
             exclude_by_query,
             baseline_rows=baseline_query_rows,
+            query_vectors=raw_query_vectors,
         )
 
     summary_metrics = _summary_metrics(session)
@@ -619,6 +647,12 @@ def _execute(
         "window_cutoff": window_cutoff.isoformat() if window_cutoff else None,
         "embedding_model": embedder.name,
         "embedding_dimension": full.matrix.shape[1],
+        "embedding_coverage": {
+            "fit": len(fit_ids),
+            "test": len(test_ids),
+            "validation": sum(aid in index_by_article for aid in split.validation_ids),
+            "missing_in_window": len(articles) - len(eval_ids),
+        },
         "results": [r.flat() for r in results],
         "tfidf_baseline": tfidf_metrics,
         "pagerank": pagerank_metrics,
@@ -633,7 +667,7 @@ def _execute(
         ),
     }
 
-    _write_artifacts(outdir, config, settings, metrics, per_query_rows, results)
+    _write_artifacts(outdir, config, settings, metrics, per_query_rows, results, embedder=embedder)
     return metrics
 
 
@@ -645,6 +679,8 @@ def _save_projector(
     config: ExperimentConfig,
     split: ChronologicalSplit,
     outdir: Path,
+    *,
+    fit_article_count: int,
 ) -> None:
     path = outdir / "projectors" / f"{projector.method}_{projector.dimension}_{fit_version}.joblib"
     projector.save(path)
@@ -659,7 +695,7 @@ def _save_projector(
                 fit_version=fit_version,
                 source_model=model_name,
                 random_seed=config.seed,
-                fit_article_count=len(split.fit_ids),
+                fit_article_count=fit_article_count,
                 fit_cutoff=split.fit_cutoff,
                 path=str(path),
                 stats={"requested_dimension": projector.meta.get("requested_dimension")},
@@ -667,6 +703,7 @@ def _save_projector(
         )
     else:
         existing.path = str(path)
+        existing.fit_article_count = fit_article_count
     session.flush()
 
 
@@ -714,9 +751,11 @@ def _pagerank_analysis(
     judgments: dict[str, set[int]],
     baseline_rankings: dict[str, list[int]] | None,
     config: ExperimentConfig,
-    full: Any,
+    full: VectorSet,
     exclude_by_query: dict[str, int] | None = None,
     baseline_rows: list[dict[str, object]] | None = None,
+    *,
+    query_vectors: Matrix,
 ) -> dict[str, Any]:
     from newstrace.graph.build import build_graph, graph_stats
     from newstrace.graph.pagerank import (
@@ -731,10 +770,8 @@ def _pagerank_analysis(
     stats = graph_stats(graph)
 
     index = full.index_by_article
-    rows = [index[a] for a in eval_ids if a in index]
-    retriever = DenseRetriever(
-        [a for a in eval_ids if a in index], full.matrix[rows], method="full"
-    )
+    vector_rows = [index[aid] for aid in eval_ids]
+    retriever = DenseRetriever(eval_ids, full.matrix[vector_rows], method="full")
 
     rankings: dict[str, list[int]] = {}
     iterations: list[int] = []
@@ -743,9 +780,9 @@ def _pagerank_analysis(
     mass_error = 0.0
     excludes = exclude_by_query or {}
     pool = set(retriever.article_ids)
-    for query in query_texts:
+    for query, vector in zip(query_texts, query_vectors, strict=True):
         hits = retriever.search(
-            query, k=config.top_k * 3, allowed_ids=pool - {excludes.get(query, -1)}
+            vector, k=config.top_k * 3, allowed_ids=pool - {excludes.get(query, -1)}
         )
         if not hits:
             rankings[query] = []
@@ -850,10 +887,12 @@ def _write_artifacts(
     metrics: dict[str, Any],
     per_query_rows: list[dict[str, Any]],
     results: list[MethodResult],
+    *,
+    embedder: Embedder,
 ) -> None:
     (outdir / "config.json").write_text(json.dumps(config.as_dict(), indent=2), encoding="utf-8")
     (outdir / "environment.json").write_text(
-        json.dumps(environment_snapshot(settings), indent=2), encoding="utf-8"
+        json.dumps(environment_snapshot(settings, embedder=embedder), indent=2), encoding="utf-8"
     )
     (outdir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 

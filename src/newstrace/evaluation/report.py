@@ -230,6 +230,14 @@ def write_report(outdir: Path, metrics: dict[str, Any]) -> Path:
         if window_days
         else ""
     )
+    coverage = metrics.get("embedding_coverage")
+    coverage_note = (
+        f"- Compatible embeddings: fit={coverage['fit']}, validation={coverage['validation']}, "
+        f"test={coverage['test']}. {coverage['missing_in_window']} article(s) in the evaluation "
+        "window lack compatible vectors and are outside the retrieval pool.\n"
+        if coverage
+        else ""
+    )
     uncertainty_table = _uncertainty_table(rows)
     query_count = metrics.get("query_count", 0)
     if uncertainty_table:
@@ -273,7 +281,7 @@ measurement produced by `scripts/run_experiments.py`; nothing is estimated.
 - Embedding model: `{model_name}` (d={model_dim})
 - Chronological split: fit={fit_n}, validation={val_n}, test={test_n}
 - Fit cutoff: `{split.get("fit_cutoff")}` — projectors saw **no** test-period article
-- Queries: **{metrics.get("query_count", 0)}**
+{coverage_note}- Queries: **{metrics.get("query_count", 0)}**
 - Relevance judgments: `{judgment_source}`
 
 ## Observed results
