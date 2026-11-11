@@ -426,11 +426,13 @@ def _execute(
     baseline_rankings: dict[str, list[int]] | None = None
 
     baseline_query_rows: list[dict[str, object]] | None = None
-    results: list[MethodResult] = []
-    per_query_rows: list[dict[str, Any]] = []
+    results_by_method: list[list[MethodResult]] = [[] for _ in config.methods]
+    query_rows_by_method: list[list[dict[str, object]]] = [[] for _ in config.methods]
     sweep_notes: list[str] = []
 
-    for method in config.methods:
+    # Score full first for comparisons and retain the requested order in the artifacts.
+    execution_order = sorted(enumerate(config.methods), key=lambda item: item[1] != "full")
+    for method_index, method in execution_order:
         dims = (
             [0] if method == "full" else [d for d in config.dimensions if d < full.matrix.shape[1]]
         )
@@ -527,7 +529,7 @@ def _execute(
             )
             for row in rows:
                 row.update({"method": method, "dimension": projector.dimension})
-            per_query_rows.extend(rows)
+            query_rows_by_method[method_index].extend(rows)
 
             distortion = {
                 **pairwise_distortion(full.matrix, projected_all, rng=rng),
@@ -557,7 +559,7 @@ def _execute(
                 "peak_memory_mib": peak_memory_mib(),
             }
 
-            results.append(
+            results_by_method[method_index].append(
                 MethodResult(
                     method=method,
                     dimension=projector.dimension,
@@ -608,6 +610,8 @@ def _execute(
 
     summary_metrics = _summary_metrics(session)
     ingest_metrics = _throughput_metrics(session)
+    results = [row for method_rows in results_by_method for row in method_rows]
+    per_query_rows = [row for method_rows in query_rows_by_method for row in method_rows]
 
     metrics: dict[str, Any] = {
         "split": split.as_dict(),

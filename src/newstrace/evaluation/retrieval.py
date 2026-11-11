@@ -123,20 +123,22 @@ class RetrievalMetrics:
     precision_at_10: float = 0.0
     mrr: float = 0.0
     ndcg_at_10: float = 0.0
-    topk_overlap_at_10: float = 0.0
+    topk_overlap_at_10: float | None = None
     queries: int = 0
 
     def as_dict(self) -> dict[str, float]:
-        return {
+        metrics = {
             "recall_at_5": round(self.recall_at_5, 4),
             "recall_at_10": round(self.recall_at_10, 4),
             "precision_at_5": round(self.precision_at_5, 4),
             "precision_at_10": round(self.precision_at_10, 4),
             "mrr": round(self.mrr, 4),
             "ndcg_at_10": round(self.ndcg_at_10, 4),
-            "topk_overlap_at_10": round(self.topk_overlap_at_10, 4),
             "queries": float(self.queries),
         }
+        if self.topk_overlap_at_10 is not None:
+            metrics["topk_overlap_at_10"] = round(self.topk_overlap_at_10, 4)
+        return metrics
 
 
 def evaluate_rankings(
@@ -145,13 +147,14 @@ def evaluate_rankings(
     *,
     baseline: Mapping[str, Sequence[int]] | None = None,
 ) -> tuple[RetrievalMetrics, list[dict[str, object]]]:
-    """Aggregate metrics plus a per-query breakdown."""
+    """Aggregate metrics plus per-query rows, with overlap for matched baseline queries."""
     rows: list[dict[str, object]] = []
+    overlaps: list[float] = []
     for query, ranked in rankings.items():
         relevant = judgments.get(query, set())
         if not relevant:
             continue
-        row = {
+        row: dict[str, object] = {
             "query": query,
             "recall_at_5": recall_at_k(ranked, relevant, 5),
             "recall_at_10": recall_at_k(ranked, relevant, 10),
@@ -159,12 +162,13 @@ def evaluate_rankings(
             "precision_at_10": precision_at_k(ranked, relevant, 10),
             "mrr": reciprocal_rank(ranked, relevant),
             "ndcg_at_10": ndcg_at_k(ranked, relevant, 10),
-            "topk_overlap_at_10": (
-                topk_overlap(baseline[query], ranked, 10) if baseline and query in baseline else 1.0
-            ),
             "relevant_count": len(relevant),
             "returned_count": len(ranked),
         }
+        if baseline is not None and query in baseline:
+            overlap = topk_overlap(baseline[query], ranked, 10)
+            row["topk_overlap_at_10"] = overlap
+            overlaps.append(overlap)
         rows.append(row)
 
     if not rows:
@@ -180,7 +184,7 @@ def evaluate_rankings(
         precision_at_10=mean("precision_at_10"),
         mrr=mean("mrr"),
         ndcg_at_10=mean("ndcg_at_10"),
-        topk_overlap_at_10=mean("topk_overlap_at_10"),
+        topk_overlap_at_10=float(np.mean(overlaps)) if overlaps else None,
         queries=len(rows),
     )
     return metrics, rows

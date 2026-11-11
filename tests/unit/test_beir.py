@@ -130,3 +130,48 @@ def test_render_table_includes_the_intervals(tmp_path: Path) -> None:
     assert "BEIR: mini" in table
     assert "nDCG@10" in table
     assert "baseline" in table
+
+
+def test_sweep_comparisons_match_when_full_is_requested_last(tmp_path: Path) -> None:
+    _write_dataset(tmp_path)
+    config = BeirConfig(
+        dataset="mini",
+        data_dir=str(tmp_path),
+        methods=["full", "gaussian_rp", "svd"],
+        dimensions=[2, 8],
+        top_k=5,
+    )
+    first = run_beir(config)["results"]
+    config.methods = ["gaussian_rp", "svd", "full"]
+    reordered = run_beir(config)
+    assert reordered["config"]["methods"] == config.methods
+    results = reordered["results"]
+    assert [row["method"] for row in results] == [
+        "gaussian_rp",
+        "gaussian_rp",
+        "svd",
+        "svd",
+        "full",
+        "tfidf",
+    ]
+    assert [row["dimension"] for row in results[:4]] == [2, 8, 2, 8]
+    for expected, actual in zip(first, [results[4], *results[:4], results[5]], strict=True):
+        assert actual["intervals"] == expected["intervals"]
+        assert actual["topk_overlap_at_10"] == expected["topk_overlap_at_10"]
+    assert any(row["topk_overlap_at_10"] < 1.0 for row in results[:4])
+
+
+def test_sweep_without_full_has_no_comparison_metrics(tmp_path: Path) -> None:
+    _write_dataset(tmp_path)
+    metrics = run_beir(
+        BeirConfig(dataset="mini", data_dir=str(tmp_path), methods=["svd"], dimensions=[8])
+    )
+    assert [row["method"] for row in metrics["results"]] == ["svd", "tfidf"]
+    for row in metrics["results"]:
+        assert "topk_overlap_at_10" not in row
+        assert "ndcg_at_10" in row["intervals"]
+        assert "topk_overlap_at_10" not in row["intervals"]
+        assert not any(key.endswith("_delta") for key in row["intervals"])
+    table = render_table(metrics)
+    assert "`full` was omitted" in table
+    assert "| baseline |" not in table
