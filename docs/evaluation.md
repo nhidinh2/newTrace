@@ -153,6 +153,14 @@ difference against the full-dimensional baseline. Pairing matters, because the
 same queries are easy or hard for every method; two independent intervals would
 be far wider and would hide differences that pairing exposes.
 
+The live and BEIR sweeps evaluate `full` first when it appears anywhere in
+`--methods`. Artifacts follow the requested method and dimension order. For
+example, `--methods gaussian_rp,full` reports Gaussian projection first with
+its measured overlap and paired intervals against `full`. Omitting `full`
+still yields relevance scores and their intervals. Top-10 overlap and paired
+deltas are unavailable in that case. Rerun older sweeps that placed `full`
+after other methods or omitted it before interpreting their overlap or deltas.
+
 On the fixture corpus the paired intervals do separate some configurations:
 sparse_rp at d=32 loses 0.251 nDCG@10 with an interval of [-0.382, -0.119], and
 SVD at d=32 and d=64 sit clearly below full. On the live corpus nothing

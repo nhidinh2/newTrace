@@ -203,7 +203,9 @@ def write_report(outdir: Path, metrics: dict[str, Any]) -> Path:
 
     baseline = next((r for r in rows if r.get("method") == "full"), None)
     observations: list[str] = []
-    if baseline:
+    if baseline is None:
+        observations.append("_`full` was omitted, so comparisons against it are unavailable._")
+    else:
         base_ndcg = float(baseline.get("retrieval_ndcg_at_10") or 0.0)
         base_mem = float(baseline.get("system_index_memory_mib") or 0.0)
         base_p95 = float(baseline.get("system_p95_query_latency_ms") or 0.0)

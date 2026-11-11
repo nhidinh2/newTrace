@@ -239,12 +239,14 @@ def run_beir(
     fit_rows = order[: max(2, int(config.fit_fraction * len(order)))]
     fit_matrix = matrix[fit_rows]
 
-    results: list[dict[str, Any]] = []
+    results_by_method: list[list[dict[str, Any]]] = [[] for _ in config.methods]
     baseline_rows: list[dict[str, Any]] | None = None
     baseline_rankings: dict[str, list[int]] | None = None
     row_ids = list(range(len(dataset.doc_ids)))
 
-    for method in config.methods:
+    # Score full first for comparisons and retain the requested order in the artifacts.
+    execution_order = sorted(enumerate(config.methods), key=lambda item: item[1] != "full")
+    for method_index, method in execution_order:
         dimensions = (
             [0] if method == "full" else [d for d in config.dimensions if d < matrix.shape[1]]
         )
@@ -265,13 +267,15 @@ def run_beir(
                 latency.append((time.perf_counter() - start) * 1000.0)
                 rankings[query] = [h.article_id for h in hits]
 
+            if method == "full":
+                baseline_rankings = rankings
             metrics, rows = evaluate_rankings(rankings, judgments, baseline=baseline_rankings)
             if method == "full":
-                baseline_rows, baseline_rankings = rows, rankings
+                baseline_rows = rows
             intervals = bootstrap_intervals(
                 rows, baseline_rows=None if method == "full" else baseline_rows, seed=config.seed
             )
-            results.append(
+            results_by_method[method_index].append(
                 {
                     "method": method,
                     "dimension": int(projector.dimension)
@@ -286,6 +290,7 @@ def run_beir(
             )
             logger.info("%s d=%s nDCG@10=%.4f", method, projector.dimension, metrics.ndcg_at_10)
 
+    results = [row for method_rows in results_by_method for row in method_rows]
     if config.include_tfidf:
         lexical = TfidfRetriever(row_ids, dataset.documents)
         rankings = {}
@@ -342,19 +347,23 @@ def render_table(metrics: dict[str, Any]) -> str:
         "delta nDCG vs full (95% CI) |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-    for row in metrics.get("results", []):
+    rows = metrics.get("results", [])
+    for row in rows:
         delta = (row.get("intervals") or {}).get("ndcg_at_10_delta")
-        ci = (
-            f"{delta['mean']:+.3f} [{delta['lo']:+.3f}, {delta['hi']:+.3f}]"
-            if delta
-            else "baseline"
-        )
+        if delta:
+            ci = f"{delta['mean']:+.3f} [{delta['lo']:+.3f}, {delta['hi']:+.3f}]"
+        else:
+            ci = "baseline" if row["method"] == "full" else "—"
+        overlap = row.get("topk_overlap_at_10")
+        overlap_cell = f"{overlap:.2f}" if overlap is not None else "—"
         lines.append(
             f"| {row['method']} | {row['dimension'] or '-'} | {row['ndcg_at_10']:.3f} | "
-            f"{row['recall_at_10']:.3f} | {row['topk_overlap_at_10']:.2f} | "
+            f"{row['recall_at_10']:.3f} | {overlap_cell} | "
             f"{row['index_memory_mib']:.2f} MiB | {row['p95_ms']:.2f} ms | {ci} |"
         )
     lines.append("")
+    if all(row["method"] != "full" for row in rows):
+        lines.append("- `full` was omitted, so comparisons against it are unavailable.")
     for note in metrics.get("notes", []):
         lines.append(f"- {note}")
     return "\n".join(lines) + "\n"

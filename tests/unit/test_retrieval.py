@@ -12,6 +12,7 @@ from newstrace.evaluation.retrieval import (
     bootstrap_intervals,
     bootstrap_mean_ci,
     chronological_split,
+    evaluate_rankings,
     ndcg_at_k,
     paired_bootstrap_delta_ci,
     precision_at_k,
@@ -153,6 +154,17 @@ def test_ranking_metrics_edge_cases() -> None:
     assert precision_at_k([], set(), 0) == 0.0
     assert recall_at_k([1], set(), 5) == 0.0
     assert topk_overlap([], [], 5) == 0.0
+
+
+def test_overlap_uses_only_queries_with_baseline_rankings() -> None:
+    rankings = {"a": [1, 2], "b": [3], "c": [4]}
+    judgments = {"a": {1}, "b": {3}, "c": {4}}
+    metrics, rows = evaluate_rankings(rankings, judgments, baseline={"a": [1, 9], "c": []})
+    assert metrics.queries == 3
+    assert metrics.ndcg_at_10 == 1.0
+    assert metrics.topk_overlap_at_10 == 0.25
+    assert [row.get("topk_overlap_at_10") for row in rows] == [0.5, None, 0.0]
+    assert bootstrap_intervals(rows)["topk_overlap_at_10"]["n"] == 2
 
 
 def test_chronological_split_is_ordered_and_leak_free(populated_session: Session) -> None:
