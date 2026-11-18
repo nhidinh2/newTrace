@@ -117,3 +117,12 @@ SQLite via SQLAlchemy 2.x, with Alembic migrations in `migrations/`.
 `IngestionRun` and `EvaluationRun` record configuration, seed, git commit,
 counts, failures and artifact paths, so any run can be traced back to the code
 and settings that produced it.
+
+Story feeds select their filtered, ordered page first, then hydrate all page
+memberships and articles with `load_story_bundles`. The API and Streamlit feed
+share this loader: a nonempty page up to 400 stories takes one listing SELECT
+and one article SELECT; empty pages skip article loading. Larger internal
+batches split IDs into groups of 400 to stay below older SQLite bind limits.
+Empty stories, copies, and historical multi-story memberships remain visible,
+with per-membership similarity preserved. This bounds query count, not article
+volume or keyword computation: memory and CPU still grow with page coverage.

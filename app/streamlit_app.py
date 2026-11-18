@@ -27,7 +27,7 @@ from newstrace.representations.embedder import detect_device, get_embedder
 from newstrace.representations.registry import available_representations
 from newstrace.search import SearchFilters, SearchRequest
 from newstrace.search import search as run_search
-from newstrace.stories import build_timeline, list_stories, load_story
+from newstrace.stories import build_timeline, list_stories, load_story, load_story_bundles
 from newstrace.summarization.extractive import ExtractiveSummarizer
 from newstrace.utils import truncate
 
@@ -240,10 +240,9 @@ def page_top_stories() -> None:
         if not stories:
             st.info("No stories yet. Run `make demo` to ingest the committed fixtures.")
             return
+        bundles = load_story_bundles(session, stories)
         for story in stories:
-            bundle = load_story(session, story.id)
-            if bundle is None:
-                continue
+            bundle = bundles[story.id]
             with st.container(border=True):
                 sources = bundle.independent_domains
                 near_dupes = len(bundle.duplicates)
