@@ -68,6 +68,28 @@ a centroid or a source count.
 `duplicate_of_article_id` and a reason, and are excluded from
 `distinct_domain_count`, independent-source counts and default search results.
 
+**Story coverage filters run before pagination.** `stories.list_stories` and
+`count_stories` share SQL conditions for topic, minimum article count, minimum
+source domains and publication bounds. `min_domains` reads the existing
+`distinct_domain_count` maintained by the online clusterer; repeated reports
+from one domain and detected copies from other domains do not inflate it.
+Zero includes duplicate-only stories as well as stories with original reports.
+This is domain diversity, without an ownership or reporting-lineage model.
+No schema change or article scan is needed for the count; each feed request
+adds one aggregate over story rows. The existing per-story article loads for
+cards and API serialization remain.
+
+API listings retain their list response and expose the filtered total through
+`X-Total-Count`, before `limit` and `offset`. Streamlit resets its page when
+filters change and clamps it if the corpus shrinks. The CLI accepts the same
+source threshold, article minimum and offset. The service's all-stories count
+keeps its historical `min_articles=0` default; paginated callers explicitly
+pass the listing's minimum (1 by default). Publication bounds select overlapping
+story intervals, exclude undated stories when a bound requires a timestamp,
+and leave whole-story source counts intact. The existing coverage/date/ID
+ordering resolves ties, but offset pagination is a live view: ingestion or
+reclustering between requests can move stories between pages.
+
 **Every ranking is explainable.** `ScoredHit.signals` carries each contributing
 signal and `retrieval/explain.py` renders it. There is no publisher-reputation
 term anywhere, because it could not be explained or justified.

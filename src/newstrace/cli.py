@@ -168,13 +168,43 @@ def search(
 
 @app.command()
 def stories(
-    limit: Annotated[int, typer.Option(help="Maximum stories to show")] = 15,
+    limit: Annotated[int, typer.Option(min=1, max=200, help="Maximum stories to show")] = 15,
     topic: Annotated[str | None, typer.Option(help="Restrict to a topic")] = None,
+    offset: Annotated[int, typer.Option(min=0, help="Skip this many matching stories")] = 0,
+    min_articles: Annotated[int, typer.Option(min=1, help="Minimum articles per story")] = 1,
+    min_domains: Annotated[
+        int,
+        typer.Option(
+            min=0, max=2**63 - 1, help="Minimum source domains, excluding detected near-duplicates"
+        ),
+    ] = 0,
 ) -> None:
     """List the current story clusters."""
-    from newstrace.stories import list_stories, load_story
+    from newstrace.stories import count_stories, list_stories, load_story
 
     with session_scope() as session:
+        total = count_stories(
+            session, topic=topic, min_articles=min_articles, min_domains=min_domains
+        )
+        matches = list_stories(
+            session,
+            topic=topic,
+            limit=limit,
+            offset=offset,
+            min_articles=min_articles,
+            min_domains=min_domains,
+        )
+        if not matches:
+            console.print(
+                f"No stories match this page ({total} matching stories). "
+                "Lower the filters or offset."
+            )
+            return
+        console.print(f"Showing {offset + 1}–{offset + len(matches)} of {total} matching stories")
+        console.print(
+            "[dim]Source domains exclude detected copies; domain diversity is not proof "
+            "of reporting independence or truth.[/dim]"
+        )
         table = Table(title="Top stories")
         table.add_column("id", justify="right")
         table.add_column("story", overflow="fold")
@@ -182,7 +212,7 @@ def stories(
         table.add_column("independent sources", justify="right")
         table.add_column("duplicates", justify="right")
         table.add_column("latest")
-        for story in list_stories(session, topic=topic, limit=limit):
+        for story in matches:
             bundle = load_story(session, story.id)
             table.add_row(
                 str(story.id),

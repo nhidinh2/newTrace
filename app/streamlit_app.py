@@ -27,7 +27,7 @@ from newstrace.representations.embedder import detect_device, get_embedder
 from newstrace.representations.registry import available_representations
 from newstrace.search import SearchFilters, SearchRequest
 from newstrace.search import search as run_search
-from newstrace.stories import build_timeline, list_stories, load_story
+from newstrace.stories import build_timeline, count_stories, list_stories, load_story
 from newstrace.summarization.extractive import ExtractiveSummarizer
 from newstrace.utils import truncate
 
@@ -213,6 +213,10 @@ def standfirst(article: Article) -> str:
 WINDOWS = {"24 hours": 24, "3 days": 72, "7 days": 24 * 7, "30 days": 24 * 30, "All time": 0}
 
 
+def _change_feed_page(delta: int) -> None:
+    st.session_state["story_feed_page"] += delta
+
+
 def page_top_stories() -> None:
     st.header("Stories")
     with session_scope() as session:
@@ -224,21 +228,80 @@ def page_top_stories() -> None:
         )
         topic = None if chosen in (None, "All topics") else chosen
         window = st.segmented_control("Published within", list(WINDOWS), default="All time")
+        min_domains = int(
+            st.number_input(
+                "Minimum source domains",
+                min_value=0,
+                value=0,
+                step=1,
+                help="0 includes all source counts. Counts distinct domains among reports not "
+                "marked as near-duplicates, across the whole story. Domains can share ownership "
+                "or reporting; this is not proof of independent confirmation or truth.",
+            )
+        )
         with st.popover("More filters"):
-            limit = st.slider("Stories to show", 5, 60, 30)
+            limit = st.slider("Stories per page", 5, 60, 30)
             min_articles = st.slider("Minimum articles per story", 1, 6, 1)
         hours = WINDOWS.get(window or "All time", 0)
         start = datetime.now(UTC) - timedelta(hours=hours) if hours else None
 
+        filters = (topic, window, min_articles, min_domains, limit)
+        if st.session_state.get("story_feed_filters") != filters:
+            st.session_state["story_feed_filters"] = filters
+            st.session_state["story_feed_page"] = 1
+        total = count_stories(
+            session,
+            topic=topic,
+            min_articles=min_articles,
+            min_domains=min_domains,
+            start_time=start,
+        )
+        if total == 0:
+            if count_stories(session) == 0:
+                st.info("No stories yet. Run `make demo` to ingest the committed fixtures.")
+            else:
+                st.info(
+                    "No stories match these filters. Lower the source or article minimum, "
+                    "choose another topic, or widen the publication window."
+                )
+            return
+        pages = (total + limit - 1) // limit
+        # Clamp when ingestion or reclustering changes the number of matches.
+        page = max(1, min(int(st.session_state["story_feed_page"]), pages))
+        st.session_state["story_feed_page"] = page
+        offset = (page - 1) * limit
+        previous, position, following = st.columns([1, 1, 1])
+        previous.button(
+            "Previous page",
+            disabled=page == 1,
+            on_click=_change_feed_page,
+            args=(-1,),
+            width="stretch",
+        )
+        position.caption(f"Page {page} of {pages}")
+        following.button(
+            "Next page",
+            disabled=page == pages,
+            on_click=_change_feed_page,
+            args=(1,),
+            width="stretch",
+        )
+        st.caption(f"Showing {offset + 1}–{min(offset + limit, total)} of {total} matching stories")
+        st.caption(
+            "Source domains exclude detected copies. Different domains can share "
+            "reporting or ownership; source breadth does not establish truth."
+        )
         stories = list_stories(
             session,
             topic=topic,
             limit=limit,
+            offset=offset,
             min_articles=min_articles,
+            min_domains=min_domains,
             start_time=start,
         )
         if not stories:
-            st.info("No stories yet. Run `make demo` to ingest the committed fixtures.")
+            st.info("This page changed during refresh. Reload to see the latest stories.")
             return
         for story in stories:
             bundle = load_story(session, story.id)
