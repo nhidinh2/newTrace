@@ -5,6 +5,7 @@ Duplicate articles are always visible but never counted as independent sources.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -55,16 +56,32 @@ def load_story(session: Session, story_id: int) -> StoryArticles | None:
     story = session.get(StoryCluster, story_id)
     if story is None:
         return None
-    rows = session.execute(
-        select(Article, ClusterMembership.similarity)
-        .join(ClusterMembership, ClusterMembership.article_id == Article.id)
-        .where(ClusterMembership.story_cluster_id == story_id)
-    ).all()
-    bundle = StoryArticles(story=story)
-    for article, similarity in rows:
-        bundle.articles.append(article)
-        bundle.similarity_by_article[article.id] = float(similarity)
-    return bundle
+    return load_story_bundles(session, [story])[story_id]
+
+
+def load_story_bundles(
+    session: Session, stories: Sequence[StoryCluster]
+) -> dict[int, StoryArticles]:
+    """Load memberships and articles for an already selected page of stories.
+
+    Empty stories remain visible. Each group of at most 400 story IDs uses one
+    SELECT, keeping bind counts below SQLite's historical 999-variable limit.
+    Articles shared by historical multi-story memberships retain each similarity.
+    """
+    bundles = {story.id: StoryArticles(story=story) for story in stories}
+    story_ids = list(bundles)
+    for start in range(0, len(story_ids), 400):
+        rows = session.execute(
+            select(ClusterMembership.story_cluster_id, Article, ClusterMembership.similarity)
+            .join(Article, ClusterMembership.article_id == Article.id)
+            .where(ClusterMembership.story_cluster_id.in_(story_ids[start : start + 400]))
+            .order_by(ClusterMembership.story_cluster_id, Article.id)
+        )
+        for story_id, article, similarity in rows:
+            bundle = bundles[story_id]
+            bundle.articles.append(article)
+            bundle.similarity_by_article[article.id] = float(similarity)
+    return bundles
 
 
 def list_stories(

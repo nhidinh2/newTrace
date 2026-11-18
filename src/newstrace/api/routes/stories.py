@@ -21,7 +21,7 @@ from newstrace.schemas import (
     StorySummaryResponse,
     TimelineResponse,
 )
-from newstrace.stories import build_timeline, list_stories, load_story
+from newstrace.stories import build_timeline, list_stories, load_story, load_story_bundles
 
 router = APIRouter(tags=["stories"])
 
@@ -45,11 +45,8 @@ def get_stories(
         start_time=start_time,
         end_time=end_time,
     )
-    out: list[StorySummaryResponse] = []
-    for story in stories:
-        bundle = load_story(session, story.id)
-        out.append(story_to_schema(story, bundle))
-    return out
+    bundles = load_story_bundles(session, stories)
+    return [story_to_schema(story, bundles[story.id]) for story in stories]
 
 
 @router.get("/stories/{story_id}", response_model=StoryDetailResponse)
