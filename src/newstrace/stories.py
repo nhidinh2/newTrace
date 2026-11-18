@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
 from newstrace.clustering.labeling import keyword_summary, split_sentences
 from newstrace.models import Article, ClusterMembership, StoryCluster
@@ -67,6 +68,28 @@ def load_story(session: Session, story_id: int) -> StoryArticles | None:
     return bundle
 
 
+def _story_conditions(
+    *,
+    topic: str | None = None,
+    min_articles: int = 1,
+    min_domains: int = 0,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
+) -> list[ColumnElement[bool]]:
+    """Shared filters, applied before counting or paginating story rows."""
+    conditions = [
+        StoryCluster.article_count >= min_articles,
+        StoryCluster.distinct_domain_count >= min_domains,
+    ]
+    if topic:
+        conditions.append(StoryCluster.topic == topic)
+    if start_time:
+        conditions.append(StoryCluster.last_published_at >= start_time)
+    if end_time:
+        conditions.append(StoryCluster.first_published_at <= end_time)
+    return conditions
+
+
 def list_stories(
     session: Session,
     *,
@@ -74,28 +97,57 @@ def list_stories(
     limit: int = 25,
     offset: int = 0,
     min_articles: int = 1,
+    min_domains: int = 0,
     start_time: datetime | None = None,
     end_time: datetime | None = None,
 ) -> list[StoryCluster]:
-    stmt = select(StoryCluster).where(StoryCluster.article_count >= min_articles)
-    if topic:
-        stmt = stmt.where(StoryCluster.topic == topic)
-    if start_time:
-        stmt = stmt.where(StoryCluster.last_published_at >= start_time)
-    if end_time:
-        stmt = stmt.where(StoryCluster.first_published_at <= end_time)
-    stmt = stmt.order_by(
-        StoryCluster.distinct_domain_count.desc(),
-        StoryCluster.last_published_at.desc().nulls_last(),
-        StoryCluster.id.desc(),
+    """List stories by coverage, with all filters applied before the page limit.
+
+    Domain counts exclude detected near-duplicates; they measure source breadth,
+    not publisher ownership, reporting independence or factual confirmation.
+    Time bounds select overlapping stories, not a subset of their source counts.
+    """
+    conditions = _story_conditions(
+        topic=topic,
+        min_articles=min_articles,
+        min_domains=min_domains,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    stmt = (
+        select(StoryCluster)
+        .where(*conditions)
+        .order_by(
+            StoryCluster.distinct_domain_count.desc(),
+            StoryCluster.last_published_at.desc().nulls_last(),
+            StoryCluster.id.desc(),
+        )
     )
     return list(session.execute(stmt.offset(offset).limit(limit)).scalars())
 
 
-def count_stories(session: Session, *, topic: str | None = None) -> int:
-    stmt = select(func.count(StoryCluster.id))
-    if topic:
-        stmt = stmt.where(StoryCluster.topic == topic)
+def count_stories(
+    session: Session,
+    *,
+    topic: str | None = None,
+    min_articles: int = 0,
+    min_domains: int = 0,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
+) -> int:
+    """Count matching stories without loading their articles.
+
+    The default retains the all-stories count, including empty clusters. Pass
+    the listing's ``min_articles`` to count exactly the same population.
+    """
+    conditions = _story_conditions(
+        topic=topic,
+        min_articles=min_articles,
+        min_domains=min_domains,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    stmt = select(func.count(StoryCluster.id)).where(*conditions)
     return int(session.execute(stmt).scalar_one())
 
 

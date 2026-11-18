@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from newstrace.api.serializers import (
@@ -21,27 +21,59 @@ from newstrace.schemas import (
     StorySummaryResponse,
     TimelineResponse,
 )
-from newstrace.stories import build_timeline, list_stories, load_story
+from newstrace.stories import build_timeline, count_stories, list_stories, load_story
 
 router = APIRouter(tags=["stories"])
 
 
-@router.get("/stories", response_model=list[StorySummaryResponse])
+@router.get(
+    "/stories",
+    response_model=list[StorySummaryResponse],
+    responses={
+        200: {
+            "headers": {
+                "X-Total-Count": {
+                    "description": "Matching stories before limit and offset.",
+                    "schema": {"type": "integer"},
+                }
+            }
+        }
+    },
+)
 def get_stories(
+    response: Response,
     session: Session = Depends(get_db),
     topic: str | None = None,
     limit: int = Query(default=25, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     min_articles: int = Query(default=1, ge=1),
+    min_domains: int = Query(
+        default=0,
+        ge=0,
+        le=2**63 - 1,
+        description="Minimum distinct domains among non-duplicate reports across the whole story. "
+        "Domain diversity does not establish reporting independence or truth.",
+    ),
     start_time: datetime | None = None,
     end_time: datetime | None = None,
 ) -> list[StorySummaryResponse]:
+    response.headers["X-Total-Count"] = str(
+        count_stories(
+            session,
+            topic=topic,
+            min_articles=min_articles,
+            min_domains=min_domains,
+            start_time=start_time,
+            end_time=end_time,
+        )
+    )
     stories = list_stories(
         session,
         topic=topic,
         limit=limit,
         offset=offset,
         min_articles=min_articles,
+        min_domains=min_domains,
         start_time=start_time,
         end_time=end_time,
     )

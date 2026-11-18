@@ -29,6 +29,25 @@ That story page is the duplicate handling doing real work: nine articles, eight
 of them regional syndications of a single wire story, counted as **one**
 independent source rather than nine.
 
+The Stories feed can filter by **Minimum source domains**, independently of
+the article-count minimum. Set it to 2 to browse events covered by at least two
+domains after detected near-duplicates are excluded; 0 keeps every source count.
+Matching totals and Previous/Next controls let you continue beyond the first
+page. Changing a filter or page size returns to page one. Source counts cover
+the whole story even when a publication window is selected. Different domains
+can share reporting or ownership, so this is a coverage filter, not evidence
+of independent confirmation or truth.
+
+The same filter is available through the CLI and API:
+
+```bash
+scripts/run.sh newstrace stories --min-domains 2 --min-articles 3 --limit 10 --offset 10
+curl -i 'http://localhost:8000/stories?min_domains=2&min_articles=3&limit=10&offset=10'
+```
+
+`GET /stories` still returns a JSON list. Its `X-Total-Count` response header
+reports matching stories before pagination, including on empty pages.
+
 ## Quickstart
 
 No API key, no GPU, no network — the demo runs on committed fixtures.
