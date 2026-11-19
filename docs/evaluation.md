@@ -315,6 +315,33 @@ existed then, and scoring it against an exact baseline over the whole corpus
 reads as a quality collapse when it is really a stale index; re-run
 `scripts/run_experiments.py` before comparing those rows.
 
+ANN runs select full embeddings by the **actual configured encoder name and
+dimension**. With `--since-days`, both the query articles and every retrieval
+arm are restricted to the publication window. Relevant documents outside that
+window are removed from judgments; window articles without compatible vectors
+remain judged, so missing indexing coverage is not silently forgiven. The
+report lists window article counts, compatible vector counts and missing
+vectors. Row coverage is relative to the compatible full-vector pool, with
+the exact and IVF rows at 100%; this does not imply every article is indexed.
+
+Queries are encoded in one batch and reused across exact, IVF and compressed
+searches; encoding and projection remain outside timed search. A compressed
+arm uses only vectors in the full pool from the latest stored fit for that
+method and output dimension. Its saved projector must match the encoder,
+method, input width and output width. Missing or incompatible fits are skipped
+with reasons in `metrics.json`, `results.md` and CLI output, rather than scored
+in a different coordinate system. The runner does not fall back to an older
+fit; refresh compression artifacts for the selected encoder. Rows record
+their vector count and compressed fit version for inspection.
+
+IVF quantizers are fitted on the retrieval pool, including held-out query
+articles. This measures approximate search over an indexed corpus, not
+generalization of a quantizer to unseen documents. Saved compression fits are
+reused; this runner does not independently verify their chronological training
+cutoff. Earlier committed measurements are unchanged. Rerun comparisons after
+an encoder change or when applying a publication window; these correctness
+checks do not establish retrieval-quality gains.
+
 ```bash
 make ann                       # defaults: 64 lists, probes 1/4/8/16, PQ 0/48/96
 python scripts/run_ann.py --lists 128 --probes 1,8,32 --subvectors 96 --since-days 30

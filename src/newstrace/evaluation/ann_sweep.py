@@ -32,12 +32,12 @@ from newstrace.evaluation.labels import load_story_labels
 from newstrace.evaluation.retrieval import chronological_split, evaluate_rankings, ndcg_at_k
 from newstrace.evaluation.systems import build_queries, environment_snapshot, silver_judgments
 from newstrace.logging import get_logger
-from newstrace.models import Article, EvaluationRun
+from newstrace.models import Article, EvaluationRun, ProjectionArtifact
 from newstrace.representations.embedder import get_embedder
-from newstrace.representations.registry import load_vectors
+from newstrace.representations.projection import SklearnProjector, load_projector
+from newstrace.representations.registry import latest_fit_version, load_vectors
 from newstrace.retrieval.ann import AnnConfig, IvfIndex
 from newstrace.retrieval.exact import DenseRetriever
-from newstrace.retrieval.index import get_index
 from newstrace.utils import ensure_utc, git_commit, set_global_seed, utcnow
 
 logger = get_logger(__name__)
@@ -131,9 +131,20 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
     if len(articles) < 4:
         raise ValueError("not enough articles to run a sweep; ingest first")
 
-    full = load_vectors(session, method="full")
+    embedder = get_embedder(settings)
+    full = load_vectors(
+        session,
+        method="full",
+        fit_version="identity",
+        model_name=embedder.name,
+        dimension=embedder.dimension,
+        article_ids=[a.id for a in articles],
+    )
     if len(full) == 0:
-        raise ValueError("no full-dimensional embeddings found; run indexing first")
+        raise ValueError(
+            f"no compatible full embeddings for {embedder.name} ({embedder.dimension}-d) "
+            "in the evaluation window; run indexing first"
+        )
 
     split = chronological_split(articles)
     split.assert_no_leakage()
@@ -147,6 +158,8 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
         [a for a in articles if a.id in test_ids], limit=len(articles)
     ) or build_queries(articles, limit=len(articles))
     judgments, judgment_source = silver_judgments(session, candidates, story_labels)
+    window_ids = {a.id for a in articles}
+    judgments = {query: relevant & window_ids for query, relevant in judgments.items()}
     collapsed: dict[str, int] = {}
     for query, article_id in candidates:
         if judgments.get(query):
@@ -159,9 +172,9 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
     query_texts = [q for q, _ in queries]
     exclude = dict(queries)
 
-    embedder = get_embedder(settings)
-    exact = DenseRetriever(full.article_ids, full.matrix, method="full")
-    query_vectors = [exact.embed_query(q) for q in query_texts]
+    exact = DenseRetriever(full.article_ids, full.matrix, method="full", embedder=embedder)
+    # Encode once with this run's encoder, outside all timed search regions.
+    query_vectors = embedder.encode(query_texts)
     pool = set(full.article_ids)
 
     # Ground truth: the exhaustive scan, with the query's own article removed
@@ -178,6 +191,13 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
 
     exact_metrics, _ = evaluate_rankings(exact_rankings, judgments)
     notes: list[str] = []
+    missing_vectors = len(articles) - len(full)
+    if missing_vectors:
+        notes.append(
+            f"{missing_vectors} article(s) in the evaluation window lack compatible "
+            f"{embedder.name} ({embedder.dimension}-d) full embeddings. Queries and "
+            "judgments still cover window articles; retrieval is limited to available vectors."
+        )
     rows: list[dict[str, Any]] = [
         {
             "index": "exact",
@@ -187,6 +207,7 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
             "n_subvectors": 0,
             "recall_at_k_vs_exact": 1.0,
             "coverage": 1.0,
+            "vectors": len(full),
             "ndcg_at_10": round(exact_metrics.ndcg_at_10, 4),
             "index_memory_mib": round(exact.memory_bytes() / 1048576, 4),
             "p95_ms": round(float(np.percentile(exact_latency, 95)), 4),
@@ -199,19 +220,55 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
     # same, and this is where they can be read side by side.
     for dimension in config.compare_dimensions:
         for method in ("svd", "gaussian_rp", "sparse_rp"):
-            vectors = load_vectors(session, method=method, dimension=dimension)
-            if len(vectors) == 0:
+            fit_version = latest_fit_version(session, method=method, dimension=dimension)
+            if fit_version is None:
                 continue
-            # Through the cache, so the query is projected with the *saved*
-            # projector for this fit -- a query embedded at 384-d cannot be
-            # scored against a 32-d index.
-            retriever = get_index(session, method=method, dimension=dimension, settings=settings)
-            if retriever is None or retriever.projector is None:
-                logger.warning(
-                    "Skipping %s@%s: no saved projector for its fit_version", method, dimension
+            # Use only the selected rows, rather than the serving cache's global
+            # corpus, and apply this fit's saved projector to the shared queries.
+            artifact = session.execute(
+                select(ProjectionArtifact).where(ProjectionArtifact.fit_version == fit_version)
+            ).scalar_one_or_none()
+            if (
+                artifact is None
+                or artifact.source_model != embedder.name
+                or artifact.method != method
+                or artifact.dimension != dimension
+            ):
+                notes.append(
+                    f"Skipping {method}@{dimension}: no compatible projector metadata "
+                    f"for fit {fit_version} and encoder {embedder.name}."
                 )
                 continue
-            projected = [retriever.embed_query(q) for q in query_texts]
+            projector = (
+                load_projector(Path(artifact.path)) if Path(artifact.path).is_file() else None
+            )
+            if (
+                not isinstance(projector, SklearnProjector)
+                or projector.method != method
+                or projector.dimension != dimension
+                or getattr(projector.model, "n_features_in_", None) != embedder.dimension
+            ):
+                notes.append(
+                    f"Skipping {method}@{dimension}: saved projector is missing or incompatible "
+                    f"with {embedder.name} ({embedder.dimension}-d), fit {fit_version}."
+                )
+                continue
+            vectors = load_vectors(
+                session,
+                method=method,
+                dimension=dimension,
+                fit_version=fit_version,
+                model_name=embedder.name,
+                article_ids=full.article_ids,
+            )
+            if len(vectors) == 0:
+                notes.append(
+                    f"Skipping {method}@{dimension}: no compatible vectors in the exact "
+                    f"retrieval pool for fit {fit_version}."
+                )
+                continue
+            retriever = DenseRetriever(vectors.article_ids, vectors.matrix, method=method)
+            projected = projector.transform(query_vectors)
             rankings: dict[str, list[int]] = {}
             latency: list[float] = []
             for _ in range(config.latency_repeats):
@@ -255,6 +312,8 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
                         4,
                     ),
                     "coverage": round(coverage, 4),
+                    "vectors": len(vectors),
+                    "fit_version": vectors.fit_version,
                     "ndcg_at_10": round(metrics.ndcg_at_10, 4),
                     "index_memory_mib": round(retriever.memory_bytes() / 1048576, 4),
                     "p95_ms": round(float(np.percentile(latency, 95)), 4),
@@ -311,6 +370,7 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
                         "n_subvectors": subvectors,
                         "recall_at_k_vs_exact": round(recall, 4),
                         "coverage": 1.0,
+                        "vectors": len(full),
                         "ndcg_at_10": round(metrics.ndcg_at_10, 4),
                         "index_memory_mib": round(index.memory_bytes() / 1048576, 4),
                         "p95_ms": round(float(np.percentile(latency, 95)), 4),
@@ -322,6 +382,7 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
         "corpus": {
             "articles": len(articles),
             "vectors": len(full),
+            "missing_vectors": missing_vectors,
             "dimension": int(full.matrix.shape[1]),
             "queries": len(queries),
             "judgment_source": judgment_source,
@@ -332,6 +393,8 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
         "notes": [
             "recall_at_k_vs_exact is measured against the exhaustive scan over the same "
             "vectors, not against human judgments.",
+            "Coverage is relative to compatible full vectors in the evaluation window. "
+            "Relevant window articles without vectors remain in relevance judgments.",
             "ndcg_at_10 uses the silver judgments and inherits every caveat in "
             "docs/limitations.md.",
             *notes,
@@ -342,7 +405,8 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
 def render_table(metrics: dict[str, Any]) -> str:
     """A markdown table of the sweep, for the artifact directory."""
     header = (
-        "| Index | dim | probe | recall@10 vs exact | nDCG@10 | Index | p95 | corpus covered |\n"
+        f"| Index | dim | probe | recall@{metrics.get('top_k', 10)} vs exact | nDCG@10 "
+        "| Index | p95 | corpus covered |\n"
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n"
     )
     lines = []
@@ -359,8 +423,12 @@ def render_table(metrics: dict[str, Any]) -> str:
         f"{corpus.get('vectors', 0)} vectors, {corpus.get('dimension', 0)}-d, "
         f"{corpus.get('queries', 0)} queries "
         f"(judgments: {corpus.get('judgment_source', 'unknown')}).\n\n"
+        f"Encoder: {corpus.get('embedding_model', 'unknown')}. "
+        f"{corpus.get('articles', 0)} article(s) in the evaluation window; "
+        f"{corpus.get('missing_vectors', 0)} lack compatible full embeddings.\n\n"
     )
-    return preamble + header + "\n".join(lines) + "\n"
+    notes = "\n".join(f"- {note}" for note in metrics.get("notes", []))
+    return preamble + header + "\n".join(lines) + "\n\n" + notes + "\n"
 
 
 def best_ndcg(metrics: dict[str, Any]) -> float:
