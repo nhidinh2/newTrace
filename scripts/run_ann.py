@@ -83,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
                     else f"[yellow](covers {row['coverage'] * 100:.0f}% of the corpus)[/yellow]"
                 )
             )
+        for note in (run.metrics or {}).get("notes", []):
+            console.print(note, markup=False)
     return 0
 
 
