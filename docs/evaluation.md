@@ -318,7 +318,31 @@ reads as a quality collapse when it is really a stale index; re-run
 ```bash
 make ann                       # defaults: 64 lists, probes 1/4/8/16, PQ 0/48/96
 python scripts/run_ann.py --lists 128 --probes 1,8,32 --subvectors 96 --since-days 30
+# Smaller PQ codebooks; omit the optional stored-compression comparison arm.
+python scripts/run_ann.py --lists 64 --subvectors 0,48 --bits 4 --compare-dimensions ""
 ```
+
+ANN configurations are validated before a run is created. Lists and probes
+must be nonempty grids of positive integers; the subvector grid must be
+nonempty and contain nonnegative integers (`0` selects IVF-Flat). Optional
+comparison dimensions must be positive; an empty grid disables that arm.
+`top_k`, `max_queries`, `latency_repeats` and a supplied `since_days` must be
+positive integers. Seeds must fit scikit-learn's unsigned 32-bit range.
+The CLI reports invalid options as argument errors (exit 2), before creating
+the database or artifact directories. Empty comma-separated entries are errors.
+
+`--bits` / `n_bits` accepts **1–8** (default 8). PQ stores each subvector code
+in a `uint8`, so codebooks wider than 8 bits cannot be represented safely.
+Fewer than 8 bits still use one byte per subvector; they reduce the codebook
+size, not the payload byte width. Older versions accepted wider codebooks and
+could silently wrap code indices; any such experiment needs to be rerun with
+a supported width. No historical benchmark results have been regenerated.
+
+A positive subvector count must divide the actual embedding dimension. This
+layout check happens before coarse k-means training. In a sweep, incompatible
+layouts are skipped with a reason in JSON, Markdown and terminal output;
+valid layouts still run. IVF cell counts continue to clamp to the corpus size,
+and positive probe counts above the number of trained cells scan all cells.
 
 ## Public benchmark (BEIR)
 

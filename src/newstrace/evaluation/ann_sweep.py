@@ -35,7 +35,7 @@ from newstrace.logging import get_logger
 from newstrace.models import Article, EvaluationRun
 from newstrace.representations.embedder import get_embedder
 from newstrace.representations.registry import load_vectors
-from newstrace.retrieval.ann import AnnConfig, IvfIndex
+from newstrace.retrieval.ann import AnnConfig, IvfIndex, validate_integer_parameter
 from newstrace.retrieval.exact import DenseRetriever
 from newstrace.retrieval.index import get_index
 from newstrace.utils import ensure_utc, git_commit, set_global_seed, utcnow
@@ -61,6 +61,33 @@ class AnnSweepConfig:
     compare_dimensions: list[int] = field(default_factory=lambda: [32])
     artifacts_dir: str | None = None
 
+    def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self) -> None:
+        """Check the entire grid before creating a run or loading any vectors."""
+        for name, values, minimum in (
+            ("n_lists", self.n_lists, 1),
+            ("n_probes", self.n_probes, 1),
+            ("n_subvectors", self.n_subvectors, 0),
+        ):
+            if not values:
+                raise ValueError(f"{name} must contain at least one value")
+            for value in values:
+                validate_integer_parameter(name, value, minimum=minimum)
+        for value in self.compare_dimensions:
+            validate_integer_parameter("compare_dimensions", value)
+        for name, value in (
+            ("top_k", self.top_k),
+            ("max_queries", self.max_queries),
+            ("latency_repeats", self.latency_repeats),
+        ):
+            validate_integer_parameter(name, value)
+        if self.since_days is not None:
+            validate_integer_parameter("since_days", self.since_days)
+        validate_integer_parameter("n_bits", self.n_bits, maximum=8)
+        validate_integer_parameter("seed", self.seed, minimum=0, maximum=2**32 - 1)
+
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
@@ -78,6 +105,7 @@ def run_ann_sweep(
     """Run the sweep, persist an :class:`EvaluationRun`, write artifacts."""
     settings = settings or get_settings()
     config = config or AnnSweepConfig(seed=settings.random_seed)
+    config.validate()
     set_global_seed(config.seed)
 
     run = EvaluationRun(
@@ -276,6 +304,7 @@ def _execute(session: Any, config: AnnSweepConfig, settings: Settings) -> dict[s
                 index = IvfIndex(index_config).fit(full.article_ids, full.matrix)
             except ValueError as exc:
                 logger.warning("Skipping %s: %s", index_config.name, exc)
+                notes.append(f"Skipped {index_config.name}: {exc}")
                 continue
 
             for probe in config.n_probes:
@@ -360,7 +389,8 @@ def render_table(metrics: dict[str, Any]) -> str:
         f"{corpus.get('queries', 0)} queries "
         f"(judgments: {corpus.get('judgment_source', 'unknown')}).\n\n"
     )
-    return preamble + header + "\n".join(lines) + "\n"
+    notes = "\n".join(f"- {note}" for note in metrics.get("notes", []))
+    return preamble + header + "\n".join(lines) + "\n\n" + notes + "\n"
 
 
 def best_ndcg(metrics: dict[str, Any]) -> float:
