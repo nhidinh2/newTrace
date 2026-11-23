@@ -40,6 +40,20 @@ logger = get_logger(__name__)
 Matrix = NDArray[np.float32]
 
 
+def validate_integer_parameter(
+    name: str, value: int, *, minimum: int = 1, maximum: int | None = None
+) -> None:
+    """Validate integer experiment controls without silently coercing them."""
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or value < minimum
+        or (maximum is not None and value > maximum)
+    ):
+        bounds = f"between {minimum} and {maximum}" if maximum is not None else f">= {minimum}"
+        raise ValueError(f"{name} must be an integer {bounds}; got {value!r}")
+
+
 @dataclass
 class AnnConfig:
     """One index configuration.
@@ -54,6 +68,25 @@ class AnnConfig:
     n_subvectors: int = 0
     n_bits: int = 8
     seed: int = 549
+
+    def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self, *, dimension: int | None = None) -> None:
+        """Reject unsupported codes and layouts before training any quantiser."""
+        validate_integer_parameter("n_lists", self.n_lists)
+        validate_integer_parameter("n_probe", self.n_probe)
+        validate_integer_parameter("n_subvectors", self.n_subvectors, minimum=0)
+        # Codes are stored in uint8. Wider codebooks would silently wrap ids.
+        validate_integer_parameter("n_bits", self.n_bits, maximum=8)
+        validate_integer_parameter("seed", self.seed, minimum=0, maximum=2**32 - 1)
+        if dimension is not None:
+            validate_integer_parameter("dimension", dimension)
+            if self.uses_pq and dimension % self.n_subvectors:
+                raise ValueError(
+                    f"n_subvectors={self.n_subvectors} does not divide "
+                    f"the embedding dimension {dimension}"
+                )
 
     @property
     def uses_pq(self) -> bool:
@@ -123,9 +156,12 @@ class IvfIndex:
     def fit(self, article_ids: Sequence[int], matrix: Matrix) -> IvfIndex:
         """Train the quantisers and add every vector. Returns ``self``."""
         started = time.perf_counter()
-        data = l2_normalize(np.asarray(matrix, dtype=np.float32))
-        if data.ndim != 2 or data.shape[0] == 0:
-            raise ValueError("an IVF index needs at least one vector")
+        self.config.validate()
+        data = np.asarray(matrix, dtype=np.float32)
+        if data.ndim != 2 or data.shape[0] == 0 or data.shape[1] == 0:
+            raise ValueError("an IVF index needs a two-dimensional matrix with positive dimensions")
+        self.config.validate(dimension=int(data.shape[1]))
+        data = l2_normalize(data)
         self.article_ids = np.asarray(list(article_ids), dtype=np.int64)
         if self.article_ids.shape[0] != data.shape[0]:
             raise ValueError("article_ids and matrix disagree on the number of vectors")
