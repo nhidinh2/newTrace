@@ -179,6 +179,28 @@ def story_keywords(bundle: StoryArticles, *, top_k: int = 8) -> list[str]:
     return keyword_summary([a.body_text for a in bundle.independent], top_k=top_k)
 
 
+def filter_timeline(
+    entries: list[TimelineEntry],
+    *,
+    source_domain: str | None = None,
+    include_duplicates: bool = True,
+    only_updates: bool = False,
+) -> list[TimelineEntry]:
+    """Select reports without recomputing novelty or earliest-report labels.
+
+    Pass the full timeline so hidden reports still provide prior evidence.
+    ``only_updates`` selects lexical novelty candidates, not verified new facts.
+    An empty source string matches reports with no recorded domain.
+    """
+    return [
+        entry
+        for entry in entries
+        if (source_domain is None or entry.article.source_domain == source_domain)
+        and (include_duplicates or not entry.is_near_duplicate)
+        and (not only_updates or bool(entry.new_sentences))
+    ]
+
+
 def story_stats(session: Session, story_id: int) -> dict[str, int]:
     bundle = load_story(session, story_id)
     if bundle is None:

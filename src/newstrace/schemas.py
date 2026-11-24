@@ -96,9 +96,14 @@ class TimelineResponse(BaseModel):
     story_id: int
     display_title: str
     entries: list[TimelineEntryResponse] = Field(default_factory=list)
+    total_entries: int = 0
+    matching_entries: int = 0
+    offset: int = 0
+    limit: int | None = None
     note: str = (
         "Ordering reflects publication timestamps in this dataset only; the earliest "
         "available report is not proof of who reported a claim first."
+        " Novelty is a lexical heuristic against the full story, not verified new facts."
     )
 
 
