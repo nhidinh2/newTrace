@@ -27,7 +27,14 @@ from newstrace.representations.embedder import detect_device, get_embedder
 from newstrace.representations.registry import available_representations
 from newstrace.search import SearchFilters, SearchRequest
 from newstrace.search import search as run_search
-from newstrace.stories import build_timeline, list_stories, load_story
+from newstrace.stories import (
+    StoryArticles,
+    TimelineEntry,
+    build_timeline,
+    filter_timeline,
+    list_stories,
+    load_story,
+)
 from newstrace.summarization.extractive import ExtractiveSummarizer
 from newstrace.utils import truncate
 
@@ -299,6 +306,160 @@ def page_top_stories() -> None:
                     st.switch_page(STORY_PAGE)
 
 
+def render_timeline_map(entries: list[TimelineEntry]) -> None:
+    """Show publication-time source lanes; undated reports stay in the list."""
+    rows = [
+        {
+            "Published": entry.published_at.isoformat(),
+            "Published (UTC)": entry.published_at.strftime("%Y-%m-%d %H:%M UTC"),
+            "Source": entry.article.source_domain or "Unknown domain",
+            "Report": entry.article.title,
+            "Article ID": entry.article.id,
+            "Text signal": (
+                "Near-duplicate"
+                if entry.is_near_duplicate
+                else "Potentially new text"
+                if entry.new_sentences
+                else "No new-text candidates"
+            ),
+            "Candidate sentences": len(entry.new_sentences),
+        }
+        for entry in entries
+        if entry.published_at is not None
+    ]
+    undated = sum(entry.published_at is None for entry in entries)
+    if rows:
+        domains = list(dict.fromkeys(row["Source"] for row in rows))
+        st.vega_lite_chart(
+            pd.DataFrame(rows),
+            {
+                "height": max(240, 28 * len(domains) + 140),
+                "mark": {"type": "point", "filled": True, "size": 95, "opacity": 0.8},
+                "encoding": {
+                    "x": {
+                        "field": "Published",
+                        "type": "temporal",
+                        "title": "Publication time (UTC)",
+                        "scale": {"type": "utc"},
+                        "axis": {"format": "%b %d %H:%M", "labelAngle": -25},
+                    },
+                    "y": {
+                        "field": "Source",
+                        "type": "nominal",
+                        "sort": domains,
+                        "axis": {"labelLimit": 180},
+                    },
+                    "color": {
+                        "field": "Text signal",
+                        "type": "nominal",
+                        "scale": {
+                            "domain": [
+                                "Potentially new text",
+                                "No new-text candidates",
+                                "Near-duplicate",
+                            ],
+                            "range": ["#68bda4", "#9babc4", "#d2a35d"],
+                        },
+                        "legend": {"orient": "bottom", "title": None},
+                    },
+                    "shape": {"field": "Text signal", "type": "nominal", "legend": None},
+                    "tooltip": [
+                        {"field": "Source", "type": "nominal"},
+                        {"field": "Report", "type": "nominal"},
+                        {"field": "Article ID", "type": "quantitative", "format": "d"},
+                        {"field": "Published (UTC)", "type": "nominal"},
+                        {"field": "Text signal", "type": "nominal"},
+                        {"field": "Candidate sentences", "type": "quantitative"},
+                    ],
+                },
+            },
+            width="stretch",
+        )
+        st.caption(
+            "Map shows all matching dated reports, including reports on other pages. "
+            "Reports from the same source at the same time can overlap."
+        )
+    elif entries:
+        st.info("Matching reports have no publication dates; read them below.")
+    if undated:
+        st.caption(
+            f"{undated} matching undated reports are listed after dated reports; not plotted."
+        )
+
+
+def render_timeline(bundle: StoryArticles) -> None:
+    st.caption(
+        "Ordering reflects publication timestamps in this dataset only. The earliest "
+        "available report is not proof of who reported a claim first."
+    )
+    st.caption(
+        "Potentially new text is a lexical similarity signal, not verified new facts. "
+        "It uses the full story even when reports are hidden. "
+        "Different domains can share reporting."
+    )
+    timeline = build_timeline(bundle)
+    prefix = f"timeline_{bundle.story.id}"
+    source_column, size_column = st.columns([3, 1])
+    source = source_column.selectbox(
+        "Timeline source",
+        [None, *sorted({entry.article.source_domain for entry in timeline})],
+        format_func=lambda domain: "All sources" if domain is None else domain or "Unknown domain",
+        key=f"{prefix}_source",
+    )
+    page_size = size_column.selectbox("Reports per page", [10, 25, 50], key=f"{prefix}_size")
+    left, right = st.columns(2)
+    duplicates = left.checkbox("Include near-duplicates", value=True, key=f"{prefix}_duplicates")
+    only_updates = right.checkbox("Only potentially new text", key=f"{prefix}_updates")
+    entries = filter_timeline(
+        timeline, source_domain=source, include_duplicates=duplicates, only_updates=only_updates
+    )
+    signature = (source, duplicates, only_updates, page_size)
+    if st.session_state.get(f"{prefix}_filters") != signature:
+        st.session_state[f"{prefix}_page"] = 0
+        st.session_state[f"{prefix}_filters"] = signature
+    page = min(st.session_state.get(f"{prefix}_page", 0), max(0, (len(entries) - 1) // page_size))
+    st.session_state[f"{prefix}_page"] = page
+    if not entries:
+        st.info(
+            "No reports match these timeline filters." if timeline else "No reports in this story."
+        )
+        return
+    render_timeline_map(entries)
+    offset = page * page_size
+    st.caption(
+        f"Showing {offset + 1}–{min(offset + page_size, len(entries))} of {len(entries)} "
+        f"matching reports · {len(timeline)} total reports"
+    )
+    previous, following = st.columns(2)
+    if previous.button("Previous reports", disabled=page == 0, key=f"{prefix}_previous"):
+        st.session_state[f"{prefix}_page"] = page - 1
+        st.rerun()
+    if following.button(
+        "Next reports", disabled=offset + page_size >= len(entries), key=f"{prefix}_next"
+    ):
+        st.session_state[f"{prefix}_page"] = page + 1
+        st.rerun()
+    for entry in entries[offset : offset + page_size]:
+        label = (
+            f"{fmt_time(entry.published_at)} — {entry.article.source_domain or 'Unknown domain'}"
+        )
+        if entry.is_first_report:
+            label += "  ⟵ earliest available report"
+        if entry.is_near_duplicate:
+            label += "  (near-duplicate, not counted as independent)"
+        with st.expander(label, expanded=entry.is_first_report):
+            st.markdown(f"**{entry.article.title}**")
+            st.markdown(f"[{entry.article.url}]({entry.article.url})")
+            if entry.new_sentences:
+                st.markdown("**Potentially new in this report**")
+                for sentence in entry.new_sentences:
+                    st.markdown(f"- {sentence}")
+            if entry.repeated_sentences:
+                st.markdown("**Already reported**")
+                for sentence in entry.repeated_sentences[:3]:
+                    st.markdown(f"- {sentence}")
+
+
 def page_story_detail() -> None:
     st.header("Story")
     with session_scope() as session:
@@ -371,27 +532,7 @@ def page_story_detail() -> None:
         )
 
         with tab_timeline:
-            st.caption(
-                "Ordering reflects publication timestamps in this dataset only. The earliest "
-                "available report is not proof of who reported a claim first."
-            )
-            for entry in build_timeline(bundle):
-                label = f"{fmt_time(entry.published_at)} — {entry.article.source_domain}"
-                if entry.is_first_report:
-                    label += "  ⟵ earliest available report"
-                if entry.is_near_duplicate:
-                    label += "  (near-duplicate, not counted as independent)"
-                with st.expander(label, expanded=entry.is_first_report):
-                    st.markdown(f"**{entry.article.title}**")
-                    st.markdown(f"[{entry.article.url}]({entry.article.url})")
-                    if entry.new_sentences:
-                        st.markdown("**Potentially new in this report**")
-                        for sentence in entry.new_sentences:
-                            st.markdown(f"- {sentence}")
-                    if entry.repeated_sentences:
-                        st.markdown("**Already reported**")
-                        for sentence in entry.repeated_sentences[:3]:
-                            st.markdown(f"- {sentence}")
+            render_timeline(bundle)
 
         with tab_summary:
             summary = ExtractiveSummarizer(session).summarize_bundle(bundle)

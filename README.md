@@ -72,6 +72,27 @@ make db && make backfill    # SimHash bands, title prefix tokens, FTS5 rows
 is also what CI runs on every push, alongside a job that replays this
 quickstart offline.
 
+## Exploring a story timeline
+
+Open a story's **Timeline** tab to compare reporting across source lanes on a
+UTC publication-time map. Hover for the report title, text signal and timestamp.
+Choose a source, hide near-duplicates, or select **Only potentially new text**;
+the map covers every matching dated report, while report details are paged in
+groups of 10, 25 or 50. Undated reports remain at the end of the list.
+
+Novelty uses lexical overlap against the full story before filtering or paging.
+Hiding earlier reports does not turn repeated wording into new evidence, and
+the earliest-report label stays attached to its original report. These signals
+do not verify new facts, publication precedence or reporting independence.
+
+The API supports the same selection, for example:
+`GET /stories/1/timeline?source_domain=example.com&only_updates=true&limit=25&offset=0`.
+`include_duplicates` defaults to `true`; omitted `limit` preserves the full-list
+response. Explicit limits must be 1–200 and offsets nonnegative. Responses add
+`total_entries` before selection and `matching_entries` before pagination,
+along with `offset` and `limit`. Source matching is exact; an empty domain
+selects reports without a recorded domain.
+
 ## Results
 
 From [`docs/experiments/live-30d`](docs/experiments/live-30d), a run committed

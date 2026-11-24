@@ -111,6 +111,26 @@ conditional on a platform wheel, and the interesting part -- the recall
 against exact retrieval, and how it trades against the compression arm -- is
 not in the library.
 
+**Timeline selection preserves evidence context.** `build_timeline` computes
+lexical novelty and the earliest available non-duplicate label over the full
+publication-ordered story. `filter_timeline` selects those existing entries
+by exact source domain, duplicate visibility and nonempty novelty candidates;
+it never relabels a filtered subset. The API slices after selection and exposes
+both whole-story and matching counts. Omitting its optional limit retains the
+existing full-list behavior.
+
+Streamlit uses the same selection for a UTC source/time map and a paginated
+detail list. Missing timestamps are not plotted or imputed; those reports remain
+last in the details. Map colors and shapes distinguish potentially new wording,
+reports without new-text candidates and detected copies. Same-source reports with identical
+timestamps can overlap visually; their individual details remain accessible.
+Changing filters or page size resets the page; shrinking stories clamp it.
+
+Pagination bounds rendered details and API payloads, not article hydration,
+novelty computation or map rows. The existing full-story lexical comparisons
+still grow with evidence volume and must be profiled before claiming a speedup.
+The view is a live read, so ingestion can move page boundaries between requests.
+
 ## Persistence
 
 SQLite via SQLAlchemy 2.x, with Alembic migrations in `migrations/`.

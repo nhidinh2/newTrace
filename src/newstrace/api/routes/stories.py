@@ -21,7 +21,7 @@ from newstrace.schemas import (
     StorySummaryResponse,
     TimelineResponse,
 )
-from newstrace.stories import build_timeline, list_stories, load_story
+from newstrace.stories import build_timeline, filter_timeline, list_stories, load_story
 
 router = APIRouter(tags=["stories"])
 
@@ -65,15 +65,30 @@ def get_timeline(
     story_id: int,
     session: Session = Depends(get_db),
     include_duplicates: bool = True,
+    source_domain: str | None = None,
+    only_updates: bool = False,
+    offset: int = Query(default=0, ge=0),
+    limit: int | None = Query(default=None, ge=1, le=200),
 ) -> TimelineResponse:
     bundle = load_story(session, story_id)
     if bundle is None:
         raise HTTPException(status_code=404, detail=f"story {story_id} not found")
-    entries = build_timeline(bundle, include_duplicates=include_duplicates)
+    timeline = build_timeline(bundle)
+    entries = filter_timeline(
+        timeline,
+        source_domain=source_domain,
+        include_duplicates=include_duplicates,
+        only_updates=only_updates,
+    )
+    page = entries[offset:] if limit is None else entries[offset : offset + limit]
     return TimelineResponse(
         story_id=story_id,
         display_title=bundle.story.display_title,
-        entries=[timeline_entry_to_schema(e) for e in entries],
+        entries=[timeline_entry_to_schema(e) for e in page],
+        total_entries=len(timeline),
+        matching_entries=len(entries),
+        offset=offset,
+        limit=limit,
     )
 
 
