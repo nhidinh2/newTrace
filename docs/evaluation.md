@@ -320,6 +320,30 @@ make ann                       # defaults: 64 lists, probes 1/4/8/16, PQ 0/48/96
 python scripts/run_ann.py --lists 128 --probes 1,8,32 --subvectors 96 --since-days 30
 ```
 
+`IvfIndex.fit(ids, matrix)` replaces the entire indexed corpus, including list
+membership, residual payloads, PQ codebooks and memory statistics. Reusing an
+index with a smaller corpus, newly empty cells, or a different embedding
+dimension or PQ layout has the same retrieval behavior as building a fresh
+index with that configuration. Switching to IVF-Flat releases the previous PQ
+codebooks. The method returns the same index object.
+
+A rebuild trains a separate candidate and publishes it only after training and
+encoding succeed. An exception leaves the last successful corpus searchable;
+a failed first build leaves an empty index that can be retried. The fitted PQ
+layout is retained independently of the editable `index.config`, so a pending
+layout change cannot reinterpret the old payload after a failed rebuild.
+Configuration changes take effect on the next successful fit, except
+`n_probe`, which remains adjustable at query time (also via
+`search(..., n_probe=...)`). Hit method names identify the configuration used
+for the successful build.
+
+Training temporarily holds both the old and replacement index storage; the
+reported `memory_bytes()` describes the completed index, not peak rebuild
+memory, and still excludes article IDs. Serialize access when calling `fit`
+and `search`; this failure guarantee does not provide concurrent publication.
+These lifecycle regressions use synthetic vectors and make no retrieval-quality
+or latency claim. Existing committed benchmark results are unchanged.
+
 ## Public benchmark (BEIR)
 
 The live sweep's conclusion is that 23 silver queries cannot separate the

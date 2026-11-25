@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 import numpy as np
@@ -117,11 +117,30 @@ class IvfIndex:
         self.article_ids: NDArray[np.int64] = np.zeros(0, dtype=np.int64)
         self.stats = AnnStats()
         self._dimension = 0
+        self._fit_config: AnnConfig | None = None
 
     # -- build ---------------------------------------------------------------
 
     def fit(self, article_ids: Sequence[int], matrix: Matrix) -> IvfIndex:
-        """Train the quantisers and add every vector. Returns ``self``."""
+        """Replace the corpus after a successful build; failures retain the old index.
+
+        Training temporarily holds both old and new index storage. Callers must
+        serialize fit/search access; this is not a concurrent publication API.
+        """
+        candidate = IvfIndex(replace(self.config))
+        candidate._build(article_ids, matrix)
+        self.centroids = candidate.centroids
+        self.codebooks = candidate.codebooks
+        self.lists = candidate.lists
+        self.payload = candidate.payload
+        self.article_ids = candidate.article_ids
+        self.stats = candidate.stats
+        self._dimension = candidate._dimension
+        self._fit_config = candidate.config
+        return self
+
+    def _build(self, article_ids: Sequence[int], matrix: Matrix) -> None:
+        """Train a fresh candidate; never mutate the index currently in use."""
         started = time.perf_counter()
         data = l2_normalize(np.asarray(matrix, dtype=np.float32))
         if data.ndim != 2 or data.shape[0] == 0:
@@ -165,7 +184,6 @@ class IvfIndex:
         logger.info(
             "Built %s over %s vectors: %s", self.config.name, data.shape[0], self.stats.as_dict()
         )
-        return self
 
     def _assign(self, data: Matrix) -> NDArray[np.int64]:
         # ||x - c||^2 expanded, so the whole assignment is one matrix product.
@@ -177,7 +195,7 @@ class IvfIndex:
         return np.asarray(np.argmin(sq, axis=1), dtype=np.int64)
 
     def _subvector_slices(self) -> list[tuple[int, int]]:
-        m = self.config.n_subvectors
+        m = (self._fit_config or self.config).n_subvectors
         if self._dimension % m:
             raise ValueError(
                 f"n_subvectors={m} does not divide the embedding dimension {self._dimension}"
@@ -219,6 +237,9 @@ class IvfIndex:
         """Top ``k`` by approximate cosine similarity."""
         if not self.lists:
             return []
+        # Layout changes apply only after a successful fit. Probe count remains
+        # adjustable without retraining, including through the explicit override.
+        config = self._fit_config or self.config
         probe = max(1, min(n_probe or self.config.n_probe, self.centroids.shape[0]))
         q = np.asarray(vector, dtype=np.float32).reshape(-1)
         norm = float(np.linalg.norm(q))
@@ -236,13 +257,13 @@ class IvfIndex:
                 continue
             residual_query = q - self.centroids[int(cell)]
             payload = self.payload[int(cell)]
-            if self.config.uses_pq:
+            if config.uses_pq:
                 table = self._distance_table(residual_query)
                 codes = np.asarray(payload, dtype=np.uint8)
                 # Asymmetric distance computation: sum the per-subspace
                 # lookups, which is the whole point of PQ -- no vector in the
                 # list is ever reconstructed.
-                block = table[np.arange(self.config.n_subvectors), codes].sum(axis=1)
+                block = table[np.arange(config.n_subvectors), codes].sum(axis=1)
             else:
                 diff = np.asarray(payload, dtype=np.float32) - residual_query
                 block = (diff**2).sum(axis=1)
@@ -274,7 +295,7 @@ class IvfIndex:
                     article_id=int(candidate_ids[position]),
                     score=cosine,
                     rank=rank,
-                    method=f"ann:{self.config.name}",
+                    method=f"ann:{config.name}",
                     signals={"cosine_estimate": cosine},
                 )
             )
@@ -282,7 +303,8 @@ class IvfIndex:
 
     def _distance_table(self, residual_query: NDArray[np.float32]) -> Matrix:
         """(m, 2**bits) squared distances from each subquery to each centroid."""
-        table = np.empty((self.config.n_subvectors, self.codebooks.shape[1]), dtype=np.float32)
+        config = self._fit_config or self.config
+        table = np.empty((config.n_subvectors, self.codebooks.shape[1]), dtype=np.float32)
         for index, (start, stop) in enumerate(self._subvector_slices()):
             book = self.codebooks[index]
             diff = book - residual_query[start:stop]
