@@ -171,6 +171,33 @@ class OnlineClusterer:
         )
         return list(self.session.execute(stmt).scalars())
 
+    @staticmethod
+    def _validated_vectors(vectors: Vector, *, rows: int | None = None) -> Vector:
+        """Validate before float32 storage can discard or overflow values."""
+        expected_ndim = 1 if rows is None else 2
+        if vectors.ndim != expected_ndim or vectors.shape[-1] == 0:
+            raise ValueError("clustering vectors must have a nonempty feature dimension")
+        if rows is not None and vectors.shape[0] != rows:
+            raise ValueError("clustering vectors must have exactly one row per article")
+        if vectors.dtype.kind not in "fiu" or not np.isfinite(vectors).all():
+            raise ValueError("clustering vectors must contain finite real numbers")
+        if (np.abs(vectors.astype(np.float64)) > np.finfo(np.float32).max).any():
+            raise ValueError("clustering vectors must be representable in float32 storage")
+        return vectors.astype(np.float32, copy=False)
+
+    @staticmethod
+    def _centroid(cluster: StoryCluster, dimension: int) -> NDArray[np.float64]:
+        if cluster.centroid_dimension not in (None, dimension):
+            raise ValueError(
+                f"story {cluster.id} centroid dimension {cluster.centroid_dimension} "
+                f"does not match vector dimension {dimension}; rebuild clustering "
+                "when changing embedding dimensions"
+            )
+        centroid = from_blob(cluster.centroid_blob, cluster.centroid_dimension or dimension)
+        if not np.isfinite(centroid).all():
+            raise ValueError(f"story {cluster.id} has a nonfinite centroid; rebuild clustering")
+        return centroid.astype(np.float64)
+
     # -- scoring -------------------------------------------------------------
     @staticmethod
     def article_features(article: Article) -> tuple[set[str], set[str]]:
@@ -190,9 +217,10 @@ class OnlineClusterer:
         ``features`` is the article's (title tokens, entities), which ``assign``
         extracts once rather than per candidate: entity extraction dominates the
         cost, and an article is scored against every story in the window."""
-        centroid = from_blob(cluster.centroid_blob, cluster.centroid_dimension or vector.shape[0])
-        denom = float(np.linalg.norm(vector) * np.linalg.norm(centroid))
-        cosine = float(np.dot(vector, centroid) / denom) if denom > 1e-9 else 0.0
+        centroid = self._centroid(cluster, vector.shape[0])
+        wide_vector = vector.astype(np.float64)
+        denom = float(np.linalg.norm(wide_vector) * np.linalg.norm(centroid))
+        cosine = float(np.dot(wide_vector, centroid) / denom) if denom > 1e-9 else 0.0
         cluster_title_tokens = set((cluster.extra or {}).get("title_tokens") or [])
         cluster_entities = set((cluster.extra or {}).get("entities") or [])
         title_tokens, entities = features or self.article_features(article)
@@ -252,10 +280,10 @@ class OnlineClusterer:
     def _update_cluster(self, cluster: StoryCluster, article: Article, vector: Vector) -> None:
         """Incremental centroid update: c <- c + (x - c)/n over non-duplicates."""
         dim = cluster.centroid_dimension or int(vector.shape[0])
-        centroid = from_blob(cluster.centroid_blob, dim)
+        centroid = self._centroid(cluster, dim)
         n_effective = max(1, cluster.article_count)
         if not article.is_near_duplicate:
-            centroid = centroid + (vector - centroid) / float(n_effective + 1)
+            centroid = centroid + (vector.astype(np.float64) - centroid) / float(n_effective + 1)
             norm = float(np.linalg.norm(centroid))
             if norm > 1e-9:
                 centroid = centroid / norm
@@ -287,6 +315,7 @@ class OnlineClusterer:
 
     def assign(self, article: Article, vector: Vector) -> Assignment:
         """Assign one article to the best candidate story, or create a new one."""
+        vector = self._validated_vectors(vector)
         existing = (
             self.session.execute(
                 select(ClusterMembership).where(ClusterMembership.article_id == article.id)
@@ -338,6 +367,9 @@ class OnlineClusterer:
         score: float,
         method: str,
     ) -> None:
+        # Duplicate links bypass scoring, so check the destination before adding
+        # a pending membership or updating any story metadata.
+        self._centroid(cluster, vector.shape[0])
         self.session.add(
             ClusterMembership(
                 article_id=article.id,
@@ -355,7 +387,13 @@ class OnlineClusterer:
     def assign_many(
         self, articles: Sequence[Article], vectors: NDArray[np.float32]
     ) -> list[Assignment]:
-        """Assign a batch in publication order (streaming semantics)."""
+        """Assign in publication order after validating the whole input matrix.
+
+        Matrix shape/value errors do not partially assign a batch. Stored-state
+        incompatibilities and database/runtime failures still require the caller
+        to roll back its transaction.
+        """
+        vectors = self._validated_vectors(vectors, rows=len(articles))
         order = sorted(
             range(len(articles)),
             key=lambda i: (ensure_utc(articles[i].published_at) or utcnow(), articles[i].id),

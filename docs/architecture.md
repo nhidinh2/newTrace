@@ -64,6 +64,22 @@ centroids incrementally, so memory grows with live clusters rather than with
 articles seen. Near-duplicates follow the article they duplicate and never move
 a centroid or a source count.
 
+Clustering assignment accepts nonempty one-dimensional real vectors with finite
+values representable in float32. Zero vectors remain supported. `assign_many`
+requires a two-dimensional matrix with exactly one row per article and validates
+all values before its first assignment; malformed matrices therefore cannot
+leave a partially assigned batch. Candidate and duplicate-linked story centroids
+must match the incoming width and be finite. Dimension changes require a fresh
+clustering replay; incompatible or corrupt stored centroids raise an explicit
+error rather than silently accepting a membership. Existing corrupt data is not
+repaired automatically. Scoring and centroid arithmetic use float64 intermediates
+to avoid overflow for large finite float32 inputs; stored blobs remain float32.
+This can change scores at rounding boundaries and does not establish a measured
+clustering-quality gain. The caller still owns the transaction: roll it back on
+stored-state incompatibilities or other execution failures, including failures
+after earlier valid batch rows. Publication ordering, duplicate links and the
+centroid weighting rule are otherwise unchanged.
+
 **Duplicates are preserved, never deleted.** They stay queryable, carry
 `duplicate_of_article_id` and a reason, and are excluded from
 `distinct_domain_count`, independent-source counts and default search results.
