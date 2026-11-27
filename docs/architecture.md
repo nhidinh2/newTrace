@@ -72,6 +72,15 @@ a centroid or a source count.
 signal and `retrieval/explain.py` renders it. There is no publisher-reputation
 term anywhere, because it could not be explained or justified.
 
+**Retrieval ties use article identity.** Dense cosine, TF-IDF and IVF (Flat or
+PQ) resolve exactly equal scores/distances by ascending article ID, including
+membership at the top-k cutoff. Filters apply before selection; cache growth
+and row/cell traversal order cannot decide which equally scored reports enter
+the reranking pool. The shared selector partitions scores and boundary IDs,
+then sorts only the selected rows. Its standalone default breaks ties by row
+index. Nonpositive retrieval budgets return no hits. This does not equate
+nearly equal floating-point values or make approximate candidate pools exact.
+
 **Fitting is chronological.** Projectors and the clustering threshold are fitted
 on the earliest 60% / next 20% of articles; the final numbers come from the last
 20%. `ChronologicalSplit.assert_no_leakage` is called before every experiment.

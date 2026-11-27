@@ -33,7 +33,7 @@ from sklearn.cluster import KMeans
 
 from newstrace.logging import get_logger
 from newstrace.representations.embedder import l2_normalize
-from newstrace.retrieval.exact import ScoredHit
+from newstrace.retrieval.exact import ScoredHit, top_k
 
 logger = get_logger(__name__)
 
@@ -217,7 +217,7 @@ class IvfIndex:
         allowed_ids: set[int] | None = None,
     ) -> list[ScoredHit]:
         """Top ``k`` by approximate cosine similarity."""
-        if not self.lists:
+        if not self.lists or k <= 0:
             return []
         probe = max(1, min(n_probe or self.config.n_probe, self.centroids.shape[0]))
         q = np.asarray(vector, dtype=np.float32).reshape(-1)
@@ -262,9 +262,7 @@ class IvfIndex:
         if candidate_ids.size == 0:
             return []
 
-        take = min(k, candidate_ids.size)
-        order = np.argpartition(candidate_distances, take - 1)[:take]
-        order = order[np.lexsort((candidate_ids[order], candidate_distances[order]))]
+        order = top_k(-candidate_distances, k, tie_breaker=candidate_ids)
         hits: list[ScoredHit] = []
         for rank, position in enumerate(order, start=1):
             # Back to cosine, so scores are comparable with the exact retriever.

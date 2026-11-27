@@ -41,6 +41,18 @@ what produces a signal.
 silver labels derived from the system's own clustering. The report records which
 was used. This run used `synthetic_fixture_labels`.
 
+**Ties at the retrieval cutoff.** Dense, TF-IDF and IVF rankings use ascending
+article ID to select and order reports with exactly equal retrieval scores (or
+IVF distances). The rule applies before truncating the candidate pool, so
+sorting the returned hits after selection cannot hide arbitrary omissions at
+the boundary. This matters for repeated vectors, zero query vectors and PQ
+distance ties. The standalone `top_k` helper defaults to row index when no
+identity keys are supplied. IVF still searches only probed cells; numerical
+rounding can distinguish distances that exact cosine treats as tied. There is
+no tolerance-based tie grouping or retrieval-quality improvement claim.
+Historical benchmark artifacts predate this selection rule and are unchanged;
+rerun affected experiments to measure any metric or timing differences.
+
 ## Retrieval quality versus cost
 
 Baseline embedding: `all-MiniLM-L6-v2`, d=384, 27 queries over 135 articles.

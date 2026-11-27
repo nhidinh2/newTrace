@@ -44,13 +44,45 @@ def cosine_scores(query: NDArray[np.float32], matrix: Matrix) -> NDArray[np.floa
     return (normalized @ q).astype(np.float32)
 
 
-def top_k(scores: NDArray[np.float32], k: int) -> NDArray[np.int64]:
-    """Indices of the ``k`` highest scores, ties broken by index for determinism."""
-    if scores.size == 0:
+def top_k(
+    scores: NDArray[np.float32],
+    k: int,
+    *,
+    tie_breaker: NDArray[np.int64] | None = None,
+) -> NDArray[np.int64]:
+    """Highest scores, then smallest identity key (or row index).
+
+    Resolve membership at the cutoff before sorting the selected rows. Sorting
+    an arbitrary partition alone cannot recover tied rows it already excluded.
+    Partitioning scores and boundary keys keeps selection linear; only the final
+    ``k`` rows are sorted. Repeated keys fall back to row index. NaNs sort last,
+    as in NumPy's ascending sort of negated scores.
+    """
+    if scores.size == 0 or k <= 0:
         return np.zeros(0, dtype=np.int64)
     k = min(k, scores.size)
-    partial = np.argpartition(-scores, k - 1)[:k]
-    return partial[np.lexsort((partial, -scores[partial]))].astype(np.int64)
+    primary = -scores
+    cutoff = np.partition(primary, k - 1)[k - 1]
+    if np.isnan(cutoff):
+        better = np.flatnonzero(~np.isnan(primary))
+        boundary = np.flatnonzero(np.isnan(primary))
+    else:
+        better = np.flatnonzero(primary < cutoff)
+        boundary = np.flatnonzero(primary == cutoff)
+    remaining = k - better.size
+    if tie_breaker is not None and remaining < boundary.size:
+        keys = tie_breaker[boundary]
+        key_cutoff = np.partition(keys, remaining - 1)[remaining - 1]
+        smaller = boundary[keys < key_cutoff]
+        equal = boundary[keys == key_cutoff][: remaining - smaller.size]
+        boundary = np.concatenate((smaller, equal))
+    selected = np.concatenate((better, boundary[:remaining]))
+    order = (
+        np.lexsort((selected, primary[selected]))
+        if tie_breaker is None
+        else np.lexsort((selected, tie_breaker[selected], primary[selected]))
+    )
+    return selected[order].astype(np.int64)
 
 
 class DenseRetriever:
@@ -117,12 +149,14 @@ class DenseRetriever:
         k: int = 10,
         allowed_ids: set[int] | None = None,
     ) -> list[ScoredHit]:
+        if k <= 0:
+            return []
         vector = self.embed_query(query) if isinstance(query, str) else query
         scores = self.score(vector)
         if allowed_ids is not None:
             scores = np.where(self._mask_for(allowed_ids), scores, -np.inf).astype(np.float32)
         hits: list[ScoredHit] = []
-        for rank, idx in enumerate(top_k(scores, k), start=1):
+        for rank, idx in enumerate(top_k(scores, k, tie_breaker=self._id_array), start=1):
             score = float(scores[idx])
             if not np.isfinite(score):
                 continue
@@ -176,6 +210,7 @@ class TfidfRetriever:
 
     def __init__(self, article_ids: Sequence[int], texts: Sequence[str]) -> None:
         self.article_ids = list(article_ids)
+        self._id_array = np.asarray(self.article_ids, dtype=np.int64)
         self.vectorizer = TfidfVectorizer(
             lowercase=True,
             sublinear_tf=True,
@@ -192,16 +227,16 @@ class TfidfRetriever:
     def search(
         self, query: str, *, k: int = 10, allowed_ids: set[int] | None = None
     ) -> list[ScoredHit]:
-        if not self.article_ids:
+        if not self.article_ids or k <= 0:
             return []
         q = self.vectorizer.transform([query])
         scores = np.asarray((self.matrix @ q.T).todense()).reshape(-1).astype(np.float32)
         if allowed_ids is not None:
             allowed = np.fromiter(allowed_ids, dtype=np.int64, count=len(allowed_ids))
-            mask = np.isin(np.asarray(self.article_ids, dtype=np.int64), allowed)
+            mask = np.isin(self._id_array, allowed)
             scores = np.where(mask, scores, -np.inf).astype(np.float32)
         hits = []
-        for rank, idx in enumerate(top_k(scores, k), start=1):
+        for rank, idx in enumerate(top_k(scores, k, tie_breaker=self._id_array), start=1):
             score = float(scores[idx])
             if not np.isfinite(score) or score <= 0.0:
                 continue
