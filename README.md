@@ -278,6 +278,14 @@ before `make ann` — the comparison arm reads them, and every row in the ANN
 table reports what fraction of the corpus its vectors cover so a stale fit
 cannot be mistaken for a quality collapse.
 
+In **Experiments**, shortlist saved configurations by minimum nDCG@10, maximum
+index memory and maximum p95 latency. The scatter plot and downloadable CSV
+share these inclusive limits; **Only Pareto frontier** hides configurations
+dominated on the three measured objectives. Open **Saved uncertainty intervals**
+before interpreting a small quality difference. Missing or invalid measurements
+have explicit exclusion reasons. Exploring a run never retrains or rewrites it.
+`make report` renders the same frontier from saved measurements.
+
 The BEIR and clustering-benchmark downloads are the only networked steps in
 this repository, and both are opt-in. `nfcorpus` and `arguana` are the same
 flag away; running them would turn one benchmark result into a pattern.
