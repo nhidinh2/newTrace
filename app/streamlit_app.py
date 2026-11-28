@@ -20,6 +20,7 @@ from newstrace import __version__
 from newstrace.claims.evidence import load_claims
 from newstrace.config import get_llm_settings, get_settings, load_topics
 from newstrace.db import create_all, session_scope
+from newstrace.evaluation.tradeoffs import TRADEOFF_NOTE, analyze_tradeoffs
 from newstrace.ingestion.deduplicate import strip_site_suffix
 from newstrace.ingestion.pipeline import latest_run
 from newstrace.models import Article, EvaluationRun, IngestionRun, StoryCluster
@@ -101,6 +102,17 @@ def fmt_time(value: datetime | None) -> str:
 # metrics are mapped explicitly rather than guessed at, because a generic
 # prettifier turns "ndcg_at_10" into "Ndcg At 10".
 COLUMN_LABELS = {
+    **{
+        f"ci_{metric}{delta}_{stat}": f"{label}{comparison} · {stat_label}"
+        for metric, label in (
+            ("ndcg_at_10", "nDCG at 10"),
+            ("recall_at_10", "Recall at 10"),
+            ("mrr", "MRR"),
+            ("topk_overlap_at_10", "Top-k overlap at 10"),
+        )
+        for delta, comparison in (("", ""), ("_delta", " delta vs Full"))
+        for stat, stat_label in (("mean", "mean"), ("lo", "CI lower"), ("hi", "CI upper"))
+    },
     "article_id": "Article",
     "articles": "Articles",
     "artifact_path": "Artifact",
@@ -113,6 +125,7 @@ COLUMN_LABELS = {
     "feeds": "Feeds",
     "fetched": "Fetched",
     "fit_version": "Fit version",
+    "frontier": "Pareto frontier",
     "gdelt_query": "GDELT query",
     "id": "Run",
     "inserted": "Inserted",
@@ -569,6 +582,110 @@ def page_topics() -> None:
     st.dataframe(frame, width="stretch", hide_index=True, column_config=column_config(frame))
 
 
+def experiment_tradeoffs(rows: list[dict[str, object]], run_key: str) -> None:
+    """Explore one run's measured means; never rerun or rewrite the experiment."""
+    st.subheader("Find a configuration within your budget")
+    st.caption(
+        "Compare observed means within this saved run. Frontier membership does not establish "
+        "statistical superiority; inspect the saved uncertainty intervals before choosing."
+    )
+    with st.expander("How the frontier is calculated"):
+        st.write(TRADEOFF_NOTE)
+    analysis = analyze_tradeoffs(rows)
+    if analysis.excluded:
+        with st.expander(f"Excluded measurements ({len(analysis.excluded)})"):
+            for excluded in analysis.excluded:
+                st.write(f"Result row {excluded.row}: {excluded.reason}.")
+    if not analysis.points:
+        st.info("No configurations have complete, valid quality and positive cost measurements.")
+        return
+
+    # Run-specific keys prevent a previous run's limits from silently carrying over.
+    minimum = st.number_input(
+        "Minimum nDCG at 10",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.0,
+        step=0.01,
+        key=f"quality:{run_key}",
+    )
+    costs = st.columns(2)
+    memory = costs[0].number_input(
+        "Maximum index memory (MiB)",
+        min_value=0.0,
+        value=max(p.memory_mib for p in analysis.points),
+        format="%.6f",
+        key=f"memory:{run_key}",
+    )
+    latency = costs[1].number_input(
+        "Maximum p95 latency (ms)",
+        min_value=0.0,
+        value=max(p.latency_ms for p in analysis.points),
+        format="%.6f",
+        key=f"latency:{run_key}",
+    )
+    frontier_only = st.checkbox("Only Pareto frontier", value=True, key=f"frontier:{run_key}")
+    selected = analysis.shortlist(
+        min_quality=minimum,
+        max_memory_mib=memory,
+        max_latency_ms=latency,
+        frontier_only=frontier_only,
+    )
+    st.caption(
+        f"{len(selected)} matching configurations · {len(analysis.points)} comparable · "
+        f"{len(analysis.excluded)} excluded"
+    )
+    if not selected:
+        st.info("No configurations match these budgets. Try relaxing a limit.")
+        return
+
+    frame = pd.DataFrame(p.as_dict() for p in selected)
+    frame["method"] = frame["method"].map(method_label)
+    axis = st.selectbox(
+        "Compare quality against",
+        ["Index memory (MiB)", "p95 latency (ms)"],
+        key=f"axis:{run_key}",
+    )
+    x_key = (
+        "system_index_memory_mib" if axis == "Index memory (MiB)" else "system_p95_query_latency_ms"
+    )
+    # Nominal identity avoids visually joining distinct configurations with lines.
+    chart = frame.rename(columns=COLUMN_LABELS).copy()
+    chart["Configuration"] = [
+        f"Row {p.row}: {method_label(p.method)} · d={p.dimension}" for p in selected
+    ]
+    chart["Status"] = ["Frontier" if p.frontier else "Dominated" for p in selected]
+    st.vega_lite_chart(
+        chart,
+        {
+            "mark": {"type": "point", "filled": True, "size": 100},
+            "encoding": {
+                "x": {"field": COLUMN_LABELS[x_key], "type": "quantitative"},
+                "y": {"field": "nDCG at 10", "type": "quantitative", "scale": {"domain": [0, 1]}},
+                "color": {"field": "Method", "type": "nominal"},
+                "shape": {"field": "Status", "type": "nominal"},
+                "tooltip": [
+                    {"field": "Configuration", "type": "nominal"},
+                    {"field": "nDCG at 10", "type": "quantitative"},
+                    {"field": "Index memory (MiB)", "type": "quantitative"},
+                    {"field": "p95 latency (ms)", "type": "quantitative"},
+                    {"field": "Status", "type": "nominal"},
+                ],
+            },
+        },
+        width="stretch",
+    )
+    st.dataframe(frame, width="stretch", hide_index=True, column_config=column_config(frame))
+    st.download_button(
+        "Download shortlist (CSV)",
+        frame.to_csv(index=False),
+        "newstrace-shortlist.csv",
+        mime="text/csv",
+        key=f"download:{run_key}",
+    )
+    st.caption("Result row identifies the original measurement in this run's metrics.json.")
+
+
 def page_experiments() -> None:
     st.header("Experiments")
     settings = get_settings()
@@ -581,14 +698,33 @@ def page_experiments() -> None:
     metrics = json.loads((Path(choice) / "metrics.json").read_text(encoding="utf-8"))
 
     split = metrics.get("split", {})
-    cols = st.columns(4)
+    cols = st.columns(3)
     cols[0].metric("Articles", metrics.get("article_count", 0))
     cols[1].metric("Queries", metrics.get("query_count", 0))
     cols[2].metric("Test articles", split.get("test_count", 0))
-    cols[3].metric("Judgments", metrics.get("judgment_source", "—"))
+    st.caption(f"Judgment source: {metrics.get('judgment_source', '—')}")
 
     rows = metrics.get("results", [])
     if rows:
+        experiment_tradeoffs(rows, str(choice))
+        with st.expander("Saved uncertainty intervals"):
+            uncertainty = pd.DataFrame(rows)
+            keys = [
+                c
+                for c in uncertainty.columns
+                if c in ("method", "dimension", "retrieval_ndcg_at_10") or c.startswith("ci_")
+            ]
+            if any(c.startswith("ci_") for c in keys):
+                if "method" in uncertainty:
+                    uncertainty["method"] = uncertainty["method"].map(method_label)
+                st.dataframe(
+                    uncertainty[keys],
+                    width="stretch",
+                    hide_index=True,
+                    column_config=column_config(uncertainty[keys]),
+                )
+            else:
+                st.info("No uncertainty intervals were saved for this run.")
         frame = pd.DataFrame(rows)
         st.subheader("Quality versus cost")
         shown = frame[

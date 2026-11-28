@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from newstrace.evaluation.tradeoffs import TRADEOFF_NOTE, analyze_tradeoffs, finite_number
 from newstrace.logging import get_logger
 
 logger = get_logger(__name__)
@@ -89,7 +90,7 @@ def _uncertainty_table(rows: list[dict[str, Any]]) -> str:
 
 def make_plots(outdir: Path, metrics: dict[str, Any]) -> list[str]:
     """Write the three quality-versus-cost plots.  Missing matplotlib is not fatal."""
-    rows = [r for r in metrics.get("results", []) if r.get("method") != "full" or True]
+    rows = [r for r in metrics.get("results", []) if isinstance(r.get("method"), str)]
     if not rows:
         return []
     try:
@@ -104,10 +105,17 @@ def make_plots(outdir: Path, metrics: dict[str, Any]) -> list[str]:
     written: list[str] = []
     methods = sorted({r["method"] for r in rows})
     for filename, x_key, y_key, title in PLOTS:
+        valid = []
+        for row in rows:
+            x, y = finite_number(row.get(x_key)), finite_number(row.get(y_key))
+            if x is not None and x > 0 and y is not None and 0 <= y <= 1:
+                valid.append(row)
+        if not valid:
+            continue
         fig, ax = plt.subplots(figsize=(7, 4.5))
         for method in methods:
             series = sorted(
-                (r for r in rows if r["method"] == method and x_key in r and y_key in r),
+                (r for r in valid if r["method"] == method),
                 key=lambda r: r[x_key],
             )
             if not series:
@@ -201,27 +209,29 @@ def write_report(outdir: Path, metrics: dict[str, Any]) -> Path:
         "_Nothing was skipped; every requested (method, dimension) pair ran._"
     )
 
-    baseline = next((r for r in rows if r.get("method") == "full"), None)
-    observations: list[str] = []
-    if baseline:
-        base_ndcg = float(baseline.get("retrieval_ndcg_at_10") or 0.0)
-        base_mem = float(baseline.get("system_index_memory_mib") or 0.0)
-        base_p95 = float(baseline.get("system_p95_query_latency_ms") or 0.0)
-        for row in rows:
-            if row.get("method") == "full":
-                continue
-            ndcg = float(row.get("retrieval_ndcg_at_10") or 0.0)
-            mem = float(row.get("system_index_memory_mib") or 0.0)
-            p95 = float(row.get("system_p95_query_latency_ms") or 0.0)
-            retained = (ndcg / base_ndcg * 100.0) if base_ndcg > 0 else 0.0
-            shrink = (base_mem / mem) if mem > 0 else 0.0
-            speed = (base_p95 / p95) if p95 > 0 else 0.0
-            observations.append(
-                f"- `{row['method']}` at d={row['dimension']}: retained "
-                f"**{retained:.1f}%** of baseline nDCG@10 with a {shrink:.2f}× smaller "
-                f"index; p95 query latency {speed:.2f}× the baseline's "
-                f"(>1 = faster than full)."
-            )
+    tradeoffs = analyze_tradeoffs(rows)
+    tradeoff_table = (
+        _table(
+            [p.as_dict() for p in tradeoffs.points],
+            [
+                ("result row", "result_row"),
+                ("method", "method"),
+                ("dim", "dimension"),
+                ("nDCG@10", "retrieval_ndcg_at_10"),
+                ("memory MiB", "system_index_memory_mib"),
+                ("p95 ms", "system_p95_query_latency_ms"),
+                ("Pareto frontier", "frontier"),
+            ],
+        )
+        if tradeoffs.points
+        else "_No configurations have complete, valid quality and positive cost measurements._"
+    )
+    excluded_tradeoffs = "\n".join(f"- Result row {e.row}: {e.reason}." for e in tradeoffs.excluded)
+    baseline_note = (
+        "_`full` was omitted, so comparisons against it are unavailable._"
+        if rows and not any(r.get("method") == "full" for r in rows)
+        else ""
+    )
 
     window_days = metrics.get("window_days")
     window_note = (
@@ -308,7 +318,17 @@ measurement produced by `scripts/run_experiments.py`; nothing is estimated.
 
 ## Interpretation
 
-{chr(10).join(observations) if observations else "_Only the full-dimensional baseline was run._"}
+{TRADEOFF_NOTE}
+
+{baseline_note}
+
+{tradeoff_table}
+
+Missing, nonfinite or zero costs are excluded from tradeoff comparisons rather
+than treated as free resources. Quality of zero remains a valid measurement.
+Result rows refer to one-based positions in `metrics.json` → `results`.
+
+{excluded_tradeoffs}
 
 ## What was skipped
 

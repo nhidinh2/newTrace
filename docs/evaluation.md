@@ -373,6 +373,38 @@ platform, seed, git commit), `metrics.json`, per-query and per-configuration
 tables, three plots and `report.md`. `report.md` is rendered *from*
 `metrics.json`, so the prose cannot drift from the measurements.
 
+## Exploring measured tradeoffs
+
+The Experiments page reads one saved run at a time. Set a minimum nDCG@10 and
+inclusive ceilings for index memory (MiB) and p95 query latency (ms), then inspect
+the matching configurations as points against either cost axis. The default
+shortlist shows only the Pareto frontier: a row is dominated if another valid
+row has at least its quality, no more memory and no more latency, with at least
+one strict improvement. Frontier membership uses all comparable rows in the run
+before filtering. Identical points share a frontier status; a tie never
+arbitrarily selects one representation. Switching runs resets the controls to
+that run's limits.
+
+The shared `evaluation.tradeoffs` service also supplies the written report's
+frontier table. It requires a named method, positive integral dimension,
+nDCG@10 in [0, 1], and finite positive measured costs. Zero quality is valid;
+zero costs, missing values, nonfinite values, booleans and numeric strings are
+excluded with row-specific reasons. Original result rows remain inspectable.
+The CSV identifies each selected measurement by its one-based `results` row,
+including repeated method/dimension pairs. Neither exploration nor report
+generation changes `metrics.json` or recomputes a benchmark. Historical reports
+remain untouched until explicitly regenerated with `make report`; regenerated
+plots omit invalid coordinates rather than drawing invented zeroes.
+
+This frontier compares saved, potentially rounded point estimates, not their
+uncertainty. It cannot establish statistical superiority, future workload
+latency, total application memory, or a recommended deployment configuration.
+The dashboard exposes stored confidence intervals without recalculating them;
+absent intervals are explicitly labelled. Read the paired deltas, query count,
+judgment source and run setup before choosing a configuration. Rows from
+different runs are never pooled. Dominance analysis is quadratic in the number
+of sweep configurations; it does not scan articles or load embedding matrices.
+
 ## What these numbers do not show
 
 The fixture test period holds 27 articles in 10 stories, and the live run scored
